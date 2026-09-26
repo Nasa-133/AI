@@ -1,0 +1,78 @@
+name: ai-business-office
+
+x-app-env: &app-env
+  env_file:
+    - path: ../../.env
+      required: false
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev}
+      BUSINESS_DB_OWNER_PASSWORD: ${BUSINESS_DB_OWNER_PASSWORD:-business_owner_dev}
+      BUSINESS_DB_APP_PASSWORD: ${BUSINESS_DB_APP_PASSWORD:-business_app_dev}
+      AI_DB_OWNER_PASSWORD: ${AI_DB_OWNER_PASSWORD:-ai_owner_dev}
+      AI_DB_APP_PASSWORD: ${AI_DB_APP_PASSWORD:-ai_app_dev}
+      INTEGRATION_DB_OWNER_PASSWORD: ${INTEGRATION_DB_OWNER_PASSWORD:-integration_owner_dev}
+      INTEGRATION_DB_APP_PASSWORD: ${INTEGRATION_DB_APP_PASSWORD:-integration_app_dev}
+    ports: ["55432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-abo}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-abo_dev}
+    ports: ["5672:5672", "15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["56379:6379"]
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-abo}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-abo_dev_password}
+    ports: ["9000:9000", "9001:9001"]
+    volumes:
+      - miniodata:/data
+
+  business-api:
+    profiles: ["apps"]
+    build: ../../services/business
+    <<: *app-env
+    environment:
+      BUSINESS_DATABASE_URL: postgresql+asyncpg://business_app:${BUSINESS_DB_APP_PASSWORD:-business_app_dev}@postgres:5432/business
+      BUSINESS_MIGRATIONS_DATABASE_URL: postgresql+asyncpg://business_owner:${BUSINESS_DB_OWNER_PASSWORD:-business_owner_dev}@postgres:5432/business
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  ai-runtime:
+    profiles: ["apps"]
+    build: ../../services/ai_runtime
+    <<: *app-env
+    ports: ["8100:8100"]
+
+  integration-runtime:
+    profiles: ["apps"]
+    build: ../../services/integration_runtime
+    <<: *app-env
+    ports: ["8200:8200"]
+
+volumes:
+  pgdata:
+  miniodata:

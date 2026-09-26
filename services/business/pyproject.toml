@@ -1,0 +1,102 @@
+[project]
+name = "business"
+version = "0.1.0"
+description = "AI Business Office — Business Core (API + Worker)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "argon2-cffi>=23.1",
+    "pyotp>=2.9",
+    "cryptography>=43",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "import-linter>=2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/business"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]
+markers = ["integration: real PostgreSQL talab qiladi (make up && make migrate)"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "ASYNC", "RUF"]
+# RUF001-003: o‘zbek lotinidagi ‘ va ’ harflari noaniq belgi emas.
+ignore = ["S101", "RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"]
+"migrations/**" = ["E501"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+mypy_path = "src"
+packages = ["business"]
+
+[[tool.mypy.overrides]]
+module = ["pyotp.*"]
+ignore_missing_imports = true
+
+# --- Arxitektura chegaralari (TZ 13.5, 13.15 gate 1) ---
+[tool.importlinter]
+root_package = "business"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain va kernel framework/I-O kutubxonalariga qaram emas"
+type = "forbidden"
+source_modules = ["business.kernel", "business.contexts.*.domain"]
+forbidden_modules = [
+    "fastapi", "starlette", "pydantic", "sqlalchemy", "asyncpg", "alembic",
+    "httpx", "redis", "aio_pika", "openai", "argon2", "pyotp", "cryptography",
+    "business.platform", "business.entrypoints", "business.bootstrap",
+]
+
+[[tool.importlinter.contracts]]
+name = "Application va ports framework/DB’ga qaram emas"
+type = "forbidden"
+source_modules = ["business.contexts.*.application", "business.contexts.*.ports"]
+forbidden_modules = [
+    "fastapi", "starlette", "sqlalchemy", "asyncpg", "alembic", "httpx", "redis",
+    "aio_pika", "openai", "argon2", "pyotp", "cryptography",
+    "business.platform", "business.entrypoints", "business.bootstrap",
+]
+
+[[tool.importlinter.contracts]]
+name = "Kontekstlar entrypoints/bootstrap’ni bilmaydi"
+type = "forbidden"
+source_modules = ["business.contexts"]
+forbidden_modules = ["business.entrypoints", "business.bootstrap"]
+
+[[tool.importlinter.contracts]]
+name = "Identity konteksti ichki qatlamlari"
+type = "layers"
+containers = ["business.contexts.identity"]
+layers = ["public", "adapters", "application", "ports", "domain"]

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/envelope.v1.json",
+  "title": "Event/command envelope v1",
+  "description": "TZ 13.8. Envelope trusted runtime tomonidan yaratiladi; model matnidan olinmaydi. tenant_id vakolat dalili emas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id", "event_type", "schema_version", "producer", "occurred_at", "tenant_id",
+    "correlation_id", "causation_id", "traceparent", "aggregate_id", "aggregate_version", "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "event_type": { "type": "string", "pattern": "^[A-Z][A-Za-z]+\\.v[0-9]+$" },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "producer": { "enum": ["business", "ai_runtime", "integration_runtime"] },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "tenant_id": { "type": "string", "format": "uuid" },
+    "correlation_id": { "type": "string", "format": "uuid" },
+    "causation_id": { "type": ["string", "null"], "format": "uuid" },
+    "traceparent": { "type": ["string", "null"], "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$" },
+    "aggregate_id": { "type": "string", "format": "uuid" },
+    "aggregate_version": { "type": "integer", "minimum": 0 },
+    "payload": {
+      "type": "object",
+      "description": "Konkret event/command schema’si bilan alohida tekshiriladi. Katta ma’lumot reference bilan uzatiladi."
+    }
+  }
+}

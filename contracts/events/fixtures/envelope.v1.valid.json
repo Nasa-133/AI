@@ -1,0 +1,14 @@
+{
+  "event_id": "5f0c1d3a-7a53-4b8e-9d52-3a1f2b8c9e01",
+  "event_type": "DatasetSnapshotPublished.v1",
+  "schema_version": 1,
+  "producer": "business",
+  "occurred_at": "2026-09-27T10:00:00Z",
+  "tenant_id": "0b6f1f3e-2a44-4f5d-8a21-6c9d0e7f1a22",
+  "correlation_id": "9c2e4a61-1b3d-4e5f-a6b7-c8d9e0f1a2b3",
+  "causation_id": null,
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+  "aggregate_id": "3d8e6f21-9a7b-4c5d-8e1f-2a3b4c5d6e7f",
+  "aggregate_version": 3,
+  "payload": { "snapshot_id": "3d8e6f21-9a7b-4c5d-8e1f-2a3b4c5d6e7f" }
+}

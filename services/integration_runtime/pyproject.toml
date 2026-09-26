@@ -1,0 +1,61 @@
+[project]
+name = "integration-runtime"
+version = "0.1.0"
+description = "AI Business Office — Integration Runtime"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic-settings>=2.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "import-linter>=2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/integration_runtime"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "ASYNC", "RUF"]
+ignore = ["S101", "RUF001", "RUF002", "RUF003"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+mypy_path = "src"
+packages = ["integration_runtime"]
+
+[tool.importlinter]
+root_package = "integration_runtime"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Domain va application framework/I-O’ga qaram emas"
+type = "forbidden"
+source_modules = ["integration_runtime.domain", "integration_runtime.application", "integration_runtime.ports"]
+forbidden_modules = ["fastapi", "starlette", "pydantic", "sqlalchemy", "asyncpg", "httpx", "aio_pika", "openai", "integration_runtime.adapters", "integration_runtime.entrypoints", "integration_runtime.bootstrap"]
+
+[[tool.importlinter.contracts]]
+name = "Qatlamlar"
+type = "layers"
+containers = ["integration_runtime"]
+layers = ["bootstrap", "entrypoints", "adapters", "application", "ports", "domain"]

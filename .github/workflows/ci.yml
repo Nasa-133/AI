@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  service:
+    name: ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [business, ai_runtime, integration_runtime]
+    defaults:
+      run:
+        working-directory: services/${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check .
+      - name: Type check
+        run: uv run mypy
+      - name: Architecture boundaries
+        run: uv run lint-imports --no-cache
+      - name: Unit tests
+        run: uv run pytest -q -m "not integration"
+      - name: Build image
+        run: docker build -t abo-${{ matrix.service }}:ci .
+
+  repo:
+    name: boundaries & contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --no-project --with pytest --with jsonschema pytest -q tests/architecture tests/contracts
+
+  integration:
+    name: business integration (Postgres + RLS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: docker compose -f infra/compose/docker-compose.yml up -d --wait postgres
+      - run: cd services/business && uv sync --frozen
+      - run: make migrate
+      - run: make test-integration
+
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
