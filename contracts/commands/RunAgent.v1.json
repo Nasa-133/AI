@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/commands/RunAgent.v1.json",
+  "title": "RunAgent v1 (payload)",
+  "description": "Business → AI Runtime. Agent run’ni boshlash. Topshiriq sanitizatsiya qilingan; ruxsatlar Tool API’da qayta tekshiriladi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "task_step_id",
+    "agent_role_key",
+    "sanitized_instruction",
+    "context_refs",
+    "deadline",
+    "budget_reservation_id",
+    "policy_version",
+    "locale"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "task_step_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent_role_key": {
+      "enum": [
+        "coordinator",
+        "sales_analyst",
+        "finance_analyst",
+        "inventory_analyst",
+        "document_assistant"
+      ]
+    },
+    "sanitized_instruction": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000
+    },
+    "context_refs": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "id",
+          "version_id",
+          "locator"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "dataset_snapshot",
+              "document_version",
+              "query_result"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "budget_reservation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "policy_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "locale": {
+      "enum": [
+        "uz-Latn",
+        "uz-Cyrl",
+        "ru",
+        "en"
+      ]
+    }
+  }
+}

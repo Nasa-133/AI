@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/SyncRunFailed.v1.json",
+  "title": "SyncRunFailed v1 (payload)",
+  "description": "Integration → Business. Qisman sync to‘liq yangilangan deb ko‘rsatilmaydi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sync_run_id",
+    "data_source_id",
+    "connector_id",
+    "error_code",
+    "retryable",
+    "message",
+    "batches_published"
+  ],
+  "properties": {
+    "sync_run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "data_source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "connector_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "error_code": {
+      "enum": [
+        "auth_failed",
+        "rate_limited",
+        "source_unavailable",
+        "schema_changed",
+        "invalid_file",
+        "mapping_invalid",
+        "internal"
+      ]
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "batches_published": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

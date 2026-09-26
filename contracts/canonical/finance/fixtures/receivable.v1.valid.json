@@ -1,0 +1,13 @@
+{
+  "source_id": "AR-300",
+  "source_revision": null,
+  "customer_code": "C-77",
+  "customer_name": "Baraka savdo",
+  "document_number": "INV-300",
+  "issued_on": "2026-08-01",
+  "due_on": "2026-08-31",
+  "amount": "5000000.00",
+  "paid_amount": "2000000.00",
+  "currency": "UZS",
+  "branch_code": "TSH"
+}

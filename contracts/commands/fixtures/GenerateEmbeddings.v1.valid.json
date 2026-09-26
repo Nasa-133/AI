@@ -1,0 +1,12 @@
+{
+  "request_id": "00000000-0000-4000-8000-000000000010",
+  "document_version_id": "00000000-0000-4000-8000-000000000011",
+  "chunks_ref": {
+    "bucket": "business-documents",
+    "key": "tenants/00000000-0000-4000-8000-000000000001/chunks/00000000-0000-4000-8000-000000000011.jsonl",
+    "checksum_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "size_bytes": 20480
+  },
+  "chunk_count": 120,
+  "model_profile": "embedding_default"
+}

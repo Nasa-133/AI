@@ -1,0 +1,17 @@
+{
+  "snapshot_id": "00000000-0000-4000-8000-000000000014",
+  "dataset_id": "00000000-0000-4000-8000-000000000015",
+  "entities": [
+    "sales.order_line",
+    "sales.return"
+  ],
+  "as_of": "2026-09-27T10:00:00Z",
+  "row_counts": {
+    "sales.order_line": 998,
+    "sales.return": 40
+  },
+  "quarantined_count": 2,
+  "source_batch_ids": [
+    "00000000-0000-4000-8000-000000000009"
+  ]
+}

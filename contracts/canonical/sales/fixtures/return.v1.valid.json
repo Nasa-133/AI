@@ -1,0 +1,16 @@
+{
+  "source_id": "RT-55",
+  "source_revision": "2",
+  "original_order_source_id": "SO-1001-1",
+  "occurred_at": "2026-08-20T11:00:00Z",
+  "branch_code": "TSH",
+  "product_code": "P-001",
+  "customer_code": "C-77",
+  "quantity": "1",
+  "amount": "25000.00",
+  "vat_amount": "0.00",
+  "amount_includes_vat": false,
+  "currency": "UZS",
+  "cost_amount": "15000.00",
+  "status": "confirmed"
+}

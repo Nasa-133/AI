@@ -1,0 +1,9 @@
+{
+  "task_id": "00000000-0000-4000-8000-000000000001",
+  "task_step_id": "00000000-0000-4000-8000-000000000002",
+  "agent_run_id": "00000000-0000-4000-8000-000000000012",
+  "phase": "computing",
+  "message": "Filiallar bo‘yicha savdo hisoblanmoqda",
+  "tool_calls_used": 2,
+  "sequence": 3
+}

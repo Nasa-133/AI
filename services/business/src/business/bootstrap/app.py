@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from business.entrypoints.http import health, identity
+from business.contexts.identity.ports.security import IdentityNotifier
+from business.entrypoints.http import health, identity, members
 from business.entrypoints.http.errors import install_error_handlers
 from business.entrypoints.http.security import install_middlewares
 
@@ -13,14 +14,19 @@ from .container import build_container
 from .settings import Settings
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None, *, notifier: IdentityNotifier | None = None
+) -> FastAPI:
     settings = settings or Settings()  # type: ignore[call-arg]
-    container = build_container(settings)
+    container = build_container(settings, notifier=notifier)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
         await container.engine.dispose()
+        close = getattr(container.rate_limiter, "close", None)
+        if close is not None:
+            await close()
 
     app = FastAPI(
         title="AI Business Office — Business API",
@@ -34,4 +40,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     install_middlewares(app)
     app.include_router(health.router)
     app.include_router(identity.router)
+    app.include_router(members.router)
     return app

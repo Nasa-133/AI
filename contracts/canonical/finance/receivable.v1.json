@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/canonical/finance/receivable.v1.json",
+  "title": "finance.receivable v1",
+  "description": "Debitorlik hujjati. Qoldiq = amount − paid_amount; muddati o‘tgani due_on bo‘yicha.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "source_revision",
+    "customer_code",
+    "customer_name",
+    "document_number",
+    "issued_on",
+    "due_on",
+    "amount",
+    "paid_amount",
+    "currency",
+    "branch_code"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "source_revision": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "customer_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "customer_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "document_number": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "issued_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "due_on": {
+      "type": "string",
+      "format": "date"
+    },
+    "amount": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "paid_amount": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217"
+    },
+    "branch_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    }
+  }
+}

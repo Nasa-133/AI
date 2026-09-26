@@ -1,0 +1,20 @@
+{
+  "batch_id": "00000000-0000-4000-8000-000000000009",
+  "data_source_id": "00000000-0000-4000-8000-000000000007",
+  "sync_run_id": "00000000-0000-4000-8000-000000000006",
+  "connector_id": "file_import",
+  "connector_version": "1.0.0",
+  "entity": "sales.order_line",
+  "canonical_schema_version": 1,
+  "record_count": 1000,
+  "object_ref": {
+    "bucket": "integration-raw",
+    "key": "tenants/00000000-0000-4000-8000-000000000001/batches/00000000-0000-4000-8000-000000000009.jsonl",
+    "checksum_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "size_bytes": 20480
+  },
+  "checksum_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "extracted_at": "2026-09-27T09:58:00Z",
+  "window": null,
+  "is_full_snapshot": true
+}

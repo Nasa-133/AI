@@ -1,0 +1,11 @@
+{
+  "source_id": "MV-9001",
+  "occurred_at": "2026-08-15T07:30:00Z",
+  "warehouse_code": "W1",
+  "branch_code": "TSH",
+  "product_code": "P-001",
+  "quantity_delta": "-10",
+  "movement_type": "sale",
+  "unit_cost": "15000.00",
+  "currency": "UZS"
+}

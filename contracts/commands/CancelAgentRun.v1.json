@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/commands/CancelAgentRun.v1.json",
+  "title": "CancelAgentRun v1 (payload)",
+  "description": "Business → AI Runtime. Yangi model/tool chaqirig‘i boshlanmaydi; natija AgentRunCompleted(status=cancelled).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "task_step_id",
+    "requested_by",
+    "reason"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "task_step_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "requested_by": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 500
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

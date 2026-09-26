@@ -7,14 +7,22 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from business.contexts.identity.adapters.security import (
     Argon2PasswordHasher,
+    DisabledNotifier,
     FernetSecretBox,
+    LoggingNotifier,
     OpaqueSessionTokens,
     PyOtpTotpService,
 )
 from business.contexts.identity.adapters.sql import SqlIdentityUnitOfWorkFactory
+from business.contexts.identity.application.members import MembershipService
+from business.contexts.identity.application.password_reset import PasswordResetService
 from business.contexts.identity.application.service import IdentityService
+from business.contexts.identity.application.sessions import SessionIssuer
+from business.contexts.identity.ports.security import IdentityNotifier
 from business.kernel.clock import SystemClock
+from business.kernel.rate_limit import RateLimiter
 from business.platform.db import make_engine
+from business.platform.rate_limit import NoopRateLimiter, RedisRateLimiter
 
 from .settings import Settings
 
@@ -24,17 +32,43 @@ class Container:
     settings: Settings
     engine: AsyncEngine
     identity: IdentityService
+    members: MembershipService
+    password_reset: PasswordResetService
+    rate_limiter: RateLimiter
 
 
-def build_container(settings: Settings) -> Container:
+def build_container(settings: Settings, *, notifier: IdentityNotifier | None = None) -> Container:
     engine = make_engine(settings.database_url)
+    uow_factory = SqlIdentityUnitOfWorkFactory(engine)
+    hasher = Argon2PasswordHasher()
+    tokens = OpaqueSessionTokens()
+    clock = SystemClock()
+    session_ttl = timedelta(hours=settings.session_ttl_hours)
+    if notifier is None:
+        notifier = (LoggingNotifier(settings.web_base_url) if settings.notifier == "log"
+                    else DisabledNotifier())
+
     identity = IdentityService(
-        uow_factory=SqlIdentityUnitOfWorkFactory(engine),
-        hasher=Argon2PasswordHasher(),
+        uow_factory=uow_factory,
+        hasher=hasher,
         totp=PyOtpTotpService(),
         secret_box=FernetSecretBox(settings.data_encryption_key),
-        tokens=OpaqueSessionTokens(),
-        clock=SystemClock(),
-        session_ttl=timedelta(hours=settings.session_ttl_hours),
+        tokens=tokens,
+        clock=clock,
+        session_ttl=session_ttl,
     )
-    return Container(settings=settings, engine=engine, identity=identity)
+    members = MembershipService(
+        uow_factory=uow_factory,
+        hasher=hasher,
+        tokens=tokens,
+        notifier=notifier,
+        clock=clock,
+        sessions=SessionIssuer(tokens=tokens, clock=clock, ttl=session_ttl),
+    )
+    password_reset = PasswordResetService(
+        uow_factory=uow_factory, hasher=hasher, tokens=tokens, notifier=notifier, clock=clock
+    )
+    rate_limiter: RateLimiter = (RedisRateLimiter(settings.redis_url) if settings.redis_url
+                                 else NoopRateLimiter())
+    return Container(settings=settings, engine=engine, identity=identity, members=members,
+                     password_reset=password_reset, rate_limiter=rate_limiter)

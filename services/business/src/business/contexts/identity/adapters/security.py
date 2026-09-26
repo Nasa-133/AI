@@ -1,4 +1,6 @@
 import hashlib
+import hmac
+import logging
 import secrets
 from datetime import datetime
 
@@ -28,9 +30,15 @@ class PyOtpTotpService:
     def new_secret(self) -> str:
         return pyotp.random_base32()
 
-    def verify(self, secret: str, code: str, now: datetime) -> bool:
-        # Soat farqi uchun ±1 oyna (30 soniya).
-        return bool(pyotp.TOTP(secret).verify(code.strip(), for_time=now, valid_window=1))
+    def match_step(self, secret: str, code: str, now: datetime) -> int | None:
+        # Soat farqi uchun ±1 qadam (30 soniya). Mos qadam replay himoyasi uchun qaytariladi.
+        totp = pyotp.TOTP(secret)
+        current = int(totp.timecode(now))
+        candidate = code.strip()
+        for step in (current - 1, current, current + 1):
+            if hmac.compare_digest(totp.generate_otp(step), candidate):
+                return step
+        return None
 
     def provisioning_uri(self, secret: str, account: str) -> str:
         return str(pyotp.TOTP(secret).provisioning_uri(name=account, issuer_name=TOTP_ISSUER))
@@ -55,3 +63,31 @@ class OpaqueSessionTokens:
 
     def hash(self, token: str) -> str:
         return hashlib.sha256(token.encode()).hexdigest()
+
+
+logger = logging.getLogger(__name__)
+
+
+class LoggingNotifier:
+    """Faqat lokal muhit uchun: havolani logga yozadi. Production email adapteri — alohida."""
+
+    def __init__(self, web_base_url: str) -> None:
+        self._base = web_base_url.rstrip("/")
+
+    async def send_invitation(self, *, email: str, tenant_name: str, token: str) -> None:
+        logger.warning("[local] %s uchun taklif (%s): %s/invite?token=%s",
+                       email, tenant_name, self._base, token)
+
+    async def send_password_reset(self, *, email: str, token: str) -> None:
+        logger.warning("[local] %s uchun parol tiklash: %s/reset-password?token=%s",
+                       email, self._base, token)
+
+
+class DisabledNotifier:
+    """Email kanali sozlanmagan muhit: token hech qayerga yozilmaydi."""
+
+    async def send_invitation(self, *, email: str, tenant_name: str, token: str) -> None:
+        logger.warning("Email kanali sozlanmagan: taklif yuborilmadi")
+
+    async def send_password_reset(self, *, email: str, token: str) -> None:
+        logger.warning("Email kanali sozlanmagan: parol tiklash havolasi yuborilmadi")

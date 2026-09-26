@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/commands/GenerateEmbeddings.v1.json",
+  "title": "GenerateEmbeddings v1 (payload)",
+  "description": "Business (Documents) → AI Runtime. Parchalar object storage’da JSONL; natija EmbeddingsGenerated bilan qaytadi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "document_version_id",
+    "chunks_ref",
+    "chunk_count",
+    "model_profile"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "document_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "chunks_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bucket",
+        "key",
+        "checksum_sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "checksum_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "chunk_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "model_profile": {
+      "enum": [
+        "embedding_default"
+      ]
+    }
+  }
+}

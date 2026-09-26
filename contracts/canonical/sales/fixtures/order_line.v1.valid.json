@@ -1,0 +1,22 @@
+{
+  "source_id": "SO-1001-1",
+  "source_revision": null,
+  "document_number": "SO-1001",
+  "occurred_at": "2026-08-15T07:30:00Z",
+  "branch_code": "TSH",
+  "branch_name": "Toshkent filiali",
+  "product_code": "P-001",
+  "product_name": "Choy 100g",
+  "customer_code": "C-77",
+  "customer_name": "Baraka savdo",
+  "quantity": "10",
+  "unit_price": "25000.00",
+  "gross_amount": "250000.00",
+  "discount_amount": "12500.00",
+  "discount_already_deducted": false,
+  "vat_amount": "0.00",
+  "amount_includes_vat": false,
+  "currency": "UZS",
+  "status": "confirmed",
+  "cost_amount": "150000.00"
+}

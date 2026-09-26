@@ -1,0 +1,27 @@
+{
+  "task_id": "00000000-0000-4000-8000-000000000001",
+  "task_step_id": "00000000-0000-4000-8000-000000000002",
+  "agent_run_id": "00000000-0000-4000-8000-000000000012",
+  "status": "succeeded",
+  "result_candidate": {
+    "kind": "answer",
+    "answer_markdown": "Toshkent filiali savdosi 12% oshdi.",
+    "structured": null
+  },
+  "source_refs": [
+    {
+      "kind": "query_result",
+      "id": "00000000-0000-4000-8000-000000000013",
+      "version_id": null,
+      "locator": null
+    }
+  ],
+  "limitations": [],
+  "error_code": null,
+  "usage": {
+    "input_tokens": 5120,
+    "output_tokens": 640,
+    "cost_estimate": "0.0215",
+    "currency": "USD"
+  }
+}

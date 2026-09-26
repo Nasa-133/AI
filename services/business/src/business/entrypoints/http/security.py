@@ -17,8 +17,14 @@ SESSION_COOKIE = "abo_session"
 CSRF_COOKIE = "abo_csrf"
 CSRF_HEADER = "X-CSRF-Token"
 _UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
-# Sessiyasiz boshlanadigan amallar: login va onboarding.
-_CSRF_EXEMPT = {"/api/v1/auth/login", "/api/v1/tenants"}
+# Sessiyasiz boshlanadigan amallar (brauzerda eski cookie qolgan bo‘lishi mumkin).
+_CSRF_EXEMPT = {
+    "/api/v1/auth/login",
+    "/api/v1/tenants",
+    "/api/v1/invitations/accept",
+    "/api/v1/auth/password-reset",
+    "/api/v1/auth/password-reset/confirm",
+}
 _TRACE_ID_RE = re.compile(r"^[A-Za-z0-9-]{8,64}$")
 
 

@@ -1,12 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel, Field
 
 from business.contexts.identity.application.dto import Login, Me, OnboardTenant
 from business.contexts.identity.domain.model import Role
 
-from .deps import AuthCtx, ContainerDep, Identity, SessionCtx
+from .deps import AuthCtx, ContainerDep, Identity, SessionCtx, rate_limit
 from .security import SESSION_COOKIE, clear_session_cookies, set_session_cookies
 
 router = APIRouter(prefix="/api/v1", tags=["identity"])
@@ -77,7 +77,8 @@ class SwitchTenantRequest(BaseModel):
     tenant_id: UUID
 
 
-@router.post("/tenants", status_code=status.HTTP_201_CREATED)
+@router.post("/tenants", status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(rate_limit("onboard", limit=10, window_seconds=3600))])
 async def onboard(
     body: OnboardRequest, response: Response, identity: Identity, container: ContainerDep
 ) -> SessionResponse:
@@ -88,7 +89,8 @@ async def onboard(
                            mfa_satisfied=ctx.mfa_satisfied)
 
 
-@router.post("/auth/login")
+@router.post("/auth/login",
+             dependencies=[Depends(rate_limit("login", limit=20, window_seconds=300))])
 async def login(
     body: LoginRequest, response: Response, identity: Identity, container: ContainerDep
 ) -> SessionResponse:
@@ -114,7 +116,8 @@ async def mfa_enroll(ctx: SessionCtx, identity: Identity) -> MfaEnrollResponse:
                              provisioning_uri=enrollment.provisioning_uri)
 
 
-@router.post("/auth/mfa/verify")
+@router.post("/auth/mfa/verify",
+             dependencies=[Depends(rate_limit("mfa", limit=10, window_seconds=300))])
 async def mfa_verify(body: MfaVerifyRequest, ctx: SessionCtx, identity: Identity) -> MeResponse:
     verified = await identity.verify_mfa(ctx, body.code)
     return MeResponse.of(await identity.get_me(verified))

@@ -33,6 +33,7 @@ from .errors import (
     NotAMember,
     Unauthenticated,
 )
+from .sessions import SessionIssuer
 
 
 class IdentityService:
@@ -53,7 +54,7 @@ class IdentityService:
         self._secret_box = secret_box
         self._tokens = tokens
         self._clock = clock
-        self._session_ttl = session_ttl
+        self._sessions = SessionIssuer(tokens=tokens, clock=clock, ttl=session_ttl)
         # Mavjud bo‘lmagan email uchun ham hash tekshiruvi bajariladi (timing oqishi yo‘q).
         self._dummy_hash = hasher.hash(uuid4().hex)
 
@@ -79,7 +80,7 @@ class IdentityService:
             await uow.users.add(user)
             await uow.tenants.add(tenant)
             await uow.memberships.add(membership)
-            issued = await self._issue_session(uow, user, membership)
+            issued = await self._sessions.issue(uow, user, membership)
             await uow.commit()
         return issued
 
@@ -105,7 +106,7 @@ class IdentityService:
             user.register_successful_login()
             await uow.users.save(user)
             await uow.bind(tenant_id=membership.tenant_id, user_id=user.id)
-            issued = await self._issue_session(uow, user, membership)
+            issued = await self._sessions.issue(uow, user, membership)
             await uow.commit()
         return issued
 
@@ -159,11 +160,13 @@ class IdentityService:
             if user.mfa_secret_encrypted is None:
                 raise InvalidMfaCode("MFA ro‘yxatdan o‘tkazilmagan.")
             secret = self._secret_box.decrypt(user.mfa_secret_encrypted)
-            if not self._totp.verify(secret, code, now):
+            step = self._totp.match_step(secret, code, now)
+            if step is None:
                 raise InvalidMfaCode("Kod noto‘g‘ri yoki muddati o‘tgan.")
+            user.use_totp_step(step)
             if not user.mfa_enabled:
                 user.confirm_mfa()
-                await uow.users.save(user)
+            await uow.users.save(user)
             session = await self._require_session(uow, ctx)
             session.mfa_verified = True
             await uow.sessions.save(session)
@@ -211,8 +214,8 @@ class IdentityService:
             old = await self._require_session(uow, ctx)
             await uow.sessions.delete(old.id)
             await uow.bind(tenant_id=tenant_id, user_id=ctx.user_id)
-            issued = await self._issue_session(uow, user, membership,
-                                               mfa_verified=old.mfa_verified)
+            issued = await self._sessions.issue(uow, user, membership,
+                                                mfa_verified=old.mfa_verified)
             await uow.commit()
         return issued
 
@@ -227,44 +230,9 @@ class IdentityService:
                 return membership
         raise NotAMember("Korxona topilmadi.")
 
-    async def _issue_session(
-        self,
-        uow: IdentityUnitOfWork,
-        user: User,
-        membership: Membership,
-        *,
-        mfa_verified: bool = False,
-    ) -> IssuedSession:
-        now = self._clock.now()
-        token = self._tokens.new_token()
-        session = AuthSession(
-            id=uuid4(),
-            token_hash=self._tokens.hash(token),
-            user_id=user.id,
-            tenant_id=membership.tenant_id,
-            created_at=now,
-            expires_at=now + self._session_ttl,
-            mfa_verified=mfa_verified,
-        )
-        await uow.sessions.add(session)
-        return IssuedSession(
-            token=token,
-            expires_at=session.expires_at,
-            context=AuthContext(
-                session_id=session.id,
-                user_id=user.id,
-                tenant_id=membership.tenant_id,
-                role=membership.role,
-                mfa_satisfied=session.mfa_satisfied(user, membership.role),
-            ),
-        )
-
     @staticmethod
     async def _require_user(uow: IdentityUnitOfWork, user_id: UUID) -> User:
-        user = await uow.users.get(user_id)
-        if user is None:
-            raise Unauthenticated("Foydalanuvchi topilmadi.")
-        return user
+        return await require_user(uow, user_id)
 
     @staticmethod
     async def _require_session(uow: IdentityUnitOfWork, ctx: AuthContext) -> AuthSession:
@@ -272,3 +240,10 @@ class IdentityService:
         if session is None:
             raise Unauthenticated("Sessiya tugagan. Qayta kiring.")
         return session
+
+
+async def require_user(uow: IdentityUnitOfWork, user_id: UUID) -> User:
+    user = await uow.users.get(user_id)
+    if user is None:
+        raise Unauthenticated("Foydalanuvchi topilmadi.")
+    return user

@@ -1,0 +1,18 @@
+{
+  "task_id": "00000000-0000-4000-8000-000000000001",
+  "task_step_id": "00000000-0000-4000-8000-000000000002",
+  "agent_role_key": "sales_analyst",
+  "sanitized_instruction": "O‘tgan oy filiallar savdosini solishtir.",
+  "context_refs": [
+    {
+      "kind": "dataset_snapshot",
+      "id": "00000000-0000-4000-8000-000000000003",
+      "version_id": null,
+      "locator": null
+    }
+  ],
+  "deadline": "2026-09-27T10:10:00Z",
+  "budget_reservation_id": "00000000-0000-4000-8000-000000000004",
+  "policy_version": 1,
+  "locale": "uz-Latn"
+}

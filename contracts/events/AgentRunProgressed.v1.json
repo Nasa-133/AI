@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/AgentRunProgressed.v1.json",
+  "title": "AgentRunProgressed v1 (payload)",
+  "description": "AI Runtime → Business. Faqat haqiqiy bosqich; o‘lchanmagan foiz yuborilmaydi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "task_step_id",
+    "agent_run_id",
+    "phase",
+    "message",
+    "tool_calls_used",
+    "sequence"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "task_step_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent_run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "phase": {
+      "enum": [
+        "planning",
+        "reading",
+        "retrieving",
+        "computing",
+        "analyzing",
+        "drafting",
+        "waiting_tool"
+      ]
+    },
+    "message": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 500
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "tool_calls_used": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

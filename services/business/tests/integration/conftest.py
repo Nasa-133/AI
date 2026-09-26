@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from business.bootstrap.app import create_app
 from business.bootstrap.settings import Settings
+from tests.unit.identity.fakes import RecordingNotifier
 
 APP_URL = os.environ.get(
     "BUSINESS_DATABASE_URL",
@@ -34,13 +35,20 @@ async def app_engine() -> AsyncIterator[AsyncEngine]:
 
 
 @pytest.fixture(scope="session")
-async def client(app_engine: AsyncEngine) -> AsyncIterator[httpx.AsyncClient]:
+def notifier() -> RecordingNotifier:
+    return RecordingNotifier()
+
+
+@pytest.fixture(scope="session")
+async def client(
+    app_engine: AsyncEngine, notifier: RecordingNotifier
+) -> AsyncIterator[httpx.AsyncClient]:
     settings = Settings(
         database_url=APP_URL,
         data_encryption_key=Fernet.generate_key().decode(),
         cookie_secure=False,
     )
-    app = create_app(settings)
+    app = create_app(settings, notifier=notifier)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         yield c

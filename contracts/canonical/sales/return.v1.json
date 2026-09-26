@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/canonical/sales/return.v1.json",
+  "title": "sales.return v1",
+  "description": "Savdo qaytarilishi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "source_revision",
+    "original_order_source_id",
+    "occurred_at",
+    "branch_code",
+    "product_code",
+    "customer_code",
+    "quantity",
+    "amount",
+    "vat_amount",
+    "amount_includes_vat",
+    "currency",
+    "cost_amount",
+    "status"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "source_revision": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "original_order_source_id": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "branch_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "product_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "customer_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "quantity": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "amount": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "vat_amount": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "amount_includes_vat": {
+      "type": "boolean"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217"
+    },
+    "cost_amount": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "description": "Decimal string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "enum": [
+        "confirmed",
+        "draft",
+        "cancelled"
+      ]
+    }
+  }
+}

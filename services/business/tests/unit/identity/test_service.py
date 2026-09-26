@@ -14,6 +14,7 @@ from business.contexts.identity.application.errors import (
 )
 from business.contexts.identity.application.service import IdentityService
 from business.contexts.identity.domain.model import MAX_FAILED_LOGINS, Membership, Role
+from business.kernel.errors import BusinessError
 
 from .fakes import (
     FakeClock,
@@ -78,7 +79,7 @@ async def test_mfa_enroll_and_verify_satisfies_session(service: IdentityService)
     assert enrollment.provisioning_uri.startswith("otpauth://")
     with pytest.raises(InvalidMfaCode):
         await service.verify_mfa(issued.context, "000000")
-    await service.verify_mfa(issued.context, FakeTotp.VALID_CODE)
+    await service.verify_mfa(issued.context, FakeTotp.code_at(NOW))
     ctx = await service.authenticate(issued.token)
     assert ctx.mfa_satisfied
 
@@ -86,9 +87,21 @@ async def test_mfa_enroll_and_verify_satisfies_session(service: IdentityService)
 async def test_new_login_requires_mfa_again(service: IdentityService) -> None:
     issued = await onboard(service)
     await service.enroll_mfa(issued.context)
-    await service.verify_mfa(issued.context, FakeTotp.VALID_CODE)
+    await service.verify_mfa(issued.context, FakeTotp.code_at(NOW))
     again = await service.login(Login(email="owner@demo.uz", password=PASSWORD))
     assert again.context.mfa_satisfied is False
+
+
+async def test_totp_code_cannot_be_reused(service: IdentityService, clock: FakeClock) -> None:
+    issued = await onboard(service)
+    await service.enroll_mfa(issued.context)
+    await service.verify_mfa(issued.context, FakeTotp.code_at(NOW))
+    again = await service.login(Login(email="owner@demo.uz", password=PASSWORD))
+    with pytest.raises(BusinessError) as reused:
+        await service.verify_mfa(again.context, FakeTotp.code_at(NOW))
+    assert reused.value.code == "INVALID_MFA_CODE"
+    clock.current = NOW + timedelta(seconds=30)
+    await service.verify_mfa(again.context, FakeTotp.code_at(clock.current))
 
 
 async def test_wrong_password_is_generic_and_counts(service: IdentityService,

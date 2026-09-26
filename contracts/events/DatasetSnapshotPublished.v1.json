@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/DatasetSnapshotPublished.v1.json",
+  "title": "DatasetSnapshotPublished v1 (payload)",
+  "description": "Business Analytics. Faqat validatsiyadan o‘tgan to‘liq snapshot e’lon qilinadi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "dataset_id",
+    "entities",
+    "as_of",
+    "row_counts",
+    "quarantined_count",
+    "source_batch_ids"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "dataset_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "entities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "sales.order_line",
+          "sales.return",
+          "inventory.movement",
+          "finance.receivable"
+        ]
+      }
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "row_counts": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "sales.order_line",
+          "sales.return",
+          "inventory.movement",
+          "finance.receivable"
+        ]
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "quarantined_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_batch_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    }
+  }
+}

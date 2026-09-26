@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/SourceBatchReady.v1.json",
+  "title": "SourceBatchReady v1 (payload)",
+  "description": "Integration → Business. Canonical batch object storage’da (JSONL); brokerda faqat reference.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "batch_id",
+    "data_source_id",
+    "sync_run_id",
+    "connector_id",
+    "connector_version",
+    "entity",
+    "canonical_schema_version",
+    "record_count",
+    "object_ref",
+    "checksum_sha256",
+    "extracted_at",
+    "window",
+    "is_full_snapshot"
+  ],
+  "properties": {
+    "batch_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "data_source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "sync_run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "connector_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "connector_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "entity": {
+      "enum": [
+        "sales.order_line",
+        "sales.return",
+        "inventory.movement",
+        "finance.receivable"
+      ]
+    },
+    "canonical_schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "record_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "object_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bucket",
+        "key",
+        "checksum_sha256",
+        "size_bytes"
+      ],
+      "properties": {
+        "bucket": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "checksum_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "checksum_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "extracted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "window": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "to": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "is_full_snapshot": {
+      "type": "boolean"
+    }
+  }
+}

@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -10,3 +12,8 @@ class Settings(BaseSettings):
     session_ttl_hours: int = 12
     cookie_secure: bool = True
     environment: str = "local"
+    # Bo‘sh bo‘lsa rate limit o‘chiq (faqat testlar uchun).
+    redis_url: str = ""
+    web_base_url: str = "http://localhost:3000"
+    # `log` — faqat lokal: havola logga yoziladi. Production email adapteri keyin qo‘shiladi.
+    notifier: Literal["log", "disabled"] = "disabled"

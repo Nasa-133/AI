@@ -8,11 +8,24 @@ from enum import StrEnum
 from functools import cache
 from uuid import UUID
 
-from .errors import InvalidEmail, InvalidTenant, MfaAlreadyEnabled, MfaNotEnrolled, WeakPassword
+from .errors import (
+    Forbidden,
+    InvalidEmail,
+    InvalidTenant,
+    InvitationInvalid,
+    LastOwner,
+    MfaAlreadyEnabled,
+    MfaCodeReused,
+    MfaNotEnrolled,
+    ResetTokenInvalid,
+    WeakPassword,
+)
 
 MAX_FAILED_LOGINS = 5
 LOCKOUT_DURATION = timedelta(minutes=15)
 MIN_PASSWORD_LENGTH = 10
+INVITATION_TTL = timedelta(days=7)
+PASSWORD_RESET_TTL = timedelta(minutes=30)
 MAX_PASSWORD_LENGTH = 256
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -81,6 +94,7 @@ class User:
     mfa_enabled: bool = False
     failed_login_count: int = 0
     locked_until: datetime | None = None
+    mfa_last_used_step: int | None = None
 
     def is_locked(self, now: datetime) -> bool:
         return self.locked_until is not None and now < self.locked_until
@@ -104,6 +118,16 @@ class User:
         if self.mfa_secret_encrypted is None:
             raise MfaNotEnrolled("Avval MFA’ni ro‘yxatdan o‘tkazing.")
         self.mfa_enabled = True
+
+    def use_totp_step(self, step: int) -> None:
+        """Bir TOTP kodi (vaqt qadami) ikki marta qabul qilinmaydi."""
+        if self.mfa_last_used_step is not None and step <= self.mfa_last_used_step:
+            raise MfaCodeReused("Bu kod allaqachon ishlatilgan. Keyingi kodni kiriting.")
+        self.mfa_last_used_step = step
+
+    def change_password(self, new_hash: str) -> None:
+        self.password_hash = new_hash
+        self.register_successful_login()
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,3 +157,59 @@ class AuthSession:
         if role.requires_mfa or user.mfa_enabled:
             return self.mfa_verified
         return True
+
+
+def ensure_can_assign_role(actor: Role, role: Role) -> None:
+    """Owner istalgan rolni beradi; Admin faqat Analyst/Viewer (TZ 3-bo‘lim)."""
+    if actor is Role.OWNER:
+        return
+    if actor is Role.ADMIN and role in (Role.ANALYST, Role.VIEWER):
+        return
+    raise Forbidden("Bu rolni berish uchun vakolat yetarli emas.")
+
+
+def ensure_can_change_member(
+    *, actor: Role, target: Role, new_role: Role | None, owners_count: int
+) -> None:
+    """`new_role=None` — a’zoni chiqarish. Korxonada kamida bitta Owner qoladi."""
+    if actor not in (Role.OWNER, Role.ADMIN):
+        raise Forbidden("A’zolarni boshqarish uchun vakolat yetarli emas.")
+    if actor is Role.ADMIN and target in (Role.OWNER, Role.ADMIN):
+        raise Forbidden("Admin Owner yoki boshqa Admin’ni o‘zgartira olmaydi.")
+    if new_role is not None:
+        ensure_can_assign_role(actor, new_role)
+    if target is Role.OWNER and new_role is not Role.OWNER and owners_count <= 1:
+        raise LastOwner("Korxonada kamida bitta Owner qolishi kerak.")
+
+
+@dataclass(slots=True)
+class Invitation:
+    id: UUID
+    tenant_id: UUID
+    email: Email
+    role: Role
+    token_hash: str
+    invited_by: UUID
+    created_at: datetime
+    expires_at: datetime
+    accepted_at: datetime | None = None
+
+    def accept(self, now: datetime) -> None:
+        if self.accepted_at is not None or now >= self.expires_at:
+            raise InvitationInvalid("Taklif muddati o‘tgan yoki allaqachon ishlatilgan.")
+        self.accepted_at = now
+
+
+@dataclass(slots=True)
+class PasswordResetToken:
+    id: UUID
+    user_id: UUID
+    token_hash: str
+    created_at: datetime
+    expires_at: datetime
+    used_at: datetime | None = None
+
+    def consume(self, now: datetime) -> None:
+        if self.used_at is not None or now >= self.expires_at:
+            raise ResetTokenInvalid("Havola muddati o‘tgan yoki allaqachon ishlatilgan.")
+        self.used_at = now

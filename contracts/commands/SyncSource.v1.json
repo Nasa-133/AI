@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/commands/SyncSource.v1.json",
+  "title": "SyncSource v1 (payload)",
+  "description": "Business → Integration Runtime. file_import uchun object_ref majburiy, boshqa connectorlar uchun null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sync_run_id",
+    "data_source_id",
+    "connector_id",
+    "mode",
+    "object_ref",
+    "requested_by"
+  ],
+  "properties": {
+    "sync_run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "data_source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "connector_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "mode": {
+      "enum": [
+        "full",
+        "incremental"
+      ]
+    },
+    "object_ref": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bucket",
+            "key",
+            "checksum_sha256",
+            "size_bytes"
+          ],
+          "properties": {
+            "bucket": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            },
+            "checksum_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size_bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "requested_by": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

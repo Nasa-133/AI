@@ -19,3 +19,23 @@ class MfaAlreadyEnabled(BusinessError):
 
 class MfaNotEnrolled(BusinessError):
     code = "MFA_NOT_ENROLLED"
+
+
+class MfaCodeReused(BusinessError):
+    code = "INVALID_MFA_CODE"
+
+
+class Forbidden(BusinessError):
+    code = "FORBIDDEN"
+
+
+class LastOwner(BusinessError):
+    code = "LAST_OWNER"
+
+
+class InvitationInvalid(BusinessError):
+    code = "INVITATION_INVALID"
+
+
+class ResetTokenInvalid(BusinessError):
+    code = "RESET_TOKEN_INVALID"

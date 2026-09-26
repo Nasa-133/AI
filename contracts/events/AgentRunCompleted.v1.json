@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/AgentRunCompleted.v1.json",
+  "title": "AgentRunCompleted v1 (payload)",
+  "description": "AI Runtime → Business. result_candidate — nomzod; Business validatori tekshirmaguncha artifact emas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "task_step_id",
+    "agent_run_id",
+    "status",
+    "result_candidate",
+    "source_refs",
+    "limitations",
+    "error_code",
+    "usage"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "task_step_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "agent_run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "partial",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "result_candidate": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "answer_markdown",
+            "structured"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "answer",
+                "dashboard_spec",
+                "document_patch"
+              ]
+            },
+            "answer_markdown": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 50000
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "structured": {
+              "anyOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "id",
+          "version_id",
+          "locator"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "dataset_snapshot",
+              "document_version",
+              "query_result"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    "error_code": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "cost_estimate",
+        "currency"
+      ],
+      "properties": {
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_estimate": {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d+)?$",
+          "description": "Decimal string"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "ISO 4217"
+        }
+      }
+    }
+  }
+}
