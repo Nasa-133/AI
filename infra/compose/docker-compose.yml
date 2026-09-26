@@ -52,7 +52,9 @@ services:
 
   business-api:
     profiles: ["apps"]
-    build: ../../services/business
+    build:
+      context: ../..
+      dockerfile: services/business/Dockerfile
     <<: *app-env
     environment:
       BUSINESS_DATABASE_URL: postgresql+asyncpg://business_app:${BUSINESS_DB_APP_PASSWORD:-business_app_dev}@postgres:5432/business
@@ -60,6 +62,20 @@ services:
     ports: ["8000:8000"]
     depends_on:
       postgres: { condition: service_healthy }
+
+  business-worker:
+    profiles: ["apps"]
+    build:
+      context: ../..
+      dockerfile: services/business/Dockerfile
+    command: ["python", "-m", "business.entrypoints.worker"]
+    <<: *app-env
+    environment:
+      BUSINESS_DATABASE_URL: postgresql+asyncpg://business_app:${BUSINESS_DB_APP_PASSWORD:-business_app_dev}@postgres:5432/business
+      BUSINESS_AMQP_URL: amqp://${RABBITMQ_DEFAULT_USER:-abo}:${RABBITMQ_DEFAULT_PASS:-abo_dev}@rabbitmq:5672/
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
 
   ai-runtime:
     profiles: ["apps"]

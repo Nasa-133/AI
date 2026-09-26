@@ -15,7 +15,11 @@ dependencies = [
     "pyotp>=2.9",
     "cryptography>=43",
     "redis>=5.0",
+    "abo-messaging",
 ]
+
+[tool.uv.sources]
+abo-messaging = { path = "../../packages/abo_messaging", editable = true }
 
 [dependency-groups]
 dev = [
@@ -77,7 +81,7 @@ source_modules = ["business.kernel", "business.contexts.*.domain"]
 forbidden_modules = [
     "fastapi", "starlette", "pydantic", "sqlalchemy", "asyncpg", "alembic",
     "httpx", "redis", "aio_pika", "openai", "argon2", "pyotp", "cryptography",
-    "business.platform", "business.entrypoints", "business.bootstrap",
+    "abo_messaging", "business.platform", "business.entrypoints", "business.bootstrap",
 ]
 
 [[tool.importlinter.contracts]]
@@ -86,7 +90,7 @@ type = "forbidden"
 source_modules = ["business.contexts.*.application", "business.contexts.*.ports"]
 forbidden_modules = [
     "fastapi", "starlette", "sqlalchemy", "asyncpg", "alembic", "httpx", "redis",
-    "aio_pika", "openai", "argon2", "pyotp", "cryptography",
+    "aio_pika", "openai", "argon2", "pyotp", "cryptography", "abo_messaging",
     "business.platform", "business.entrypoints", "business.bootstrap",
 ]
 

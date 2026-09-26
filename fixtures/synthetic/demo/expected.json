@@ -1,0 +1,1268 @@
+{
+  "generator_version": "1.0.0",
+  "seed": 42,
+  "rows_requested": 19000,
+  "period": {
+    "from": "2025-09-01",
+    "to": "2026-08-31"
+  },
+  "as_of": "2026-08-31",
+  "timezone": "Asia/Tashkent",
+  "row_counts": {
+    "sotuvlar.csv": 19000,
+    "qaytarishlar.csv": 750,
+    "ombor_harakatlari.csv": 18638,
+    "debitorlik.csv": 2164
+  },
+  "sales": {
+    "USD": {
+      "2025-09": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "4354.51",
+            "discounts": "118.46",
+            "returns": "287.25",
+            "net_sales": "3948.80",
+            "cogs": "2973.23",
+            "cogs_missing_rows": 1,
+            "gross_profit": "975.57",
+            "gross_margin_pct": "24.71"
+          }
+        },
+        "total": {
+          "gross_sales": "4354.51",
+          "discounts": "118.46",
+          "returns": "287.25",
+          "net_sales": "3948.80",
+          "cogs": "2973.23",
+          "cogs_missing_rows": 1,
+          "gross_profit": "975.57",
+          "gross_margin_pct": "24.71"
+        }
+      },
+      "2025-10": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "5310.51",
+            "discounts": "202.10",
+            "returns": "0.00",
+            "net_sales": "5108.41",
+            "cogs": "4071.48",
+            "cogs_missing_rows": 0,
+            "gross_profit": "1036.93",
+            "gross_margin_pct": "20.30"
+          }
+        },
+        "total": {
+          "gross_sales": "5310.51",
+          "discounts": "202.10",
+          "returns": "0.00",
+          "net_sales": "5108.41",
+          "cogs": "4071.48",
+          "cogs_missing_rows": 0,
+          "gross_profit": "1036.93",
+          "gross_margin_pct": "20.30"
+        }
+      },
+      "2025-11": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "3661.85",
+            "discounts": "68.24",
+            "returns": "76.49",
+            "net_sales": "3517.12",
+            "cogs": "2650.17",
+            "cogs_missing_rows": 1,
+            "gross_profit": "866.95",
+            "gross_margin_pct": "24.65"
+          }
+        },
+        "total": {
+          "gross_sales": "3661.85",
+          "discounts": "68.24",
+          "returns": "76.49",
+          "net_sales": "3517.12",
+          "cogs": "2650.17",
+          "cogs_missing_rows": 1,
+          "gross_profit": "866.95",
+          "gross_margin_pct": "24.65"
+        }
+      },
+      "2025-12": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "5603.62",
+            "discounts": "151.16",
+            "returns": "74.78",
+            "net_sales": "5377.68",
+            "cogs": "4280.57",
+            "cogs_missing_rows": 0,
+            "gross_profit": "1097.11",
+            "gross_margin_pct": "20.40"
+          }
+        },
+        "total": {
+          "gross_sales": "5603.62",
+          "discounts": "151.16",
+          "returns": "74.78",
+          "net_sales": "5377.68",
+          "cogs": "4280.57",
+          "cogs_missing_rows": 0,
+          "gross_profit": "1097.11",
+          "gross_margin_pct": "20.40"
+        }
+      },
+      "2026-01": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "3073.12",
+            "discounts": "45.94",
+            "returns": "0.00",
+            "net_sales": "3027.18",
+            "cogs": "2431.42",
+            "cogs_missing_rows": 0,
+            "gross_profit": "595.76",
+            "gross_margin_pct": "19.68"
+          }
+        },
+        "total": {
+          "gross_sales": "3073.12",
+          "discounts": "45.94",
+          "returns": "0.00",
+          "net_sales": "3027.18",
+          "cogs": "2431.42",
+          "cogs_missing_rows": 0,
+          "gross_profit": "595.76",
+          "gross_margin_pct": "19.68"
+        }
+      },
+      "2026-02": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "3109.30",
+            "discounts": "38.17",
+            "returns": "121.60",
+            "net_sales": "2949.53",
+            "cogs": "2312.37",
+            "cogs_missing_rows": 0,
+            "gross_profit": "637.16",
+            "gross_margin_pct": "21.60"
+          }
+        },
+        "total": {
+          "gross_sales": "3109.30",
+          "discounts": "38.17",
+          "returns": "121.60",
+          "net_sales": "2949.53",
+          "cogs": "2312.37",
+          "cogs_missing_rows": 0,
+          "gross_profit": "637.16",
+          "gross_margin_pct": "21.60"
+        }
+      },
+      "2026-03": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "4825.80",
+            "discounts": "151.66",
+            "returns": "0.00",
+            "net_sales": "4674.14",
+            "cogs": "3624.99",
+            "cogs_missing_rows": 1,
+            "gross_profit": "1049.15",
+            "gross_margin_pct": "22.45"
+          }
+        },
+        "total": {
+          "gross_sales": "4825.80",
+          "discounts": "151.66",
+          "returns": "0.00",
+          "net_sales": "4674.14",
+          "cogs": "3624.99",
+          "cogs_missing_rows": 1,
+          "gross_profit": "1049.15",
+          "gross_margin_pct": "22.45"
+        }
+      },
+      "2026-04": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "2687.40",
+            "discounts": "33.31",
+            "returns": "17.82",
+            "net_sales": "2636.27",
+            "cogs": "2073.71",
+            "cogs_missing_rows": 0,
+            "gross_profit": "562.56",
+            "gross_margin_pct": "21.34"
+          }
+        },
+        "total": {
+          "gross_sales": "2687.40",
+          "discounts": "33.31",
+          "returns": "17.82",
+          "net_sales": "2636.27",
+          "cogs": "2073.71",
+          "cogs_missing_rows": 0,
+          "gross_profit": "562.56",
+          "gross_margin_pct": "21.34"
+        }
+      },
+      "2026-05": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "2742.79",
+            "discounts": "50.84",
+            "returns": "0.00",
+            "net_sales": "2691.95",
+            "cogs": "2147.35",
+            "cogs_missing_rows": 0,
+            "gross_profit": "544.60",
+            "gross_margin_pct": "20.23"
+          }
+        },
+        "total": {
+          "gross_sales": "2742.79",
+          "discounts": "50.84",
+          "returns": "0.00",
+          "net_sales": "2691.95",
+          "cogs": "2147.35",
+          "cogs_missing_rows": 0,
+          "gross_profit": "544.60",
+          "gross_margin_pct": "20.23"
+        }
+      },
+      "2026-06": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "2364.57",
+            "discounts": "47.15",
+            "returns": "0.00",
+            "net_sales": "2317.42",
+            "cogs": "1842.57",
+            "cogs_missing_rows": 0,
+            "gross_profit": "474.85",
+            "gross_margin_pct": "20.49"
+          }
+        },
+        "total": {
+          "gross_sales": "2364.57",
+          "discounts": "47.15",
+          "returns": "0.00",
+          "net_sales": "2317.42",
+          "cogs": "1842.57",
+          "cogs_missing_rows": 0,
+          "gross_profit": "474.85",
+          "gross_margin_pct": "20.49"
+        }
+      },
+      "2026-07": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "2954.49",
+            "discounts": "38.76",
+            "returns": "0.00",
+            "net_sales": "2915.73",
+            "cogs": "2259.99",
+            "cogs_missing_rows": 0,
+            "gross_profit": "655.74",
+            "gross_margin_pct": "22.49"
+          }
+        },
+        "total": {
+          "gross_sales": "2954.49",
+          "discounts": "38.76",
+          "returns": "0.00",
+          "net_sales": "2915.73",
+          "cogs": "2259.99",
+          "cogs_missing_rows": 0,
+          "gross_profit": "655.74",
+          "gross_margin_pct": "22.49"
+        }
+      },
+      "2026-08": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "4802.82",
+            "discounts": "98.31",
+            "returns": "367.68",
+            "net_sales": "4336.83",
+            "cogs": "3422.98",
+            "cogs_missing_rows": 0,
+            "gross_profit": "913.85",
+            "gross_margin_pct": "21.07"
+          }
+        },
+        "total": {
+          "gross_sales": "4802.82",
+          "discounts": "98.31",
+          "returns": "367.68",
+          "net_sales": "4336.83",
+          "cogs": "3422.98",
+          "cogs_missing_rows": 0,
+          "gross_profit": "913.85",
+          "gross_margin_pct": "21.07"
+        }
+      }
+    },
+    "UZS": {
+      "2025-09": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "383238600.00",
+            "discounts": "7678720.00",
+            "returns": "4386708.00",
+            "net_sales": "371173172.00",
+            "cogs": "285326032.00",
+            "cogs_missing_rows": 6,
+            "gross_profit": "85847140.00",
+            "gross_margin_pct": "23.13"
+          },
+          "FAR": {
+            "gross_sales": "315357400.00",
+            "discounts": "8094786.00",
+            "returns": "6784320.00",
+            "net_sales": "300478294.00",
+            "cogs": "235130540.00",
+            "cogs_missing_rows": 5,
+            "gross_profit": "65347754.00",
+            "gross_margin_pct": "21.75"
+          },
+          "SAM": {
+            "gross_sales": "423037000.00",
+            "discounts": "10620610.00",
+            "returns": "8022300.00",
+            "net_sales": "404394090.00",
+            "cogs": "313650335.00",
+            "cogs_missing_rows": 8,
+            "gross_profit": "90743755.00",
+            "gross_margin_pct": "22.44"
+          },
+          "TOS": {
+            "gross_sales": "792177800.00",
+            "discounts": "23097619.00",
+            "returns": "17625282.00",
+            "net_sales": "751454899.00",
+            "cogs": "586612161.00",
+            "cogs_missing_rows": 12,
+            "gross_profit": "164842738.00",
+            "gross_margin_pct": "21.94"
+          }
+        },
+        "total": {
+          "gross_sales": "1913810800.00",
+          "discounts": "49491735.00",
+          "returns": "36818610.00",
+          "net_sales": "1827500455.00",
+          "cogs": "1420719068.00",
+          "cogs_missing_rows": 31,
+          "gross_profit": "406781387.00",
+          "gross_margin_pct": "22.26"
+        }
+      },
+      "2025-10": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "297098500.00",
+            "discounts": "6351137.00",
+            "returns": "10489804.00",
+            "net_sales": "280257559.00",
+            "cogs": "216726725.00",
+            "cogs_missing_rows": 9,
+            "gross_profit": "63530834.00",
+            "gross_margin_pct": "22.67"
+          },
+          "FAR": {
+            "gross_sales": "476428900.00",
+            "discounts": "9020522.00",
+            "returns": "7059382.00",
+            "net_sales": "460348996.00",
+            "cogs": "356716774.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "103632222.00",
+            "gross_margin_pct": "22.51"
+          },
+          "SAM": {
+            "gross_sales": "511291600.00",
+            "discounts": "11381987.00",
+            "returns": "38635706.00",
+            "net_sales": "461273907.00",
+            "cogs": "362125581.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "99148326.00",
+            "gross_margin_pct": "21.49"
+          },
+          "TOS": {
+            "gross_sales": "779725600.00",
+            "discounts": "17802811.00",
+            "returns": "12363526.00",
+            "net_sales": "749559263.00",
+            "cogs": "582712769.00",
+            "cogs_missing_rows": 14,
+            "gross_profit": "166846494.00",
+            "gross_margin_pct": "22.26"
+          }
+        },
+        "total": {
+          "gross_sales": "2064544600.00",
+          "discounts": "44556457.00",
+          "returns": "68548418.00",
+          "net_sales": "1951439725.00",
+          "cogs": "1518281849.00",
+          "cogs_missing_rows": 31,
+          "gross_profit": "433157876.00",
+          "gross_margin_pct": "22.20"
+        }
+      },
+      "2025-11": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "370690000.00",
+            "discounts": "10906481.00",
+            "returns": "9714023.00",
+            "net_sales": "350069496.00",
+            "cogs": "269252408.00",
+            "cogs_missing_rows": 6,
+            "gross_profit": "80817088.00",
+            "gross_margin_pct": "23.09"
+          },
+          "FAR": {
+            "gross_sales": "365886600.00",
+            "discounts": "7500933.00",
+            "returns": "8346592.00",
+            "net_sales": "350039075.00",
+            "cogs": "275628623.00",
+            "cogs_missing_rows": 5,
+            "gross_profit": "74410452.00",
+            "gross_margin_pct": "21.26"
+          },
+          "SAM": {
+            "gross_sales": "507055900.00",
+            "discounts": "10807801.00",
+            "returns": "8517295.00",
+            "net_sales": "487730804.00",
+            "cogs": "378676995.00",
+            "cogs_missing_rows": 7,
+            "gross_profit": "109053809.00",
+            "gross_margin_pct": "22.36"
+          },
+          "TOS": {
+            "gross_sales": "970629600.00",
+            "discounts": "21910230.00",
+            "returns": "17637314.00",
+            "net_sales": "931082056.00",
+            "cogs": "726923736.00",
+            "cogs_missing_rows": 17,
+            "gross_profit": "204158320.00",
+            "gross_margin_pct": "21.93"
+          }
+        },
+        "total": {
+          "gross_sales": "2214262100.00",
+          "discounts": "51125445.00",
+          "returns": "44215224.00",
+          "net_sales": "2118921431.00",
+          "cogs": "1650481762.00",
+          "cogs_missing_rows": 35,
+          "gross_profit": "468439669.00",
+          "gross_margin_pct": "22.11"
+        }
+      },
+      "2025-12": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "461324300.00",
+            "discounts": "9998407.00",
+            "returns": "10590504.00",
+            "net_sales": "440735389.00",
+            "cogs": "346562972.00",
+            "cogs_missing_rows": 2,
+            "gross_profit": "94172417.00",
+            "gross_margin_pct": "21.37"
+          },
+          "FAR": {
+            "gross_sales": "480894500.00",
+            "discounts": "10003446.00",
+            "returns": "10041300.00",
+            "net_sales": "460849754.00",
+            "cogs": "357879063.00",
+            "cogs_missing_rows": 6,
+            "gross_profit": "102970691.00",
+            "gross_margin_pct": "22.34"
+          },
+          "SAM": {
+            "gross_sales": "644854200.00",
+            "discounts": "15087842.00",
+            "returns": "23852727.00",
+            "net_sales": "605913631.00",
+            "cogs": "465469849.00",
+            "cogs_missing_rows": 10,
+            "gross_profit": "140443782.00",
+            "gross_margin_pct": "23.18"
+          },
+          "TOS": {
+            "gross_sales": "1126329400.00",
+            "discounts": "23578714.00",
+            "returns": "28981931.00",
+            "net_sales": "1073768755.00",
+            "cogs": "817713473.00",
+            "cogs_missing_rows": 21,
+            "gross_profit": "256055282.00",
+            "gross_margin_pct": "23.85"
+          }
+        },
+        "total": {
+          "gross_sales": "2713402400.00",
+          "discounts": "58668409.00",
+          "returns": "73466462.00",
+          "net_sales": "2581267529.00",
+          "cogs": "1987625357.00",
+          "cogs_missing_rows": 39,
+          "gross_profit": "593642172.00",
+          "gross_margin_pct": "23.00"
+        }
+      },
+      "2026-01": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "313874200.00",
+            "discounts": "6506930.00",
+            "returns": "9913075.00",
+            "net_sales": "297454195.00",
+            "cogs": "232280000.00",
+            "cogs_missing_rows": 2,
+            "gross_profit": "65174195.00",
+            "gross_margin_pct": "21.91"
+          },
+          "FAR": {
+            "gross_sales": "381569600.00",
+            "discounts": "8195045.00",
+            "returns": "13586801.00",
+            "net_sales": "359787754.00",
+            "cogs": "278615956.00",
+            "cogs_missing_rows": 3,
+            "gross_profit": "81171798.00",
+            "gross_margin_pct": "22.56"
+          },
+          "SAM": {
+            "gross_sales": "375019400.00",
+            "discounts": "9121819.00",
+            "returns": "6291948.00",
+            "net_sales": "359605633.00",
+            "cogs": "275108744.00",
+            "cogs_missing_rows": 11,
+            "gross_profit": "84496889.00",
+            "gross_margin_pct": "23.50"
+          },
+          "TOS": {
+            "gross_sales": "620258300.00",
+            "discounts": "12671105.00",
+            "returns": "15706954.00",
+            "net_sales": "591880241.00",
+            "cogs": "447080124.00",
+            "cogs_missing_rows": 10,
+            "gross_profit": "144800117.00",
+            "gross_margin_pct": "24.46"
+          }
+        },
+        "total": {
+          "gross_sales": "1690721500.00",
+          "discounts": "36494899.00",
+          "returns": "45498778.00",
+          "net_sales": "1608727823.00",
+          "cogs": "1233084824.00",
+          "cogs_missing_rows": 26,
+          "gross_profit": "375642999.00",
+          "gross_margin_pct": "23.35"
+        }
+      },
+      "2026-02": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "262500300.00",
+            "discounts": "5429933.00",
+            "returns": "6730985.00",
+            "net_sales": "250339382.00",
+            "cogs": "197339590.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "52999792.00",
+            "gross_margin_pct": "21.17"
+          },
+          "FAR": {
+            "gross_sales": "509711400.00",
+            "discounts": "11568655.00",
+            "returns": "7141616.00",
+            "net_sales": "491001129.00",
+            "cogs": "382394578.00",
+            "cogs_missing_rows": 5,
+            "gross_profit": "108606551.00",
+            "gross_margin_pct": "22.12"
+          },
+          "SAM": {
+            "gross_sales": "327920100.00",
+            "discounts": "6913757.00",
+            "returns": "11208264.00",
+            "net_sales": "309798079.00",
+            "cogs": "240513792.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "69284287.00",
+            "gross_margin_pct": "22.36"
+          },
+          "TOS": {
+            "gross_sales": "620035900.00",
+            "discounts": "14141695.00",
+            "returns": "24918064.00",
+            "net_sales": "580976141.00",
+            "cogs": "444910614.00",
+            "cogs_missing_rows": 11,
+            "gross_profit": "136065527.00",
+            "gross_margin_pct": "23.42"
+          }
+        },
+        "total": {
+          "gross_sales": "1720167700.00",
+          "discounts": "38054040.00",
+          "returns": "49998929.00",
+          "net_sales": "1632114731.00",
+          "cogs": "1265158574.00",
+          "cogs_missing_rows": 24,
+          "gross_profit": "366956157.00",
+          "gross_margin_pct": "22.48"
+        }
+      },
+      "2026-03": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "357575700.00",
+            "discounts": "8426862.00",
+            "returns": "7599840.00",
+            "net_sales": "341548998.00",
+            "cogs": "260626531.00",
+            "cogs_missing_rows": 10,
+            "gross_profit": "80922467.00",
+            "gross_margin_pct": "23.69"
+          },
+          "FAR": {
+            "gross_sales": "526395000.00",
+            "discounts": "10332997.00",
+            "returns": "26038828.00",
+            "net_sales": "490023175.00",
+            "cogs": "378683264.00",
+            "cogs_missing_rows": 5,
+            "gross_profit": "111339911.00",
+            "gross_margin_pct": "22.72"
+          },
+          "NAM": {
+            "gross_sales": "217189400.00",
+            "discounts": "3730472.00",
+            "returns": "3876183.00",
+            "net_sales": "209582745.00",
+            "cogs": "164346096.00",
+            "cogs_missing_rows": 2,
+            "gross_profit": "45236649.00",
+            "gross_margin_pct": "21.58"
+          },
+          "SAM": {
+            "gross_sales": "562631700.00",
+            "discounts": "12213468.00",
+            "returns": "21568969.00",
+            "net_sales": "528849263.00",
+            "cogs": "405417919.00",
+            "cogs_missing_rows": 9,
+            "gross_profit": "123431344.00",
+            "gross_margin_pct": "23.34"
+          },
+          "TOS": {
+            "gross_sales": "761203900.00",
+            "discounts": "13067283.00",
+            "returns": "11443206.00",
+            "net_sales": "736693411.00",
+            "cogs": "559966662.00",
+            "cogs_missing_rows": 12,
+            "gross_profit": "176726749.00",
+            "gross_margin_pct": "23.99"
+          }
+        },
+        "total": {
+          "gross_sales": "2424995700.00",
+          "discounts": "47771082.00",
+          "returns": "70527026.00",
+          "net_sales": "2306697592.00",
+          "cogs": "1769040472.00",
+          "cogs_missing_rows": 38,
+          "gross_profit": "537657120.00",
+          "gross_margin_pct": "23.31"
+        }
+      },
+      "2026-04": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "315034400.00",
+            "discounts": "126422365.00",
+            "returns": "9751002.00",
+            "net_sales": "178861033.00",
+            "cogs": "229819807.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "-50958774.00",
+            "gross_margin_pct": "-28.49"
+          },
+          "FAR": {
+            "gross_sales": "319816500.00",
+            "discounts": "7307066.00",
+            "returns": "5579698.00",
+            "net_sales": "306929736.00",
+            "cogs": "231043654.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "75886082.00",
+            "gross_margin_pct": "24.72"
+          },
+          "NAM": {
+            "gross_sales": "263868700.00",
+            "discounts": "5582012.00",
+            "returns": "4226232.00",
+            "net_sales": "254060456.00",
+            "cogs": "198090227.00",
+            "cogs_missing_rows": 2,
+            "gross_profit": "55970229.00",
+            "gross_margin_pct": "22.03"
+          },
+          "SAM": {
+            "gross_sales": "479143300.00",
+            "discounts": "9544391.00",
+            "returns": "10129647.00",
+            "net_sales": "459469262.00",
+            "cogs": "343725173.00",
+            "cogs_missing_rows": 9,
+            "gross_profit": "115744089.00",
+            "gross_margin_pct": "25.19"
+          },
+          "TOS": {
+            "gross_sales": "674942000.00",
+            "discounts": "12387343.00",
+            "returns": "28344153.00",
+            "net_sales": "634210504.00",
+            "cogs": "478512062.00",
+            "cogs_missing_rows": 14,
+            "gross_profit": "155698442.00",
+            "gross_margin_pct": "24.55"
+          }
+        },
+        "total": {
+          "gross_sales": "2052804900.00",
+          "discounts": "161243177.00",
+          "returns": "58030732.00",
+          "net_sales": "1833530991.00",
+          "cogs": "1481190923.00",
+          "cogs_missing_rows": 33,
+          "gross_profit": "352340068.00",
+          "gross_margin_pct": "19.22"
+        }
+      },
+      "2026-05": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "342512000.00",
+            "discounts": "4910363.00",
+            "returns": "5692072.00",
+            "net_sales": "331909565.00",
+            "cogs": "253858292.00",
+            "cogs_missing_rows": 2,
+            "gross_profit": "78051273.00",
+            "gross_margin_pct": "23.52"
+          },
+          "FAR": {
+            "gross_sales": "433813600.00",
+            "discounts": "8147127.00",
+            "returns": "16622836.00",
+            "net_sales": "409043637.00",
+            "cogs": "321938629.00",
+            "cogs_missing_rows": 2,
+            "gross_profit": "87105008.00",
+            "gross_margin_pct": "21.29"
+          },
+          "NAM": {
+            "gross_sales": "247549200.00",
+            "discounts": "5925341.00",
+            "returns": "2242948.00",
+            "net_sales": "239380911.00",
+            "cogs": "190186837.00",
+            "cogs_missing_rows": 1,
+            "gross_profit": "49194074.00",
+            "gross_margin_pct": "20.55"
+          },
+          "SAM": {
+            "gross_sales": "430396200.00",
+            "discounts": "11195729.00",
+            "returns": "17173833.00",
+            "net_sales": "402026638.00",
+            "cogs": "318180958.00",
+            "cogs_missing_rows": 3,
+            "gross_profit": "83845680.00",
+            "gross_margin_pct": "20.86"
+          },
+          "TOS": {
+            "gross_sales": "723742600.00",
+            "discounts": "17710899.00",
+            "returns": "14317261.00",
+            "net_sales": "691714440.00",
+            "cogs": "534848526.00",
+            "cogs_missing_rows": 11,
+            "gross_profit": "156865914.00",
+            "gross_margin_pct": "22.68"
+          }
+        },
+        "total": {
+          "gross_sales": "2178013600.00",
+          "discounts": "47889459.00",
+          "returns": "56048950.00",
+          "net_sales": "2074075191.00",
+          "cogs": "1619013242.00",
+          "cogs_missing_rows": 19,
+          "gross_profit": "455061949.00",
+          "gross_margin_pct": "21.94"
+        }
+      },
+      "2026-06": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "320207900.00",
+            "discounts": "6638812.00",
+            "returns": "16513745.00",
+            "net_sales": "297055343.00",
+            "cogs": "233772101.00",
+            "cogs_missing_rows": 1,
+            "gross_profit": "63283242.00",
+            "gross_margin_pct": "21.30"
+          },
+          "FAR": {
+            "gross_sales": "330860500.00",
+            "discounts": "5966603.00",
+            "returns": "13951620.00",
+            "net_sales": "310942277.00",
+            "cogs": "239489846.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "71452431.00",
+            "gross_margin_pct": "22.98"
+          },
+          "NAM": {
+            "gross_sales": "230583300.00",
+            "discounts": "4601323.00",
+            "returns": "8570148.00",
+            "net_sales": "217411829.00",
+            "cogs": "169716179.00",
+            "cogs_missing_rows": 2,
+            "gross_profit": "47695650.00",
+            "gross_margin_pct": "21.94"
+          },
+          "SAM": {
+            "gross_sales": "456250200.00",
+            "discounts": "137200055.00",
+            "returns": "9592365.00",
+            "net_sales": "309457780.00",
+            "cogs": "334124925.00",
+            "cogs_missing_rows": 7,
+            "gross_profit": "-24667145.00",
+            "gross_margin_pct": "-7.97"
+          },
+          "TOS": {
+            "gross_sales": "778686600.00",
+            "discounts": "17311478.00",
+            "returns": "21589470.00",
+            "net_sales": "739785652.00",
+            "cogs": "576891818.00",
+            "cogs_missing_rows": 10,
+            "gross_profit": "162893834.00",
+            "gross_margin_pct": "22.02"
+          }
+        },
+        "total": {
+          "gross_sales": "2116588500.00",
+          "discounts": "171718271.00",
+          "returns": "70217348.00",
+          "net_sales": "1874652881.00",
+          "cogs": "1553994869.00",
+          "cogs_missing_rows": 24,
+          "gross_profit": "320658012.00",
+          "gross_margin_pct": "17.10"
+        }
+      },
+      "2026-07": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "376601400.00",
+            "discounts": "8427787.00",
+            "returns": "11779632.00",
+            "net_sales": "356393981.00",
+            "cogs": "278503774.00",
+            "cogs_missing_rows": 4,
+            "gross_profit": "77890207.00",
+            "gross_margin_pct": "21.86"
+          },
+          "FAR": {
+            "gross_sales": "326822400.00",
+            "discounts": "7627400.00",
+            "returns": "7294930.00",
+            "net_sales": "311900070.00",
+            "cogs": "243656939.00",
+            "cogs_missing_rows": 3,
+            "gross_profit": "68243131.00",
+            "gross_margin_pct": "21.88"
+          },
+          "NAM": {
+            "gross_sales": "178418700.00",
+            "discounts": "2633382.00",
+            "returns": "1206141.00",
+            "net_sales": "174579177.00",
+            "cogs": "136674730.00",
+            "cogs_missing_rows": 1,
+            "gross_profit": "37904447.00",
+            "gross_margin_pct": "21.71"
+          },
+          "SAM": {
+            "gross_sales": "458103100.00",
+            "discounts": "8607079.00",
+            "returns": "10623793.00",
+            "net_sales": "438872228.00",
+            "cogs": "339965723.00",
+            "cogs_missing_rows": 5,
+            "gross_profit": "98906505.00",
+            "gross_margin_pct": "22.54"
+          },
+          "TOS": {
+            "gross_sales": "663871100.00",
+            "discounts": "13412130.00",
+            "returns": "28615635.00",
+            "net_sales": "621843335.00",
+            "cogs": "468431646.00",
+            "cogs_missing_rows": 9,
+            "gross_profit": "153411689.00",
+            "gross_margin_pct": "24.67"
+          }
+        },
+        "total": {
+          "gross_sales": "2003816700.00",
+          "discounts": "40707778.00",
+          "returns": "59520131.00",
+          "net_sales": "1903588791.00",
+          "cogs": "1467232812.00",
+          "cogs_missing_rows": 22,
+          "gross_profit": "436355979.00",
+          "gross_margin_pct": "22.92"
+        }
+      },
+      "2026-08": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "270110300.00",
+            "discounts": "5501093.00",
+            "returns": "4248861.00",
+            "net_sales": "260360346.00",
+            "cogs": "194484473.00",
+            "cogs_missing_rows": 7,
+            "gross_profit": "65875873.00",
+            "gross_margin_pct": "25.30"
+          },
+          "FAR": {
+            "gross_sales": "395459000.00",
+            "discounts": "9342507.00",
+            "returns": "13144020.00",
+            "net_sales": "372972473.00",
+            "cogs": "288211314.00",
+            "cogs_missing_rows": 7,
+            "gross_profit": "84761159.00",
+            "gross_margin_pct": "22.73"
+          },
+          "NAM": {
+            "gross_sales": "235177500.00",
+            "discounts": "4711679.00",
+            "returns": "6844324.00",
+            "net_sales": "223621497.00",
+            "cogs": "173452897.00",
+            "cogs_missing_rows": 1,
+            "gross_profit": "50168600.00",
+            "gross_margin_pct": "22.43"
+          },
+          "SAM": {
+            "gross_sales": "474511100.00",
+            "discounts": "8871269.00",
+            "returns": "9147384.00",
+            "net_sales": "456492447.00",
+            "cogs": "358981798.00",
+            "cogs_missing_rows": 5,
+            "gross_profit": "97510649.00",
+            "gross_margin_pct": "21.36"
+          },
+          "TOS": {
+            "gross_sales": "677422700.00",
+            "discounts": "15292826.00",
+            "returns": "38955579.00",
+            "net_sales": "623174295.00",
+            "cogs": "472673730.00",
+            "cogs_missing_rows": 14,
+            "gross_profit": "150500565.00",
+            "gross_margin_pct": "24.15"
+          }
+        },
+        "total": {
+          "gross_sales": "2052680600.00",
+          "discounts": "43719374.00",
+          "returns": "72340168.00",
+          "net_sales": "1936621058.00",
+          "cogs": "1487804212.00",
+          "cogs_missing_rows": 34,
+          "gross_profit": "448816846.00",
+          "gross_margin_pct": "23.18"
+        }
+      }
+    }
+  },
+  "receivables": {
+    "USD": {
+      "outstanding": "2453.82",
+      "overdue": "0.00",
+      "overdue_documents": 0
+    },
+    "UZS": {
+      "outstanding": "1522627378.40",
+      "overdue": "831939871.06",
+      "overdue_documents": 290
+    }
+  },
+  "inventory": {
+    "slow_moving_threshold_days": 60,
+    "balance_by_product": {
+      "P001": "3396",
+      "P002": "4193",
+      "P003": "4694",
+      "P004": "4862",
+      "P005": "4914",
+      "P006": "3701",
+      "P007": "4111",
+      "P008": "4663",
+      "P009": "4780",
+      "P010": "4862",
+      "P011": "3296",
+      "P012": "4069",
+      "P013": "4633",
+      "P014": "4650",
+      "P015": "4885",
+      "P016": "3196",
+      "P017": "4061",
+      "P018": "4784",
+      "P019": "4840",
+      "P020": "4925",
+      "P021": "3480",
+      "P022": "4555",
+      "P023": "4601",
+      "P024": "4855",
+      "P025": "4871",
+      "P026": "3316",
+      "P027": "3893",
+      "P028": "4431",
+      "P029": "4788",
+      "P030": "4887",
+      "P031": "3729",
+      "P032": "3803",
+      "P033": "4656",
+      "P034": "4675",
+      "P035": "4784",
+      "P036": "3265",
+      "P037": "3972",
+      "P038": "4675",
+      "P039": "4842",
+      "P040": "4768",
+      "P041": "2945",
+      "P042": "4308",
+      "P043": "4474",
+      "P044": "4715",
+      "P045": "4795",
+      "P046": "3724",
+      "P047": "4651",
+      "P048": "4736",
+      "P049": "4635",
+      "P050": "4759",
+      "P051": "3844",
+      "P052": "4729",
+      "P053": "4536",
+      "P054": "4844",
+      "P055": "4744",
+      "P056": "3793",
+      "P057": "4306",
+      "P058": "4740",
+      "P059": "4774",
+      "P060": "4751",
+      "P061": "3120",
+      "P062": "3777",
+      "P063": "4728",
+      "P064": "4757",
+      "P065": "4923",
+      "P066": "4207",
+      "P067": "3649",
+      "P068": "4697",
+      "P069": "4581",
+      "P070": "4784",
+      "P071": "4019",
+      "P072": "3849",
+      "P073": "4381",
+      "P074": "4636",
+      "P075": "4837",
+      "P076": "2810",
+      "P077": "4646",
+      "P078": "4482",
+      "P079": "4915",
+      "P080": "4830",
+      "P081": "3321",
+      "P082": "4541",
+      "P083": "4588",
+      "P084": "4795",
+      "P085": "4709",
+      "P086": "3534",
+      "P087": "4270",
+      "P088": "4726",
+      "P089": "4645",
+      "P090": "4740",
+      "P091": "4026",
+      "P092": "4641",
+      "P093": "4484",
+      "P094": "4810",
+      "P095": "4847",
+      "P096": "2952",
+      "P097": "4430",
+      "P098": "4341",
+      "P099": "4838",
+      "P100": "4877",
+      "P101": "4181",
+      "P102": "-499",
+      "P103": "4286",
+      "P104": "4615",
+      "P105": "4732",
+      "P106": "4016",
+      "P107": "4631",
+      "P108": "4543",
+      "P109": "4703",
+      "P110": "4719",
+      "P111": "3366",
+      "P112": "4334",
+      "P113": "4747",
+      "P114": "4889",
+      "P115": "4705",
+      "P116": "3848",
+      "P117": "4385",
+      "P118": "4769",
+      "P119": "4617",
+      "P120": "4812",
+      "P121": "3244",
+      "P122": "3940",
+      "P123": "4656",
+      "P124": "4764",
+      "P125": "4725",
+      "P126": "2874",
+      "P127": "3884",
+      "P128": "4820",
+      "P129": "4843",
+      "P130": "4861",
+      "P131": "3301",
+      "P132": "4389",
+      "P133": "4443",
+      "P134": "4778",
+      "P135": "4808",
+      "P136": "3646",
+      "P137": "4429",
+      "P138": "4766",
+      "P139": "4821",
+      "P140": "4882",
+      "P141": "3061",
+      "P142": "4400",
+      "P143": "4568",
+      "P144": "4847",
+      "P145": "4778",
+      "P146": "3735",
+      "P147": "4497",
+      "P148": "4668",
+      "P149": "4628",
+      "P150": "4939"
+    },
+    "slow_moving_products": [
+      "P010",
+      "P011",
+      "P020",
+      "P033",
+      "P038",
+      "P039",
+      "P079",
+      "P095",
+      "P111",
+      "P140",
+      "P142",
+      "P150"
+    ]
+  },
+  "scenarios": {
+    "quarantine_expected": {
+      "sotuvlar.csv": {
+        "duplicate_conflict": [
+          "S0001587",
+          "S0004886",
+          "S0008222",
+          "S0011365",
+          "S0014434"
+        ],
+        "invalid_date": [
+          "S0003205",
+          "S0009607",
+          "S0015951"
+        ],
+        "non_positive_quantity": [
+          "S0002396",
+          "S0008909",
+          "S0015206"
+        ]
+      }
+    },
+    "branch_opened": {
+      "currency": "UZS",
+      "branch": "NAM",
+      "first_month": "2026-03",
+      "previous_month": "2026-02"
+    },
+    "profit_drop": {
+      "currency": "UZS",
+      "month": "2026-06",
+      "previous_month": "2026-05",
+      "driver_branch": "SAM"
+    },
+    "negative_gross_profit": {
+      "currency": "UZS",
+      "month": "2026-04",
+      "branch": "BUX"
+    },
+    "currencies": {
+      "USD": 412,
+      "UZS": 18588
+    },
+    "missing_cost": {
+      "confirmed_rows": 17835,
+      "rows_without_cost": 359
+    },
+    "slow_moving_designed": [
+      "P010",
+      "P011",
+      "P020",
+      "P033",
+      "P038",
+      "P039",
+      "P079",
+      "P095",
+      "P111",
+      "P140",
+      "P142",
+      "P150"
+    ],
+    "negative_stock": {
+      "product": "P102",
+      "warehouse": "TOS-01",
+      "first_negative_at": "2025-10-22T23:00:00+05:00"
+    },
+    "overdue_receivables_documents": 290
+  }
+}

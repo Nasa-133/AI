@@ -121,14 +121,23 @@ Frontend 0.6 dagi OpenAPI baseline tayyor bo‘lgach mock server bilan parallel 
 
 ## 5. Holat
 
+### Bosqich 0 — Poydevor: ✅ yakunlandi
+
 | Ish paketi | Holat | Izoh |
 |---|---|---|
 | 0.1 Monorepo va platforma | ✅ | 3 ta logical DB, alohida owner/app rollari; Postgres hostda 55432 |
-| 0.2 Servis skeletlari | ✅ | Business Core to‘liq; AI va Integration hozircha faqat health + qatlamlar |
-| 0.3 Arxitektura testlari | ✅ | import-linter (har servis) + `tests/architecture`; buzilish CI’ni yiqitishi qo‘lda tekshirildi |
-| 0.4 Identity va auth | 🟡 | Onboarding, login, logout, lockout, MFA (TOTP, shifrlangan secret), `/me`, korxona almashtirish tayyor. Qolgan: parolni tiklash (email kanali kerak), invite va a’zolarni boshqarish, TOTP kodini qayta ishlatishdan himoya, IP bo‘yicha rate limit (Redis) |
-| 0.5 Tenant izolyatsiyasi (RLS) | ✅ | FORCE RLS, app roli superuser/BYPASSRLS emas, kontekst tranzaksiyadan sizmasligi testlangan |
-| 0.6 Kontraktlar | 🟡 | Event envelope v1 + fixture + validatsiya testi. Qolgan: OpenAPI eksport va baseline diff, command/event schema’lari |
-| 0.7 Outbox/inbox | ⏳ | |
-| 0.8 Sintetik ma’lumotlar | ⏳ | |
-| 0.9 CI | 🟡 | Workflow yozilgan, lokal `make check` yashil; GitHub’da hali ishga tushirilmagan (remote yo‘q) |
+| 0.2 Servis skeletlari | ✅ | Business Core to‘liq; AI va Integration health + qatlamlar (Bosqich 1 da to‘ldiriladi) |
+| 0.3 Arxitektura testlari | ✅ | import-linter + `tests/architecture`; buzilish CI’ni yiqitishi qo‘lda tekshirildi |
+| 0.4 Identity va auth | ✅ | Onboarding, login, lockout, MFA (TOTP, replay himoyasi), sessiya, CSRF, korxona almashtirish, takliflar, a’zolar va rollar, parol tiklash, Redis rate limit |
+| 0.5 Tenant izolyatsiyasi (RLS) | ✅ | FORCE RLS (tenants, memberships, invitations), app roli superuser/BYPASSRLS emas, kontekst sizmasligi testlangan |
+| 0.6 Kontraktlar | ✅ | Envelope, 4 command, 5 event, 4 canonical + batch manifest; OpenAPI baseline va breaking-change tekshiruvi |
+| 0.7 Outbox/inbox | ✅ | `packages/abo_messaging` (ADR 004), Business migratsiyasi va worker; retry/DLQ haqiqiy RabbitMQ bilan testlangan |
+| 0.8 Sintetik ma’lumotlar | ✅ | `tools/synthetic_data`, golden (A01/A02/A07) va demo (19 ming satr, 12 oy, barcha ssenariylar) |
+| 0.9 CI | 🟡 | Workflow yozilgan, lokal `make check` yashil; GitHub’da remote yo‘qligi sababli ishga tushirilmagan |
+
+Ma’lum cheklovlar:
+- Production email adapteri yo‘q: `notifier=log` faqat lokal, boshqa muhitda taklif/parol havolasi yuborilmaydi (provayder tanlovi kerak).
+- Rate limit Redis ishlamasa o‘chadi (fail-open); login uchun DB lockout baribir ishlaydi.
+- Takliflar commitdan keyin yuboriladi; yuborish xatosi logga yoziladi, qayta yuborish endpointi hali yo‘q.
+
+### Bosqich 1 — Analitika vertikal kesimi: ⏳ boshlandi

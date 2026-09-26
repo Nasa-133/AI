@@ -29,15 +29,35 @@ jobs:
       - name: Unit tests
         run: uv run pytest -q -m "not integration"
       - name: Build image
-        run: docker build -t abo-${{ matrix.service }}:ci .
+        working-directory: .
+        run: |
+          if [ "${{ matrix.service }}" = business ]; then
+            docker build -f services/business/Dockerfile -t abo-business:ci .
+          else
+            docker build -t abo-${{ matrix.service }}:ci services/${{ matrix.service }}
+          fi
+
+  messaging:
+    name: abo_messaging (Postgres + RabbitMQ)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/abo_messaging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: docker compose -f ../../infra/compose/docker-compose.yml up -d --wait postgres rabbitmq
+      - run: uv sync --frozen
+      - run: uv run ruff check . && uv run mypy
+      - run: uv run pytest -q
 
   repo:
-    name: boundaries & contracts
+    name: boundaries, contracts, synthetic data
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv run --no-project --with pytest --with jsonschema pytest -q tests/architecture tests/contracts
+      - run: uv run --no-project --with pytest --with jsonschema pytest -q tests/architecture tests/contracts tools/synthetic_data/tests
 
   integration:
     name: business integration (Postgres + RLS)
@@ -45,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: docker compose -f infra/compose/docker-compose.yml up -d --wait postgres
+      - run: docker compose -f infra/compose/docker-compose.yml up -d --wait postgres redis
       - run: cd services/business && uv sync --frozen
       - run: make migrate
       - run: make test-integration

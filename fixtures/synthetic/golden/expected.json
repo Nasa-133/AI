@@ -1,0 +1,161 @@
+{
+  "generator_version": "1.0.0",
+  "seed": null,
+  "rows_requested": null,
+  "period": {
+    "from": "2026-01-01",
+    "to": "2026-08-31"
+  },
+  "as_of": "2026-08-31",
+  "timezone": "Asia/Tashkent",
+  "row_counts": {
+    "sotuvlar.csv": 7,
+    "qaytarishlar.csv": 1,
+    "ombor_harakatlari.csv": 10,
+    "debitorlik.csv": 2
+  },
+  "sales": {
+    "UZS": {
+      "2026-01": {
+        "branches": {
+          "TOS": {
+            "gross_sales": "1000.00",
+            "discounts": "50.00",
+            "returns": "100.00",
+            "net_sales": "850.00",
+            "cogs": "500.00",
+            "cogs_missing_rows": 0,
+            "gross_profit": "350.00",
+            "gross_margin_pct": "41.18"
+          }
+        },
+        "total": {
+          "gross_sales": "1000.00",
+          "discounts": "50.00",
+          "returns": "100.00",
+          "net_sales": "850.00",
+          "cogs": "500.00",
+          "cogs_missing_rows": 0,
+          "gross_profit": "350.00",
+          "gross_margin_pct": "41.18"
+        }
+      },
+      "2026-02": {
+        "branches": {
+          "NAM": {
+            "gross_sales": "100.00",
+            "discounts": "0.00",
+            "returns": "0.00",
+            "net_sales": "100.00",
+            "cogs": "60.00",
+            "cogs_missing_rows": 0,
+            "gross_profit": "40.00",
+            "gross_margin_pct": "40.00"
+          }
+        },
+        "total": {
+          "gross_sales": "100.00",
+          "discounts": "0.00",
+          "returns": "0.00",
+          "net_sales": "100.00",
+          "cogs": "60.00",
+          "cogs_missing_rows": 0,
+          "gross_profit": "40.00",
+          "gross_margin_pct": "40.00"
+        }
+      },
+      "2026-03": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "400.00",
+            "discounts": "0.00",
+            "returns": "0.00",
+            "net_sales": "400.00",
+            "cogs": "500.00",
+            "cogs_missing_rows": 0,
+            "gross_profit": "-100.00",
+            "gross_margin_pct": "-25.00"
+          }
+        },
+        "total": {
+          "gross_sales": "400.00",
+          "discounts": "0.00",
+          "returns": "0.00",
+          "net_sales": "400.00",
+          "cogs": "500.00",
+          "cogs_missing_rows": 0,
+          "gross_profit": "-100.00",
+          "gross_margin_pct": "-25.00"
+        }
+      },
+      "2026-04": {
+        "branches": {
+          "BUX": {
+            "gross_sales": "450.00",
+            "discounts": "0.00",
+            "returns": "0.00",
+            "net_sales": "450.00",
+            "cogs": "500.00",
+            "cogs_missing_rows": 0,
+            "gross_profit": "-50.00",
+            "gross_margin_pct": "-11.11"
+          }
+        },
+        "total": {
+          "gross_sales": "450.00",
+          "discounts": "0.00",
+          "returns": "0.00",
+          "net_sales": "450.00",
+          "cogs": "500.00",
+          "cogs_missing_rows": 0,
+          "gross_profit": "-50.00",
+          "gross_margin_pct": "-11.11"
+        }
+      }
+    }
+  },
+  "receivables": {
+    "UZS": {
+      "outstanding": "450.40",
+      "overdue": "338.40",
+      "overdue_documents": 1
+    }
+  },
+  "inventory": {
+    "slow_moving_threshold_days": 60,
+    "balance_by_product": {
+      "P001": "26",
+      "P002": "6"
+    },
+    "slow_moving_products": [
+      "P001",
+      "P002"
+    ]
+  },
+  "scenarios": {
+    "quarantine_expected": {
+      "sotuvlar.csv": {
+        "duplicate_conflict": [],
+        "invalid_date": [],
+        "non_positive_quantity": []
+      }
+    },
+    "a01": {
+      "currency": "UZS",
+      "month": "2026-01",
+      "branch": "TOS"
+    },
+    "a02": {
+      "currency": "UZS",
+      "branch": "NAM",
+      "month": "2026-02",
+      "previous_month": "2026-01"
+    },
+    "a07": {
+      "currency": "UZS",
+      "branch": "BUX",
+      "month": "2026-04",
+      "previous_month": "2026-03"
+    }
+  }
+}

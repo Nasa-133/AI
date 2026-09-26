@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     environment: str = "local"
     # Bo‘sh bo‘lsa rate limit o‘chiq (faqat testlar uchun).
     redis_url: str = ""
+    amqp_url: str = "amqp://abo:abo_dev@localhost:5672/"
     web_base_url: str = "http://localhost:3000"
     # `log` — faqat lokal: havola logga yoziladi. Production email adapteri keyin qo‘shiladi.
     notifier: Literal["log", "disabled"] = "disabled"

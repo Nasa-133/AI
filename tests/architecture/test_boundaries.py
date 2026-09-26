@@ -67,6 +67,32 @@ def test_contexts_use_only_public_api_of_other_contexts() -> None:
     assert not violations, f"Boshqa kontekstning ichki moduliga murojaat: {violations}"
 
 
+PACKAGES = {"abo_messaging": ROOT / "packages/abo_messaging/src/abo_messaging"}
+
+
+@pytest.mark.parametrize("package", sorted(PACKAGES))
+def test_transport_packages_do_not_depend_on_services(package: str) -> None:
+    """ADR 004: umumiy paket faqat transport; hech bir servisni bilmaydi."""
+    violations = {
+        str(f.relative_to(ROOT)): bad
+        for f in python_files(PACKAGES[package])
+        if (bad := [m for m in imported_modules(f.read_text(encoding="utf-8"))
+                    if m.split(".")[0] in SERVICES])
+    }
+    assert not violations, f"Transport paketi servis kodini import qilmoqda: {violations}"
+
+
+def test_domain_and_application_do_not_use_transport_package() -> None:
+    """Messaging faqat adapter/platform/entrypoint qatlamida (xabar — infratuzilma)."""
+    offenders = {}
+    for layer in ("domain", "application", "ports"):
+        for f in SERVICES["business"].glob(f"contexts/*/{layer}/**/*.py"):
+            if any(m.startswith("abo_messaging") for m in
+                   imported_modules(f.read_text(encoding="utf-8"))):
+                offenders[str(f.relative_to(ROOT))] = layer
+    assert not offenders, offenders
+
+
 def test_no_shared_common_package() -> None:
     offenders = [p for p in (ROOT / "services").glob("*/src/*") if p.name in {"common", "shared"}]
     assert not offenders, f"Umumiy biznes paketi taqiqlangan (TZ 13.6): {offenders}"
