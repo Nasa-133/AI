@@ -12,7 +12,7 @@ Kontraktlar manbasi `contracts/`. Bu hujjat ular orasidagi bog‘lovchi qarorlar
 | Integration Runtime | Connector’lar, manba → canonical mapping (versiyali), sync run, raw va canonical batch fayllari | Metrikalar, AI, Core DB |
 | AI Runtime | AgentRun, checkpoint, model bilan suhbat holati, prompt versiyalari, tool loop | Core DB, ERP, ruxsat qarori |
 
-## 2. Object storage (lokalda MinIO, S3 API)
+## 2. Object storage (lokalda SeaweedFS, S3 API)
 
 | Bucket | Egasi | Kalit shabloni |
 |---|---|---|
@@ -21,7 +21,7 @@ Kontraktlar manbasi `contracts/`. Bu hujjat ular orasidagi bog‘lovchi qarorlar
 
 - Canonical batch — UTF-8 JSON Lines, har satr bitta canonical record (`contracts/canonical/...`), satrlar tartibi manbadagi tartib.
 - `checksum_sha256` — obyekt baytlarining SHA-256 hex’i. O‘quvchi yuklab olgach tekshiradi; mos kelmasa — doimiy xato.
-- P0 lokal: bitta MinIO foydalanuvchisi. Production: har runtime o‘z credential’i; Integration’ga `abo-business/uploads/` faqat o‘qish, Core’ga `abo-integration/canonical/` faqat o‘qish.
+- P0 lokal: bitta S3 foydalanuvchisi (`abo`). Production: har runtime o‘z credential’i; Integration’ga `abo-business/uploads/` faqat o‘qish, Core’ga `abo-integration/canonical/` faqat o‘qish.
 
 Sozlamalar (har servis o‘z prefiksi bilan): `*_S3_ENDPOINT_URL` (lokal `http://localhost:9000`), `*_S3_ACCESS_KEY`, `*_S3_SECRET_KEY`, `*_S3_REGION` (`us-east-1`).
 

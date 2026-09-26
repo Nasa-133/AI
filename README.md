@@ -27,7 +27,7 @@ cp .env.example .env
 # BUSINESS_DATA_ENCRYPTION_KEY ni to‘ldiring:
 python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 
-make up        # Postgres (3 ta alohida DB), RabbitMQ, Redis, MinIO
+make up        # Postgres (3 ta alohida DB), RabbitMQ, Redis, S3 ombori (SeaweedFS)
 make sync      # har servis dependency’lari
 make migrate   # Business schema + RLS
 make dev       # http://localhost:8000/api/docs

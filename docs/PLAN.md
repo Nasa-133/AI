@@ -11,7 +11,7 @@ Manba: `AI_Business_Office_TZ.md` v1.3. Reja TZ’ning 21-bo‘limidagi ketma-ke
 | DB | PostgreSQL 16 + pgvector; SQLAlchemy 2 (async, asyncpg); Alembic | RLS, vektor va FTS bitta joyda |
 | Broker | RabbitMQ (aio-pika), versionli JSON xabarlar | TZ 13.8; Celery servislar orasida ishlatilmaydi |
 | Worker | O‘z consumer’imiz (aio-pika) + outbox relay | Kontrakt Python funksiya nomiga bog‘lanmaydi |
-| Storage | S3-mos (lokalda MinIO) | Immutable batch va fayllar |
+| Storage | S3-mos (lokalda SeaweedFS) | Immutable batch va fayllar |
 | Cache | Redis | Rate limit, kesh; source of truth emas |
 | Auth | Argon2id (`argon2-cffi`), TOTP (`pyotp`), server-side sessiya + httpOnly cookie | TZ 3-bo‘lim |
 | Sifat | ruff, mypy (strict domain/application), pytest, import-linter | 13.15 gate’lari |

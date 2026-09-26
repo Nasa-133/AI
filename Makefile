@@ -6,8 +6,8 @@ export BUSINESS_MIGRATIONS_DATABASE_URL
 
 .PHONY: up down reset sync migrate dev worker check test test-unit test-integration test-repo lint openapi synthetic
 
-up:            ## Platformani ko‘tarish (Postgres, RabbitMQ, Redis, MinIO)
-	$(COMPOSE) up -d --wait postgres rabbitmq redis minio
+up:            ## Platformani ko‘tarish (Postgres, RabbitMQ, Redis, S3 ombori)
+	$(COMPOSE) up -d --wait postgres rabbitmq redis objectstore
 
 down:
 	$(COMPOSE) down

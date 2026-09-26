@@ -40,15 +40,14 @@ services:
     image: redis:7-alpine
     ports: ["56379:6379"]
 
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-abo}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-abo_dev_password}
-    ports: ["9000:9000", "9001:9001"]
+  # S3-mos obyekt ombori (lokal). MinIO community image’lari endi ommaviy emas.
+  objectstore:
+    image: chrislusf/seaweedfs:latest
+    command: server -dir=/data -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json
+    ports: ["9000:9000"]
     volumes:
-      - miniodata:/data
+      - objectdata:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
 
   business-api:
     profiles: ["apps"]
@@ -91,4 +90,4 @@ services:
 
 volumes:
   pgdata:
-  miniodata:
+  objectdata:

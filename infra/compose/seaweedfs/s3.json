@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "abo_local",
+      "credentials": [{ "accessKey": "abo", "secretKey": "abo_dev_password" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}
