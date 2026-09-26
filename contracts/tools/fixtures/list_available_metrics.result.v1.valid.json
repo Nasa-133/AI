@@ -1,0 +1,33 @@
+{
+  "timezone": "Asia/Tashkent",
+  "today": "2026-09-27",
+  "currencies": [
+    "UZS",
+    "USD"
+  ],
+  "data_coverage": {
+    "from": "2025-09-01",
+    "to": "2026-08-31"
+  },
+  "metrics": [
+    {
+      "id": "net_sales",
+      "name": "Sof savdo tushumi",
+      "description": "Tasdiqlangan savdo − qaytarish − chegirma, QQSsiz",
+      "unit": "money",
+      "version": 1,
+      "subject": "sales",
+      "dimensions": [
+        "month",
+        "branch"
+      ],
+      "approved": true
+    }
+  ],
+  "dimensions": [
+    {
+      "id": "branch",
+      "name": "Filial"
+    }
+  ]
+}

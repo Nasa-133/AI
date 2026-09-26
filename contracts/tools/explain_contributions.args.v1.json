@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/explain_contributions.args.v1.json",
+  "title": "explain_contributions argumentlari",
+  "description": "Tafovutga hisobiy hissa; sababiy xulosa emas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "query_spec_id",
+    "comparison_range",
+    "dimension",
+    "metric_id"
+  ],
+  "properties": {
+    "query_spec_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "comparison_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "description": "Korxona vaqt mintaqasidagi kunlar, ikkala chegara ham kiradi."
+    },
+    "dimension": {
+      "enum": [
+        "month",
+        "week",
+        "day",
+        "branch",
+        "product",
+        "customer",
+        "currency"
+      ]
+    },
+    "metric_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    }
+  }
+}

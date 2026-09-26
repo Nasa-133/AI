@@ -1,0 +1,32 @@
+{
+  "data_source_id": "00000000-0000-4000-8000-000000000007",
+  "connector_id": "file_import",
+  "mapping_version": 1,
+  "entity": "sales.order_line",
+  "config": {
+    "delimiter": ",",
+    "encoding": "utf-8",
+    "status_map": [
+      {
+        "source_value": "tasdiqlangan",
+        "canonical_value": "confirmed"
+      }
+    ]
+  },
+  "mapping": [
+    {
+      "canonical_field": "source_id",
+      "source_column": "Hujjat ID",
+      "transform": "text",
+      "constant": null
+    },
+    {
+      "canonical_field": "amount_includes_vat",
+      "source_column": null,
+      "transform": "const",
+      "constant": "false"
+    }
+  ],
+  "approved_by": "00000000-0000-4000-8000-000000000005",
+  "approved_at": "2026-09-27T10:00:00Z"
+}

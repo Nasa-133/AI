@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/commands/ConfigureSource.v1.json",
+  "title": "ConfigureSource v1 (payload)",
+  "description": "Business → Integration. Foydalanuvchi tasdiqlagan manba → canonical mapping va connector sozlamasi. Integration versiyasi bilan saqlaydi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "data_source_id",
+    "connector_id",
+    "mapping_version",
+    "entity",
+    "config",
+    "mapping",
+    "approved_by",
+    "approved_at"
+  ],
+  "properties": {
+    "data_source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "connector_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "mapping_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "entity": {
+      "enum": [
+        "sales.order_line",
+        "sales.return",
+        "inventory.movement",
+        "finance.receivable"
+      ]
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delimiter",
+        "encoding",
+        "status_map"
+      ],
+      "properties": {
+        "delimiter": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "encoding": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status_map": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_value",
+              "canonical_value"
+            ],
+            "properties": {
+              "source_value": {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 200
+              },
+              "canonical_value": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              }
+            }
+          }
+        }
+      }
+    },
+    "mapping": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "canonical_field",
+          "source_column",
+          "transform",
+          "constant"
+        ],
+        "properties": {
+          "canonical_field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "source_column": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transform": {
+            "enum": [
+              "text",
+              "decimal",
+              "decimal_or_null",
+              "datetime_tz",
+              "date",
+              "status_map",
+              "const"
+            ],
+            "description": "status_map: config.status_map bo‘yicha; const: `constant` qiymati (JSON matn sifatida, masalan \"false\")."
+          },
+          "constant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "approved_by": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

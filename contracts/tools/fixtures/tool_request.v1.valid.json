@@ -1,0 +1,6 @@
+{
+  "tool_call_id": "call_01",
+  "arguments": {
+    "subject": "sales"
+  }
+}

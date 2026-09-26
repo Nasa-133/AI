@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/tool_request.v1.json",
+  "title": "Tool so‘rovi v1",
+  "description": "POST /internal/v1/tools/{name}. Sarlavhalar: Authorization: Bearer <servis tokeni>, X-ABO-Capability: <RunAgent.capability_token>, traceparent. tool_call_id idempotentlik kaliti ham.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tool_call_id",
+    "arguments"
+  ],
+  "properties": {
+    "tool_call_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "arguments": {
+      "type": "object"
+    }
+  }
+}

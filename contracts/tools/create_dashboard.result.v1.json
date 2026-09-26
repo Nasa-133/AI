@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/create_dashboard.result.v1.json",
+  "title": "create_dashboard natijasi (data)",
+  "description": "Saqlangan dashboard; ochish UI tomonidan (majburan ochilmaydi).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dashboard_id",
+    "version",
+    "title",
+    "widget_count"
+  ],
+  "properties": {
+    "dashboard_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "widget_count": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

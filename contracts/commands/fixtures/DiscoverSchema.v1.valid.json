@@ -1,0 +1,12 @@
+{
+  "discovery_id": "00000000-0000-4000-8000-000000000020",
+  "data_source_id": "00000000-0000-4000-8000-000000000007",
+  "connector_id": "file_import",
+  "object_ref": {
+    "bucket": "abo-business",
+    "key": "uploads/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000008/sotuvlar.csv",
+    "checksum_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "size_bytes": 20480
+  },
+  "requested_by": "00000000-0000-4000-8000-000000000005"
+}

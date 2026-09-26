@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/explain_contributions.result.v1.json",
+  "title": "explain_contributions natijasi (data)",
+  "description": "share_of_change_pct: umumiy o‘zgarish 0 bo‘lsa null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metric_id",
+    "dimension",
+    "current_period",
+    "comparison_period",
+    "currency",
+    "total_current",
+    "total_previous",
+    "total_change",
+    "contributions",
+    "dataset_snapshot_ids",
+    "notes"
+  ],
+  "properties": {
+    "metric_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "dimension": {
+      "enum": [
+        "month",
+        "week",
+        "day",
+        "branch",
+        "product",
+        "customer",
+        "currency"
+      ]
+    },
+    "current_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "description": "Korxona vaqt mintaqasidagi kunlar, ikkala chegara ham kiradi."
+    },
+    "comparison_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "description": "Korxona vaqt mintaqasidagi kunlar, ikkala chegara ham kiradi."
+    },
+    "currency": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "total_current": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "total_previous": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "total_change": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Decimal string"
+    },
+    "contributions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "member",
+          "current",
+          "previous",
+          "change",
+          "share_of_change_pct"
+        ],
+        "properties": {
+          "member": {
+            "type": "string",
+            "minLength": 0,
+            "maxLength": 300
+          },
+          "current": {
+            "type": "string",
+            "pattern": "^-?\\d+(\\.\\d+)?$",
+            "description": "Decimal string"
+          },
+          "previous": {
+            "type": "string",
+            "pattern": "^-?\\d+(\\.\\d+)?$",
+            "description": "Decimal string"
+          },
+          "change": {
+            "type": "string",
+            "pattern": "^-?\\d+(\\.\\d+)?$",
+            "description": "Decimal string"
+          },
+          "share_of_change_pct": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?\\d+(\\.\\d+)?$",
+                "description": "Decimal string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "maxItems": 500
+    },
+    "dataset_snapshot_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      }
+    }
+  }
+}

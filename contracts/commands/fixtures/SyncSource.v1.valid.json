@@ -9,5 +9,6 @@
     "checksum_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "size_bytes": 20480
   },
-  "requested_by": "00000000-0000-4000-8000-000000000005"
+  "requested_by": "00000000-0000-4000-8000-000000000005",
+  "mapping_version": 1
 }

@@ -1,0 +1,12 @@
+{
+  "title": "Filiallar savdosi — avgust",
+  "description": null,
+  "widgets": [
+    {
+      "title": "Filiallar bo‘yicha sof savdo",
+      "type": "bar",
+      "query_spec_id": "00000000-0000-4000-8000-000000000030",
+      "text": null
+    }
+  ]
+}

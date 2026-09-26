@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/SourceConfigured.v1.json",
+  "title": "SourceConfigured v1 (payload)",
+  "description": "Integration → Business. Mapping versiyasi qabul qilindi yoki rad etildi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "data_source_id",
+    "mapping_version",
+    "accepted",
+    "error_message"
+  ],
+  "properties": {
+    "data_source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "mapping_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "accepted": {
+      "type": "boolean"
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

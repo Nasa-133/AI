@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/compare_periods.result.v1.json",
+  "title": "compare_periods natijasi (data)",
+  "description": "pct_change: oldingi qiymat 0 yoki manfiy bo‘lsa null va izoh (TZ 7.1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "query_spec_id",
+    "base_query_spec_id",
+    "current_period",
+    "comparison_period",
+    "currency",
+    "dataset_snapshot_ids",
+    "columns",
+    "rows",
+    "notes"
+  ],
+  "properties": {
+    "query_spec_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "base_query_spec_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "current_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "description": "Korxona vaqt mintaqasidagi kunlar, ikkala chegara ham kiradi."
+    },
+    "comparison_period": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "description": "Korxona vaqt mintaqasidagi kunlar, ikkala chegara ham kiradi."
+    },
+    "currency": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dataset_snapshot_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "kind",
+          "metric_id",
+          "unit"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "kind": {
+            "enum": [
+              "dimension",
+              "current",
+              "previous",
+              "abs_change",
+              "pct_change"
+            ]
+          },
+          "metric_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "money",
+                  "percent",
+                  "count",
+                  "quantity"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 1000
+        }
+      },
+      "maxItems": 5000
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "sync_run_id": "00000000-0000-4000-8000-000000000006",
+  "data_source_id": "00000000-0000-4000-8000-000000000007",
+  "status": "partial",
+  "mapping_version": 1,
+  "batch_ids": [
+    "00000000-0000-4000-8000-000000000009"
+  ],
+  "record_counts": [
+    {
+      "entity": "sales.order_line",
+      "count": 18990
+    }
+  ],
+  "rejected_count": 3,
+  "rejection_samples": [
+    {
+      "row_number": 17,
+      "source_id": "S-000123",
+      "reason": "Sana ISO formatda emas"
+    }
+  ],
+  "finished_at": "2026-09-27T10:02:00Z"
+}

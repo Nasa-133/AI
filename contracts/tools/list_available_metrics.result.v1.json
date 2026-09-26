@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/list_available_metrics.result.v1.json",
+  "title": "list_available_metrics natijasi (data)",
+  "description": "`today` va `timezone` — davrni (masalan, “o‘tgan oy”) yechish uchun.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "timezone",
+    "today",
+    "currencies",
+    "data_coverage",
+    "metrics",
+    "dimensions"
+  ],
+  "properties": {
+    "timezone": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "today": {
+      "type": "string",
+      "format": "date"
+    },
+    "currencies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z]{3}$"
+      }
+    },
+    "data_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "to": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "description",
+          "unit",
+          "version",
+          "subject",
+          "dimensions",
+          "approved"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "unit": {
+            "enum": [
+              "money",
+              "percent",
+              "count",
+              "quantity"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "subject": {
+            "enum": [
+              "sales",
+              "finance",
+              "inventory"
+            ]
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "month",
+                "week",
+                "day",
+                "branch",
+                "product",
+                "customer",
+                "currency"
+              ]
+            }
+          },
+          "approved": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "month",
+              "week",
+              "day",
+              "branch",
+              "product",
+              "customer",
+              "currency"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        }
+      }
+    }
+  }
+}

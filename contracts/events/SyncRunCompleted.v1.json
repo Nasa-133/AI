@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/SyncRunCompleted.v1.json",
+  "title": "SyncRunCompleted v1 (payload)",
+  "description": "Integration → Business. Sync yakuni: qaysi batch’lar tayyor, nechta satr normallashtirilmadi (rad etilgan satrlar yashirilmaydi).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "sync_run_id",
+    "data_source_id",
+    "status",
+    "mapping_version",
+    "batch_ids",
+    "record_counts",
+    "rejected_count",
+    "rejection_samples",
+    "finished_at"
+  ],
+  "properties": {
+    "sync_run_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "data_source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "partial"
+      ]
+    },
+    "mapping_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "batch_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "record_counts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entity",
+          "count"
+        ],
+        "properties": {
+          "entity": {
+            "enum": [
+              "sales.order_line",
+              "sales.return",
+              "inventory.movement",
+              "finance.receivable"
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "rejected_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "rejection_samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "row_number",
+          "source_id",
+          "reason"
+        ],
+        "properties": {
+          "row_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        }
+      },
+      "maxItems": 50
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

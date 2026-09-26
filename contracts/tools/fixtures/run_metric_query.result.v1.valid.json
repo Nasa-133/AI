@@ -1,0 +1,41 @@
+{
+  "query_spec_id": "00000000-0000-4000-8000-000000000030",
+  "dataset_snapshot_ids": [
+    "00000000-0000-4000-8000-000000000031"
+  ],
+  "metric_versions": [
+    {
+      "metric_id": "net_sales",
+      "version": 1
+    }
+  ],
+  "period": {
+    "from": "2026-08-01",
+    "to": "2026-08-31"
+  },
+  "currency": "UZS",
+  "columns": [
+    {
+      "name": "branch",
+      "kind": "dimension",
+      "metric_id": null,
+      "unit": null
+    },
+    {
+      "name": "net_sales",
+      "kind": "metric",
+      "metric_id": "net_sales",
+      "unit": "money"
+    }
+  ],
+  "rows": [
+    [
+      "TOS",
+      "1250000.00"
+    ]
+  ],
+  "row_count": 1,
+  "truncated": false,
+  "as_of": "2026-09-27T10:00:00Z",
+  "notes": []
+}

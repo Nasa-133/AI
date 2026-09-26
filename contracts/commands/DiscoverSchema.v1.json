@@ -1,21 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://contracts.ai-business-office/commands/SyncSource.v1.json",
-  "title": "SyncSource v1 (payload)",
-  "description": "Business → Integration Runtime. file_import uchun object_ref majburiy, boshqa connectorlar uchun null.",
+  "$id": "https://contracts.ai-business-office/commands/DiscoverSchema.v1.json",
+  "title": "DiscoverSchema v1 (payload)",
+  "description": "Business → Integration. Manba tuzilmasini o‘qish va canonical mapping taklifini olish.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "sync_run_id",
+    "discovery_id",
     "data_source_id",
     "connector_id",
-    "mode",
     "object_ref",
-    "requested_by",
-    "mapping_version"
+    "requested_by"
   ],
   "properties": {
-    "sync_run_id": {
+    "discovery_id": {
       "type": "string",
       "format": "uuid"
     },
@@ -27,12 +25,6 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 200
-    },
-    "mode": {
-      "enum": [
-        "full",
-        "incremental"
-      ]
     },
     "object_ref": {
       "anyOf": [
@@ -74,10 +66,6 @@
     "requested_by": {
       "type": "string",
       "format": "uuid"
-    },
-    "mapping_version": {
-      "type": "integer",
-      "minimum": 1
     }
   }
 }

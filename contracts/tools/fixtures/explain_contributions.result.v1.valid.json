@@ -1,0 +1,31 @@
+{
+  "metric_id": "gross_profit",
+  "dimension": "branch",
+  "current_period": {
+    "from": "2026-06-01",
+    "to": "2026-06-30"
+  },
+  "comparison_period": {
+    "from": "2026-05-01",
+    "to": "2026-05-31"
+  },
+  "currency": "UZS",
+  "total_current": "900.00",
+  "total_previous": "1000.00",
+  "total_change": "-100.00",
+  "contributions": [
+    {
+      "member": "SAM",
+      "current": "200.00",
+      "previous": "281.00",
+      "change": "-81.00",
+      "share_of_change_pct": "81.00"
+    }
+  ],
+  "dataset_snapshot_ids": [
+    "00000000-0000-4000-8000-000000000031"
+  ],
+  "notes": [
+    "Hisobiy hissa; sababni isbotlamaydi."
+  ]
+}

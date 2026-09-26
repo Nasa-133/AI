@@ -1,0 +1,60 @@
+{
+  "query_spec_id": "00000000-0000-4000-8000-000000000032",
+  "base_query_spec_id": "00000000-0000-4000-8000-000000000030",
+  "current_period": {
+    "from": "2026-08-01",
+    "to": "2026-08-31"
+  },
+  "comparison_period": {
+    "from": "2026-07-01",
+    "to": "2026-07-31"
+  },
+  "currency": "UZS",
+  "dataset_snapshot_ids": [
+    "00000000-0000-4000-8000-000000000031"
+  ],
+  "columns": [
+    {
+      "name": "branch",
+      "kind": "dimension",
+      "metric_id": null,
+      "unit": null
+    },
+    {
+      "name": "net_sales__current",
+      "kind": "current",
+      "metric_id": "net_sales",
+      "unit": "money"
+    },
+    {
+      "name": "net_sales__previous",
+      "kind": "previous",
+      "metric_id": "net_sales",
+      "unit": "money"
+    },
+    {
+      "name": "net_sales__abs_change",
+      "kind": "abs_change",
+      "metric_id": "net_sales",
+      "unit": "money"
+    },
+    {
+      "name": "net_sales__pct_change",
+      "kind": "pct_change",
+      "metric_id": "net_sales",
+      "unit": "percent"
+    }
+  ],
+  "rows": [
+    [
+      "NAM",
+      "500.00",
+      "0.00",
+      "500.00",
+      null
+    ]
+  ],
+  "notes": [
+    "NAM: oldingi davr 0, foiz o‘rniga mutlaq farq"
+  ]
+}

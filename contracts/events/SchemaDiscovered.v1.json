@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/SchemaDiscovered.v1.json",
+  "title": "SchemaDiscovered v1 (payload)",
+  "description": "Integration → Business. Topilgan ustunlar, namunaviy satrlar va mapping taklifi. Taklif tasdiqlanmaguncha ishlatilmaydi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "discovery_id",
+    "data_source_id",
+    "connector_id",
+    "entities",
+    "error_code",
+    "error_message"
+  ],
+  "properties": {
+    "discovery_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "data_source_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "connector_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entity",
+          "source_name",
+          "match_score",
+          "columns",
+          "sample_rows",
+          "suggested_mapping",
+          "unmapped_required_fields"
+        ],
+        "properties": {
+          "entity": {
+            "enum": [
+              "sales.order_line",
+              "sales.return",
+              "inventory.movement",
+              "finance.receivable"
+            ]
+          },
+          "source_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "match_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 200
+            },
+            "maxItems": 500
+          },
+          "sample_rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 1000
+              }
+            },
+            "maxItems": 5
+          },
+          "suggested_mapping": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "canonical_field",
+                "source_column",
+                "transform",
+                "constant"
+              ],
+              "properties": {
+                "canonical_field": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "source_column": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "transform": {
+                  "enum": [
+                    "text",
+                    "decimal",
+                    "decimal_or_null",
+                    "datetime_tz",
+                    "date",
+                    "status_map",
+                    "const"
+                  ],
+                  "description": "status_map: config.status_map bo‘yicha; const: `constant` qiymati (JSON matn sifatida, masalan \"false\")."
+                },
+                "constant": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 0,
+                      "maxLength": 200
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "unmapped_required_fields": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          }
+        }
+      },
+      "maxItems": 20
+    },
+    "error_code": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

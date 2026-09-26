@@ -14,5 +14,6 @@
   "deadline": "2026-09-27T10:10:00Z",
   "budget_reservation_id": "00000000-0000-4000-8000-000000000004",
   "policy_version": 1,
-  "locale": "uz-Latn"
+  "locale": "uz-Latn",
+  "capability_token": "v1.eyJ0YXNrX2lkIjoiMDAwIn0.c2lnbmF0dXJlLXBsYWNlaG9sZGVy"
 }
