@@ -47,8 +47,9 @@ class DashboardService:
         for w in d.spec["widgets"]:
             qid = w["query_spec_id"]
             data = await self._results.result(UUID(qid)) if qid else None
+            spec = await self._results.spec(UUID(qid)) if qid else None
             status = "ready" if data or w["text"] else "missing"
-            widgets.append({**w, "data": data, "status": status})
+            widgets.append({**w, "data": data, "query": spec, "status": status})
         return {"id": str(d.id), "title": d.spec["title"], "description": d.spec["description"],
                 "version": d.version, "updated_at": d.updated_at.isoformat(), "widgets": widgets}
 

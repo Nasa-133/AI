@@ -165,3 +165,29 @@ Qolgan ishlar va ma’lum cheklovlar:
 - Budjet rezervi faqat identifikator (limit qo‘llanmaydi) — Bosqich 5.
 - Ingestion batch’ni xotirada ushlaydi (~200 ming satrgacha mos); katta batch — SQL staging, P1.
 - Web ilova (Bosqich 2) boshlanmagan; Node.js o‘rnatilmagan.
+
+### Bosqich 2 — Web ilova: ✅ asosiy ekranlar tayyor
+
+`make stack` — API + 3 worker + web (http://localhost:3010). `make e2e-ui` — Playwright.
+
+| Ish paketi | Holat | Izoh |
+|---|---|---|
+| 2.1 Skelet, API client, auth | ✅ | Next.js 16, OpenAPI’dan tiplar, CSRF, ro‘yxatdan o‘tish, login, MFA (QR), korxona almashtirish |
+| 2.2 Layout | ✅ | Chap menyu, markaz, doimiy chat; mobil: bitta panel + pastki navigatsiya (toshish yo‘q) |
+| 2.3 Chat | ✅ | @agent, SSE task kartasi (bosqich + vaqt, soxta foiz yo‘q), bekor qilish, xavfsiz markdown, xato holatlari |
+| 2.4 Dashboardlar | ✅ | Doska, tanlash oynasi, ilova ichidagi oyna, drill-down (oy → filial → mahsulot), breadcrumb, sessiyada tiklanish, Escape va fokus qaytishi |
+| 2.5 Integratsiya ekrani | ✅ | CSV yuklash, eng mos entity, mapping tahriri, holat qiymatlari, sinxronlash holati |
+
+Brauzer testlari (Playwright, haqiqiy stek): U02, U03, U05, U06, U07 va to‘liq oqim — o‘tadi (3/3).
+
+UI tekshiruvida topilib tuzatilgan xatolar: birinchi xabarda suhbat ID yo‘qolishi; yangi dashboard
+doskada ko‘rinmasligi; bir fayl uchun 4 ta mapping muharriri; mapping jadvalida siqilgan
+tanlovlar; mobil ekranda gorizontal toshish va Sozlamalarga yo‘l yo‘qligi; FakeProvider’da oylar
+oralig‘i, dashboard nomi, jadval sarlavhalari va debitorlik metrika ID’si.
+
+Qolgan ishlar:
+- Chat’dagi faol hujjat/dataset “chip”i — hujjatlar bilan (Bosqich 3).
+- A’zolarni boshqarish ekrani (API tayyor, UI yo‘q), parolni tiklash sahifalari.
+- Dashboard tahriri, ulashish, CSV eksport (backend ham hali yo‘q).
+- Ofis sahnasi va jonli agent holatlari — Bosqich 4.
+- Tungi rejim ranglari brauzer sozlamasi bo‘yicha; qo‘lda almashtirgich yo‘q.

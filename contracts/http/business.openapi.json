@@ -515,6 +515,133 @@
         "title": "PasswordResetRequest",
         "type": "object"
       },
+      "Period": {
+        "properties": {
+          "from": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "title": "From",
+            "type": "string"
+          },
+          "to": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "title": "Period",
+        "type": "object"
+      },
+      "QueryFilters": {
+        "properties": {
+          "branch_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch Codes"
+          },
+          "customer_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Codes"
+          },
+          "product_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Codes"
+          }
+        },
+        "title": "QueryFilters",
+        "type": "object"
+      },
+      "QueryIn": {
+        "description": "run_metric_query bilan bir xil semantika (contracts/tools/run_metric_query.args.v1.json).",
+        "properties": {
+          "currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "date_range": {
+            "$ref": "#/components/schemas/Period"
+          },
+          "dimensions": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Dimensions",
+            "type": "array"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/QueryFilters"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "maximum": 5000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "metric_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Metric Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "metric_ids",
+          "date_range"
+        ],
+        "title": "QueryIn",
+        "type": "object"
+      },
       "Role": {
         "enum": [
           "owner",
@@ -671,6 +798,50 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/analytics/queries": {
+      "post": {
+        "description": "Semantik query (TZ 15): drill-down va foydalanuvchi so‘rovlari. LLM ishtirok etmaydi.",
+        "operationId": "run_query_api_v1_analytics_queries_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Run Query Api V1 Analytics Queries Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Query",
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "operationId": "login_api_v1_auth_login_post",

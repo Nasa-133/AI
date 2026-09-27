@@ -3,11 +3,13 @@
 from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from business.contexts.analytics.adapters.sql_store import SqlAnalyticsStore
+from business.contexts.analytics.application.queries import QueryContext, QueryService
 from business.contexts.analytics.domain.metrics import CATALOG
 from business.contexts.analytics.ports.store import MetricSettings
 from business.contexts.dashboards.adapters.sql import AnalyticsQueryResults, SqlDashboardStore
@@ -56,6 +58,43 @@ async def approve_metric_settings(body: MetricSettingsIn, ctx: AuthCtx,
                                   ctx.user_id, datetime.now(UTC))
         await store.save_metric_settings(settings)
     return {"version": settings.version, "settings": settings.settings}
+
+
+class Period(BaseModel):
+    from_: str = Field(alias="from", pattern=r"^\d{4}-\d{2}-\d{2}$")
+    to: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+class QueryFilters(BaseModel):
+    branch_codes: list[str] | None = None
+    product_codes: list[str] | None = None
+    customer_codes: list[str] | None = None
+
+
+class QueryIn(BaseModel):
+    """run_metric_query bilan bir xil semantika (contracts/tools/run_metric_query.args.v1.json)."""
+
+    metric_ids: list[str] = Field(min_length=1, max_length=6)
+    date_range: Period
+    dimensions: list[str] = Field(default_factory=list, max_length=2)
+    filters: QueryFilters = Field(default_factory=QueryFilters)
+    currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
+    limit: int | None = Field(default=None, ge=1, le=5000)
+
+
+@router.post("/analytics/queries")
+async def run_query(body: QueryIn, ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
+    """Semantik query (TZ 15): drill-down va foydalanuvchi so‘rovlari. LLM ishtirok etmaydi."""
+    if ctx.role is Role.VIEWER:
+        raise Forbidden("Viewer faqat ulashilgan dashboardlarni ko‘radi; yangi so‘rov yo‘q.")
+    profile = await container.identity.tenant_profile(ctx.tenant_id)
+    today = datetime.now(UTC).astimezone(ZoneInfo(profile.timezone)).date()
+    async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
+                                  user_id=ctx.user_id) as conn:
+        data, refs = await QueryService(SqlAnalyticsStore(conn, ctx.tenant_id)).run(
+            QueryContext(ctx.user_id, None, today, profile.timezone),
+            body.model_dump(by_alias=True))
+    return {"data": data, "source_refs": refs}
 
 
 @router.get("/dashboards")

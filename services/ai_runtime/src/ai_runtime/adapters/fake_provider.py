@@ -27,8 +27,9 @@ METRIC_KEYWORDS: list[tuple[str, str]] = [
     ("marja", "gross_margin"),
     ("yalpi foyda", "gross_profit"),
     ("foyda", "gross_profit"),
-    ("debitor", "receivables_outstanding"),
-    ("qarz", "receivables_outstanding"),
+    ("muddati o'tgan", "receivables_overdue"),
+    ("debitor", "receivables_open"),
+    ("qarz", "receivables_open"),
     ("chegirma", "discounts"),
     ("qaytarish", "returns"),
     ("tushum", "net_sales"),
@@ -104,6 +105,18 @@ def resolve_period(text: str, today: date) -> tuple[Period, list[str]]:
         return Period(date(today.year - 1, 1, 1), date(today.year - 1, 12, 31)), []
     if "bu yil" in t:
         return Period(date(today.year, 1, 1), today), ["Joriy yil to‘liq emas."]
+    names = "|".join(MONTHS)
+    if m := re.search(rf"\b({names})\w*\s*(?:dan|-|–|—)\s*({names})\w*", t):
+        first, last = MONTHS[m.group(1)], MONTHS[m.group(2)]
+        year_match = re.search(r"\b(20\d{2})\b", t)
+        year = int(year_match.group(1)) if year_match else today.year
+        start, end = date(year, first, 1), _month_end(date(year, last, 1))
+        if end < start:
+            end = _month_end(date(year + 1, last, 1))  # masalan, noyabrdan fevralgacha
+        notes = []
+        if end > today:
+            end, notes = today, ["Davr bugungacha qisqartirildi."]
+        return Period(start, end), notes
     for name, month in MONTHS.items():
         if re.search(rf"\b{name}", t):
             year_match = re.search(r"\b(20\d{2})\b", t)
@@ -197,8 +210,25 @@ def _cell(value: Any) -> str:
     return "—" if value is None else str(value).replace("|", "/")
 
 
-def _table(columns: list[dict[str, Any]], rows: list[list[Any]], limit: int = 15) -> str:
-    header = "| " + " | ".join(_cell(c["name"]) for c in columns) + " |"
+DIMENSION_NAMES = {"month": "Oy", "week": "Hafta", "day": "Kun", "branch": "Filial",
+                   "product": "Mahsulot", "customer": "Mijoz", "currency": "Valyuta"}
+_KIND_SUFFIX = {"current": "joriy", "previous": "oldingi", "abs_change": "farq",
+                "pct_change": "o‘zgarish, %"}
+
+
+def _header(column: dict[str, Any], names: dict[str, str]) -> str:
+    if column.get("kind") == "dimension":
+        if column["name"].endswith("_name"):
+            return "Nomi"
+        return DIMENSION_NAMES.get(str(column["name"]), str(column["name"]))
+    base: str = names.get(column.get("metric_id") or "", str(column["name"]))
+    suffix = _KIND_SUFFIX.get(column.get("kind", ""))
+    return f"{base} ({suffix})" if suffix else base
+
+
+def _table(columns: list[dict[str, Any]], rows: list[list[Any]], limit: int = 15,
+           names: dict[str, str] | None = None) -> str:
+    header = "| " + " | ".join(_cell(_header(c, names or {})) for c in columns) + " |"
     sep = "|" + "---|" * len(columns)
     body = ["| " + " | ".join(_cell(v) for v in row) + " |" for row in rows[:limit]]
     extra = ["", "_Qolgan satrlar to‘liq jadvalda (query manbasi)._"] if len(rows) > limit else []
@@ -212,9 +242,20 @@ def _dec(value: Any) -> Decimal | None:
         return None
 
 
+def dashboard_title(plan: Plan, catalog: dict[str, Any], query: dict[str, Any]) -> str:
+    """Masalan: “Sof savdo tushumi — oylar kesimida, 2026-01-01 — 2026-04-30”."""
+    names = {m["id"]: m["name"] for m in catalog.get("metrics", [])}
+    metric = names.get(plan.metric_ids[0], plan.metric_ids[0])
+    dims = [DIMENSION_NAMES.get(d, d).lower() for d in plan.dimensions]
+    period = query["period"]
+    by = f" — {', '.join(dims)} kesimida" if dims else ""
+    return f"{metric}{by}, {period['from']} — {period['to']}"[:200]
+
+
 def compose_answer(plan: Plan, catalog: dict[str, Any],
                    results: dict[str, dict[str, Any]]) -> str:
     metrics = {m["id"]: m for m in catalog.get("metrics", [])}
+    names = {mid: m["name"] for mid, m in metrics.items()}
     query = results["run_metric_query"]
     compare = results.get("compare_periods")
     explain = results.get("explain_contributions")
@@ -253,11 +294,11 @@ def compose_answer(plan: Plan, catalog: dict[str, Any],
                          f"— {biggest['member']} ({biggest['change']}{share_text}).")
 
     parts = ["**Qisqa javob**", " ".join(short), "", "**Asosiy raqamlar**",
-             _table(query["columns"], query["rows"])]
+             _table(query["columns"], query["rows"], names=names)]
     if compare:
         parts += ["", "**Taqqoslash** (oldingi davr: "
                   f"{compare['comparison_period']['from']} — {compare['comparison_period']['to']})",
-                  _table(compare["columns"], compare["rows"])]
+                  _table(compare["columns"], compare["rows"], names=names)]
     if explain:
         rows = [[c["member"], c["current"], c["previous"], c["change"], c["share_of_change_pct"]]
                 for c in explain.get("contributions", [])]
@@ -355,8 +396,8 @@ class FakeProvider:
                                 "query_spec_id": outputs["compare_periods"]["data"][
                                     "query_spec_id"], "text": None})
             return self._call(request, "create_dashboard", {
-                "title": text.strip()[:200] or "Dashboard", "description": None,
-                "widgets": widgets}, available)
+                "title": dashboard_title(plan, catalog, outputs["run_metric_query"]["data"]),
+                "description": None, "widgets": widgets}, available)
 
         results = {name: r["data"] for name, r in outputs.items() if r["status"] == "ok"}
         limitations = [f"{name}: {r.get('error_message') or r.get('error_code')}"

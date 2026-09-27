@@ -4,7 +4,7 @@ PACKAGES := abo_messaging
 BUSINESS_MIGRATIONS_DATABASE_URL ?= postgresql+asyncpg://business_owner:business_owner_dev@localhost:55432/business
 export BUSINESS_MIGRATIONS_DATABASE_URL
 
-.PHONY: up down reset sync migrate dev worker ai-worker integration-worker check e2e test test-unit test-integration test-repo lint openapi synthetic
+.PHONY: up down reset sync migrate dev worker ai-worker integration-worker check e2e e2e-ui stack web-lint web-test test test-unit test-integration test-repo lint openapi synthetic
 
 up:            ## Platformani ko‘tarish (Postgres, RabbitMQ, Redis, S3 ombori)
 	$(COMPOSE) up -d --wait postgres rabbitmq redis objectstore
@@ -43,6 +43,15 @@ lint:          ## ruff + mypy + import-linter har servisda
 	done
 	@for p in $(PACKAGES); do echo "== $$p"; (cd packages/$$p && uv run ruff check . && uv run mypy) || exit 1; done
 
+web-lint:      ## Web: eslint + TypeScript
+	cd apps/web && npx eslint src e2e && npx tsc --noEmit
+
+web-test:      ## Web: unit testlar (vitest)
+	cd apps/web && npx vitest run
+
+e2e-ui:        ## Brauzer testlari (Playwright). Oldin: make stack
+	cd apps/web && npx playwright test
+
 test-unit:
 	@for s in $(SERVICES); do (cd services/$$s && uv run pytest -q -m "not integration") || exit 1; done
 	@for p in $(PACKAGES); do (cd packages/$$p && uv run pytest -q -m "not integration") || exit 1; done
@@ -65,7 +74,10 @@ synthetic:     ## Demo va golden sintetik ma’lumotlarni qayta yaratish
 
 test: test-unit test-repo test-integration
 
-check: lint test
+check: lint web-lint test web-test
+
+stack:         ## Butun stek lokal: API + 3 worker + web (http://localhost:3010)
+	./scripts/dev.sh
 
 e2e:           ## Vertikal kesim: API + 3 worker haqiqiy jarayon sifatida (make up kerak)
 	./scripts/e2e.sh

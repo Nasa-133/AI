@@ -64,3 +64,9 @@ class AnalyticsQueryResults:
     async def result(self, query_id: UUID) -> dict[str, Any] | None:
         stored = await self._reader.get_query(query_id)
         return None if stored is None else dict(stored.result)
+
+    async def spec(self, query_id: UUID) -> dict[str, Any] | None:
+        stored = await self._reader.get_query(query_id)
+        if stored is None or stored.kind != "query":
+            return None
+        return dict(stored.spec)

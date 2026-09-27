@@ -1,0 +1,21 @@
+.panel { display: flex; flex-direction: column; height: 100%; }
+.header { display: flex; gap: var(--space-2); align-items: center; padding: var(--space-3); border-bottom: 1px solid var(--border); }
+.header select { flex: 1; min-width: 0; }
+.list { flex: 1; overflow-y: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.msg { display: flex; flex-direction: column; gap: var(--space-1); max-width: 100%; }
+.msgUser { align-self: flex-end; max-width: 88%; }
+.bubbleUser { background: var(--accent); color: var(--accent-contrast); border-radius: var(--radius) var(--radius) 2px var(--radius); padding: var(--space-2) var(--space-3); white-space: pre-wrap; }
+.bubbleAgent { background: var(--surface-2); border-radius: var(--radius); padding: var(--space-3); }
+.bubbleAgent :global(.md) { display: flex; flex-direction: column; gap: var(--space-2); }
+.bubbleAgent :global(.md ul) { margin: 0; padding-left: 20px; }
+.author { font-size: 12px; color: var(--text-muted); }
+.meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.card { border: 1px solid var(--border); border-radius: var(--radius); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+.cardRow { display: flex; align-items: center; gap: var(--space-2); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+.dot[data-live="true"] { animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: 0.3; } }
+.composer { border-top: 1px solid var(--border); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+.composerRow { display: flex; gap: var(--space-2); align-items: flex-end; }
+.empty { margin: auto; text-align: center; display: flex; flex-direction: column; gap: var(--space-2); max-width: 300px; }
+.suggestion { text-align: left; }

@@ -24,3 +24,6 @@ class DashboardStore(Protocol):
 
 class QueryResults(Protocol):
     async def result(self, query_id: UUID) -> dict[str, Any] | None: ...
+    async def spec(self, query_id: UUID) -> dict[str, Any] | None:
+        """Natijani yaratgan so‘rov argumentlari (drill-down keyingi darajasi uchun)."""
+        ...

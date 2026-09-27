@@ -1,0 +1,54 @@
+.shell {
+  display: grid; height: 100vh;
+  grid-template-columns: var(--nav-width) minmax(0, 1fr) var(--chat-width);
+  grid-template-rows: 52px minmax(0, 1fr);
+  grid-template-areas: "nav top chat" "nav main chat";
+}
+.shell[data-nav="collapsed"] { grid-template-columns: 64px minmax(0, 1fr) var(--chat-width); }
+.shell[data-chat="collapsed"] { grid-template-columns: var(--nav-width) minmax(0, 1fr) 0; }
+.shell[data-nav="collapsed"][data-chat="collapsed"] { grid-template-columns: 64px minmax(0, 1fr) 0; }
+.nav {
+  grid-area: nav; display: flex; flex-direction: column; gap: var(--space-1);
+  padding: var(--space-3); background: var(--surface); border-right: 1px solid var(--border);
+}
+.brand { font-weight: 700; padding: var(--space-2) var(--space-3) var(--space-4); white-space: nowrap; overflow: hidden; }
+.navLink {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm); color: var(--text); text-decoration: none; white-space: nowrap;
+  overflow: hidden;
+}
+.navLink:hover { background: var(--surface-2); }
+.navLink[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.navIcon { width: 20px; text-align: center; flex: none; }
+.navSpacer { flex: 1; }
+.top {
+  grid-area: top; display: flex; align-items: center; gap: var(--space-3);
+  padding: 0 var(--space-4); border-bottom: 1px solid var(--border); background: var(--surface);
+}
+.topSpacer { flex: 1; }
+.main { grid-area: main; overflow: auto; position: relative; }
+.chat { grid-area: chat; border-left: 1px solid var(--border); background: var(--surface); min-width: 0; overflow: hidden; }
+.mobileNav { display: none; }
+
+@media (max-width: 900px) {
+  .shell, .shell[data-nav="collapsed"], .shell[data-chat="collapsed"] {
+    /* minmax(0, …) — uzun matn yoki jadval sahifani ekrandan kengaytirmasin. */
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: 52px minmax(0, 1fr) 56px;
+    grid-template-areas: "top" "main" "mobile";
+  }
+  .nav { display: none; }
+  .chat { display: none; }
+  .desktopOnly { display: none; }
+  .top { gap: var(--space-2); padding: 0 var(--space-3); }
+  .main { overflow-x: hidden; }
+  .shell[data-mobile-view="chat"] .chat { display: block; grid-area: main; border: 0; }
+  .shell[data-mobile-view="chat"] .main { display: none; }
+  .mobileNav {
+    grid-area: mobile; display: grid; grid-template-columns: repeat(5, 1fr);
+    border-top: 1px solid var(--border); background: var(--surface);
+  }
+  .mobileNav button, .mobileNav a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 0; background: none; font-size: 12px; color: var(--text-muted); text-decoration: none;
+  }
+}
