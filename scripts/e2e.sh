@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOGS="$ROOT/.e2e-logs"; mkdir -p "$LOGS"
-PORT="${E2E_PORT:-8010}"
+PORT="${E2E_PORT:-8020}"  # make stack 8010’ni band qilishi mumkin
 export E2E_BASE_URL="http://localhost:$PORT"
 TOKEN="e2e-tools-token-$(python3 -c 'import secrets;print(secrets.token_hex(16))')"
 export BUSINESS_DATABASE_URL=postgresql+asyncpg://business_app:business_app_dev@localhost:55432/business
