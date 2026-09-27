@@ -11,6 +11,8 @@ CREATE ROLE ${app} LOGIN PASSWORD '${app_pw}' NOSUPERUSER NOCREATEDB NOCREATEROL
 CREATE DATABASE ${db} OWNER ${owner};
 REVOKE ALL ON DATABASE ${db} FROM PUBLIC;
 GRANT CONNECT ON DATABASE ${db} TO ${owner}, ${app};
+-- Katta batch’larni versiyalash uchun staging temp jadvallari (ON COMMIT DROP).
+GRANT TEMP ON DATABASE ${db} TO ${app};
 SQL
   psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$db" <<SQL
 REVOKE ALL ON SCHEMA public FROM PUBLIC;

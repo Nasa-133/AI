@@ -24,6 +24,7 @@ from .dto import (
     MfaEnrollment,
     OnboardTenant,
     TenantMembershipView,
+    TenantProfile,
 )
 from .errors import (
     AccountLocked,
@@ -202,6 +203,21 @@ class IdentityService:
                 if m.tenant_id in tenants
             ],
         )
+
+    async def tenant_profile(self, tenant_id: UUID) -> TenantProfile:
+        """Boshqa kontekstlar uchun: vaqt mintaqasi va asosiy valyuta (public API orqali)."""
+        async with self._uow() as uow:
+            await uow.bind(tenant_id=tenant_id, user_id=None)
+            (tenant,) = await uow.tenants.list_by_ids([tenant_id])
+        return TenantProfile(tenant_id=tenant.id, name=tenant.name, timezone=tenant.timezone,
+                             base_currency=tenant.base_currency)
+
+    async def role_of(self, tenant_id: UUID, user_id: UUID) -> Role | None:
+        """Joriy (authoritative) rol yoki None. Delegated tool chaqiruvlari uchun."""
+        async with self._uow() as uow:
+            await uow.bind(tenant_id=tenant_id, user_id=user_id)
+            membership = await uow.memberships.get(tenant_id, user_id)
+        return membership.role if membership else None
 
     async def switch_tenant(self, ctx: AuthContext, tenant_id: UUID) -> IssuedSession:
         """Yangi tenant kontekstli sessiya beradi va eskisini yopadi."""

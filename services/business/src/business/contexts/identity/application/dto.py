@@ -61,3 +61,11 @@ class Me:
     mfa_enabled: bool
     mfa_satisfied: bool
     memberships: list[TenantMembershipView]
+
+
+@dataclass(frozen=True, slots=True)
+class TenantProfile:
+    tenant_id: UUID
+    name: str
+    timezone: str
+    base_currency: str

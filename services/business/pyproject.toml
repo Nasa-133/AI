@@ -16,6 +16,8 @@ dependencies = [
     "cryptography>=43",
     "redis>=5.0",
     "abo-messaging",
+    "boto3>=1.35",
+    "python-multipart>=0.0.9",
 ]
 
 [tool.uv.sources]
@@ -66,7 +68,7 @@ mypy_path = "src"
 packages = ["business"]
 
 [[tool.mypy.overrides]]
-module = ["pyotp.*"]
+module = ["pyotp.*", "boto3.*", "botocore.*"]
 ignore_missing_imports = true
 
 # --- Arxitektura chegaralari (TZ 13.5, 13.15 gate 1) ---

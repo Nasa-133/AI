@@ -1,9 +1,14 @@
 import asyncio
 import os
+import sys
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
+
+# `helpers/rls.py` migratsiyalardan import qilinadi (versions/ ichida bo‘lsa alembic uni revision deb o‘qiydi).
+sys.path.insert(0, str(Path(__file__).parent / "helpers"))
 
 
 def _url() -> str:
