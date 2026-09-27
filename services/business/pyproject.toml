@@ -60,6 +60,9 @@ ignore = ["S101", "RUF001", "RUF002", "RUF003"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106"]
 "migrations/**" = ["E501"]
+# SQL bo‘laklari faqat konstanta oq ro‘yxatlardan (jadval, o‘lcham ifodasi); qiymatlar bind parametr.
+"src/business/contexts/analytics/adapters/sql_ingest.py" = ["S608"]
+"src/business/contexts/analytics/adapters/sql_query.py" = ["S608"]
 
 [tool.mypy]
 strict = true
@@ -103,7 +106,10 @@ source_modules = ["business.contexts"]
 forbidden_modules = ["business.entrypoints", "business.bootstrap"]
 
 [[tool.importlinter.contracts]]
-name = "Identity konteksti ichki qatlamlari"
+name = "Har kontekst ichki qatlamlari (public → adapters → application → ports → domain)"
 type = "layers"
-containers = ["business.contexts.identity"]
-layers = ["public", "adapters", "application", "ports", "domain"]
+containers = [
+    "business.contexts.identity", "business.contexts.analytics", "business.contexts.integrations",
+    "business.contexts.workspace", "business.contexts.dashboards", "business.contexts.governance",
+]
+layers = ["(public)", "adapters", "application", "ports", "domain"]

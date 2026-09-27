@@ -143,3 +143,20 @@ def local_date(occurred_at: datetime, timezone: str) -> date:
     from zoneinfo import ZoneInfo
 
     return occurred_at.astimezone(ZoneInfo(timezone)).date()
+
+
+class S3CanonicalBatchReader:
+    """CanonicalBatchReader porti: S3 obyekt → tekshirilgan record’lar."""
+
+    def __init__(self, storage: Any) -> None:
+        self._storage = storage
+
+    async def read(self, object_ref: dict[str, Any], entity: Entity) -> list[dict[str, Any]]:
+        from business.platform.storage import ObjectRef
+
+        records = []
+        number = 0
+        async for line in self._storage.read_lines(ObjectRef.from_json(object_ref)):
+            number += 1
+            records.append(parse_line(entity, line, number))
+        return records

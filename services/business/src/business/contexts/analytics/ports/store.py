@@ -1,4 +1,3 @@
-from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -80,10 +79,13 @@ class AnalyticsStore(Protocol):
     async def apply_full_snapshot(
         self,
         dataset: DatasetRef,
-        rows: list[dict[str, Any]],
+        records: list[dict[str, Any]],
         quarantined: list[Quarantined],
         meta: BatchMeta,
-    ) -> SnapshotRef: ...
+        timezone: str,
+    ) -> SnapshotRef:
+        """Canonical record’lar (kontrakt ko‘rinishida) → versiyali satrlar; sana — tenant TZ’da."""
+        ...
 
     async def active_snapshots(self) -> dict[Entity, SnapshotRef]: ...
     async def snapshots_by_ids(self, ids: list[UUID]) -> dict[Entity, SnapshotRef]: ...
@@ -111,8 +113,10 @@ class AnalyticsStore(Protocol):
     async def get_query(self, query_id: UUID) -> StoredQuery | None: ...
 
 
-class ObjectLines(Protocol):
-    def read_lines(self, ref: Any) -> AsyncIterator[bytes]: ...
+class CanonicalBatchReader(Protocol):
+    async def read(self, object_ref: dict[str, Any], entity: Entity) -> list[dict[str, Any]]:
+        """Batch faylini o‘qiydi, checksum va kontraktni tekshiradi (buzilgan — doimiy xato)."""
+        ...
 
 
 class EventOutbox(Protocol):
