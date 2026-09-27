@@ -6,7 +6,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from business.contexts.identity.ports.security import IdentityNotifier
-from business.entrypoints.http import health, identity, members
+from business.entrypoints.http import (
+    analytics,
+    health,
+    identity,
+    integrations,
+    members,
+    workspace,
+)
 from business.entrypoints.http.errors import install_error_handlers
 from business.entrypoints.http.security import install_middlewares
 from business.entrypoints.internal import tools
@@ -42,5 +49,8 @@ def create_app(
     app.include_router(health.router)
     app.include_router(identity.router)
     app.include_router(members.router)
+    app.include_router(workspace.router)
+    app.include_router(analytics.router)
+    app.include_router(integrations.router)
     app.include_router(tools.router)
     return app
