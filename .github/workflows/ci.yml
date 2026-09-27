@@ -31,11 +31,7 @@ jobs:
       - name: Build image
         working-directory: .
         run: |
-          if [ "${{ matrix.service }}" = business ]; then
-            docker build -f services/business/Dockerfile -t abo-business:ci .
-          else
-            docker build -t abo-${{ matrix.service }}:ci services/${{ matrix.service }}
-          fi
+          docker build -f services/${{ matrix.service }}/Dockerfile -t abo-${{ matrix.service }}:ci .
 
   messaging:
     name: abo_messaging (Postgres + RabbitMQ)
@@ -60,13 +56,13 @@ jobs:
       - run: uv run --no-project --with pytest --with jsonschema pytest -q tests/architecture tests/contracts tools/synthetic_data/tests
 
   integration:
-    name: business integration (Postgres + RLS)
+    name: integration (Postgres, RabbitMQ, S3, Redis)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: docker compose -f infra/compose/docker-compose.yml up -d --wait postgres redis
-      - run: cd services/business && uv sync --frozen
+      - run: docker compose -f infra/compose/docker-compose.yml up -d --wait postgres redis rabbitmq objectstore
+      - run: make sync
       - run: make migrate
       - run: make test-integration
 

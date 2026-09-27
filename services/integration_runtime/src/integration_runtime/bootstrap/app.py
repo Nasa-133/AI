@@ -4,11 +4,11 @@ from fastapi import FastAPI
 
 from integration_runtime.entrypoints import http
 
-from .settings import Settings
+from .settings import HttpSettings
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
-    settings = settings or Settings()
+def create_app(settings: HttpSettings | None = None) -> FastAPI:
+    settings = settings or HttpSettings()
     # Ichki servis: brauzerga ochilmaydi, docs faqat lokal muhitda.
     app = FastAPI(
         title="AI Business Office — Integration Runtime",

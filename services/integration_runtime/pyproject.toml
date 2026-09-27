@@ -7,7 +7,15 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "pydantic-settings>=2.4",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "boto3>=1.35",
+    "abo-messaging",
 ]
+
+[tool.uv.sources]
+abo-messaging = { path = "../../packages/abo_messaging", editable = true }
 
 [dependency-groups]
 dev = [
@@ -17,6 +25,7 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "import-linter>=2.1",
+    "jsonschema>=4.23",
 ]
 
 [build-system]
@@ -28,7 +37,10 @@ packages = ["src/integration_runtime"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
+markers = ["integration: PostgreSQL, RabbitMQ va S3 talab qiladi (make up)"]
 
 [tool.ruff]
 line-length = 100
@@ -38,11 +50,19 @@ target-version = "py312"
 select = ["E", "F", "I", "B", "UP", "S", "ASYNC", "RUF"]
 ignore = ["S101", "RUF001", "RUF002", "RUF003"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106", "S108", "S608", "E501"]
+"migrations/**" = ["E501"]
+
 [tool.mypy]
 strict = true
 python_version = "3.12"
 mypy_path = "src"
 packages = ["integration_runtime"]
+
+[[tool.mypy.overrides]]
+module = ["boto3.*", "botocore.*", "jsonschema.*"]
+ignore_missing_imports = true
 
 [tool.importlinter]
 root_package = "integration_runtime"
@@ -52,7 +72,8 @@ include_external_packages = true
 name = "Domain va application framework/I-O’ga qaram emas"
 type = "forbidden"
 source_modules = ["integration_runtime.domain", "integration_runtime.application", "integration_runtime.ports"]
-forbidden_modules = ["fastapi", "starlette", "pydantic", "sqlalchemy", "asyncpg", "httpx", "aio_pika", "openai", "integration_runtime.adapters", "integration_runtime.entrypoints", "integration_runtime.bootstrap"]
+forbidden_modules = ["fastapi", "starlette", "pydantic", "sqlalchemy", "asyncpg", "httpx", "aio_pika", "openai", "abo_messaging", "boto3", "botocore", "alembic",
+    "integration_runtime.adapters", "integration_runtime.entrypoints", "integration_runtime.bootstrap"]
 
 [[tool.importlinter.contracts]]
 name = "Qatlamlar"
