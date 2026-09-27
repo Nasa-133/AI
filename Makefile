@@ -4,7 +4,7 @@ PACKAGES := abo_messaging
 BUSINESS_MIGRATIONS_DATABASE_URL ?= postgresql+asyncpg://business_owner:business_owner_dev@localhost:55432/business
 export BUSINESS_MIGRATIONS_DATABASE_URL
 
-.PHONY: up down reset sync migrate dev worker ai-worker integration-worker check test test-unit test-integration test-repo lint openapi synthetic
+.PHONY: up down reset sync migrate dev worker ai-worker integration-worker check e2e test test-unit test-integration test-repo lint openapi synthetic
 
 up:            ## Platformani ko‘tarish (Postgres, RabbitMQ, Redis, S3 ombori)
 	$(COMPOSE) up -d --wait postgres rabbitmq redis objectstore
@@ -66,3 +66,6 @@ synthetic:     ## Demo va golden sintetik ma’lumotlarni qayta yaratish
 test: test-unit test-repo test-integration
 
 check: lint test
+
+e2e:           ## Vertikal kesim: API + 3 worker haqiqiy jarayon sifatida (make up kerak)
+	./scripts/e2e.sh

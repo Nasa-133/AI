@@ -140,4 +140,28 @@ Ma’lum cheklovlar:
 - Rate limit Redis ishlamasa o‘chadi (fail-open); login uchun DB lockout baribir ishlaydi.
 - Takliflar commitdan keyin yuboriladi; yuborish xatosi logga yoziladi, qayta yuborish endpointi hali yo‘q.
 
-### Bosqich 1 — Analitika vertikal kesimi: ⏳ boshlandi
+### Bosqich 1 — Analitika vertikal kesimi: 🟡 asosiy oqim ishlaydi
+
+`make e2e` — API va 3 worker alohida jarayon sifatida: CSV yuklash → mapping tasdiqlash → sync →
+ingestion → chat savoli → AI (FakeProvider) → Tool API → hisob → manbali javob → dashboard.
+Barqaror (3/3), ~9 soniya.
+
+| Ish paketi | Holat | Izoh |
+|---|---|---|
+| 1.1 Yuklash | ✅ | CSV → S3, SHA-256, limitlar; XLSX — aniq 415 xabari bilan (P1) |
+| 1.2 Integration Runtime | ✅ | Connector SDK, lease’li sync, `file_import`, `demo_erp` (demo deb belgilangan) |
+| 1.3 Ingestion | ✅ | Karantin, versiyali snapshot, idempotent batch |
+| 1.4 Semantik qatlam | ✅ | 10 metrika, taqqoslash, hissa; valyutalar qo‘shilmaydi; A01/A02/A04/A06/A07 testlangan |
+| 1.5 Tool API | ✅ | Servis tokeni, capability, joriy rol, siyosat, schema, idempotentlik |
+| 1.6 AI Runtime | ✅ | FakeProvider bilan ishlaydi; OpenAI adapteri real kalit bilan tekshirilmagan |
+| 1.7 Workspace | ✅ | Chat, task, RunAgent, SSE (Last-Event-ID), bekor qilish |
+| 1.8 Dashboards | 🟡 | Tool orqali yaratish, doska va tafsilot; foydalanuvchi tahriri/versiyalash/ulashish/CSV eksport — hali yo‘q |
+
+Qolgan ishlar va ma’lum cheklovlar:
+- OpenAI bilan real tekshiruv (kalit kerak).
+- Dashboard tahriri, ulashish, CSV eksport (TZ 8.2).
+- FakeProvider: dashboard nomi xabar matnidan olinadi; jadval sarlavhasida metrika ID’si.
+- Dashboard kartochkasi preview’i faqat saqlangan natijadan; “yangilash” (refresh) yo‘q.
+- Budjet rezervi faqat identifikator (limit qo‘llanmaydi) — Bosqich 5.
+- Ingestion batch’ni xotirada ushlaydi (~200 ming satrgacha mos); katta batch — SQL staging, P1.
+- Web ilova (Bosqich 2) boshlanmagan; Node.js o‘rnatilmagan.
