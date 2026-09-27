@@ -24,6 +24,8 @@ def build_openapi(service: str) -> dict[str, Any]:
             data_encryption_key=Fernet.generate_key().decode(),
             cookie_secure=True,
             environment="contract",
+            tools_service_token="x" * 32,
+            capability_signing_key="y" * 32,
         )
         spec: dict[str, Any] = create_app(settings).openapi()
         return spec

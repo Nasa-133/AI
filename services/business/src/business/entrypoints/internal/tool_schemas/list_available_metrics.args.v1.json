@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/list_available_metrics.args.v1.json",
+  "title": "list_available_metrics argumentlari",
+  "description": "Foydalanuvchiga ruxsat etilgan metrikalar va ma’lumot qamrovi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "subject"
+  ],
+  "properties": {
+    "subject": {
+      "enum": [
+        "sales",
+        "finance",
+        "inventory",
+        "all"
+      ]
+    }
+  }
+}

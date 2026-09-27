@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,10 +16,14 @@ class Settings(BaseSettings):
     business_tools_url: str = "http://localhost:8000"
     business_tools_token: str = ""
     model_provider: Literal["fake", "openai"] = "fake"
-    openai_api_key: str = ""
+    # TZ 10 nomlari (OPENAI_*) va servis prefiksli nomlar (AI_OPENAI_*) ikkalasi ham qabul qilinadi.
+    openai_api_key: str = Field(
+        default="", validation_alias=AliasChoices("OPENAI_API_KEY", "AI_OPENAI_API_KEY"))
     # Model nomlari kodga tikilmaydi (TZ 10): deployment konfiguratsiyasidan.
-    openai_model_main: str = ""
-    openai_model_fast: str = ""
+    openai_model_main: str = Field(
+        default="", validation_alias=AliasChoices("OPENAI_MODEL_MAIN", "AI_OPENAI_MODEL_MAIN"))
+    openai_model_fast: str = Field(
+        default="", validation_alias=AliasChoices("OPENAI_MODEL_FAST", "AI_OPENAI_MODEL_FAST"))
     max_tool_calls: int = 20
     lease_seconds: int = 60
     runner_concurrency: int = 4

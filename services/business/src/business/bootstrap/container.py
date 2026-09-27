@@ -21,8 +21,10 @@ from business.contexts.identity.application.sessions import SessionIssuer
 from business.contexts.identity.ports.security import IdentityNotifier
 from business.kernel.clock import SystemClock
 from business.kernel.rate_limit import RateLimiter
+from business.platform.capability import CapabilitySigner
 from business.platform.db import make_engine
 from business.platform.rate_limit import NoopRateLimiter, RedisRateLimiter
+from business.platform.storage import S3ObjectStorage
 
 from .settings import Settings
 
@@ -35,6 +37,8 @@ class Container:
     members: MembershipService
     password_reset: PasswordResetService
     rate_limiter: RateLimiter
+    capabilities: CapabilitySigner
+    storage: S3ObjectStorage
 
 
 def build_container(settings: Settings, *, notifier: IdentityNotifier | None = None) -> Container:
@@ -70,5 +74,10 @@ def build_container(settings: Settings, *, notifier: IdentityNotifier | None = N
     )
     rate_limiter: RateLimiter = (RedisRateLimiter(settings.redis_url) if settings.redis_url
                                  else NoopRateLimiter())
+    storage = S3ObjectStorage(endpoint_url=settings.s3_endpoint_url,
+                              access_key=settings.s3_access_key,
+                              secret_key=settings.s3_secret_key, region=settings.s3_region)
     return Container(settings=settings, engine=engine, identity=identity, members=members,
-                     password_reset=password_reset, rate_limiter=rate_limiter)
+                     password_reset=password_reset, rate_limiter=rate_limiter,
+                     capabilities=CapabilitySigner(settings.capability_signing_key),
+                     storage=storage)

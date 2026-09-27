@@ -1,5 +1,7 @@
 """Business Core ichidagi DB infratuzilmasi: engine va tenant kontekstini bog‘lash."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from uuid import UUID
 
 from sqlalchemy import text
@@ -28,3 +30,13 @@ async def bind_request_context(
             "user_id": str(user_id) if user_id else "",
         },
     )
+
+
+@asynccontextmanager
+async def tenant_transaction(
+    engine: AsyncEngine, *, tenant_id: UUID, user_id: UUID | None
+) -> AsyncIterator[AsyncConnection]:
+    """Tenant kontekstli bitta tranzaksiya: xato bo‘lsa rollback, aks holda commit."""
+    async with engine.connect() as conn, conn.begin():
+        await bind_request_context(conn, tenant_id=tenant_id, user_id=user_id)
+        yield conn

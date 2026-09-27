@@ -20,6 +20,9 @@ APP_URL = os.environ.get(
 
 pytestmark = pytest.mark.integration
 
+TOOLS_TOKEN = "t" * 40
+CAPABILITY_KEY = "k" * 40
+
 
 @pytest.fixture(scope="session")
 async def app_engine() -> AsyncIterator[AsyncEngine]:
@@ -47,6 +50,10 @@ async def client(
         database_url=APP_URL,
         data_encryption_key=Fernet.generate_key().decode(),
         cookie_secure=False,
+        tools_service_token=TOOLS_TOKEN,
+        capability_signing_key=CAPABILITY_KEY,
+        s3_access_key="abo",
+        s3_secret_key="abo_dev_password",
     )
     app = create_app(settings, notifier=notifier)
     transport = httpx.ASGITransport(app=app)

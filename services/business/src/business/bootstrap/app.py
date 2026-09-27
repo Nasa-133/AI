@@ -9,6 +9,7 @@ from business.contexts.identity.ports.security import IdentityNotifier
 from business.entrypoints.http import health, identity, members
 from business.entrypoints.http.errors import install_error_handlers
 from business.entrypoints.http.security import install_middlewares
+from business.entrypoints.internal import tools
 
 from .container import build_container
 from .settings import Settings
@@ -41,4 +42,5 @@ def create_app(
     app.include_router(health.router)
     app.include_router(identity.router)
     app.include_router(members.router)
+    app.include_router(tools.router)
     return app

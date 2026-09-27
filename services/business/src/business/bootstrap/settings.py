@@ -18,3 +18,11 @@ class Settings(BaseSettings):
     web_base_url: str = "http://localhost:3000"
     # `log` — faqat lokal: havola logga yoziladi. Production email adapteri keyin qo‘shiladi.
     notifier: Literal["log", "disabled"] = "disabled"
+    # AI Runtime → Tool API servis tokeni va capability imzo kaliti (secret manager’dan).
+    tools_service_token: str = Field(min_length=32)
+    capability_signing_key: str = Field(min_length=32)
+    s3_endpoint_url: str = "http://localhost:9000"
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_region: str = "us-east-1"
+    uploads_bucket: str = "abo-business"
