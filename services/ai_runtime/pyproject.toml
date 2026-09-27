@@ -7,16 +7,25 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "pydantic-settings>=2.4",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "httpx>=0.27",
+    "openai>=1.60",
+    "abo-messaging",
 ]
+
+[tool.uv.sources]
+abo-messaging = { path = "../../packages/abo_messaging", editable = true }
 
 [dependency-groups]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
-    "httpx>=0.27",
     "ruff>=0.6",
     "mypy>=1.11",
     "import-linter>=2.1",
+    "jsonschema>=4.23",
 ]
 
 [build-system]
@@ -28,15 +37,23 @@ packages = ["src/ai_runtime"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
+markers = ["integration: PostgreSQL va RabbitMQ talab qiladi (make up; AI migratsiyasi)"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "S", "ASYNC", "RUF"]
 ignore = ["S101", "RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"]
+"migrations/**" = ["E501"]
 
 [tool.mypy]
 strict = true
@@ -49,10 +66,21 @@ root_package = "ai_runtime"
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
-name = "Domain va application framework/I-O’ga qaram emas"
+name = "Domain, application va ports framework/I-O’ga qaram emas"
 type = "forbidden"
 source_modules = ["ai_runtime.domain", "ai_runtime.application", "ai_runtime.ports"]
-forbidden_modules = ["fastapi", "starlette", "pydantic", "sqlalchemy", "asyncpg", "httpx", "aio_pika", "openai", "ai_runtime.adapters", "ai_runtime.entrypoints", "ai_runtime.bootstrap"]
+forbidden_modules = [
+    "fastapi", "starlette", "pydantic", "sqlalchemy", "asyncpg", "httpx", "aio_pika",
+    "openai", "abo_messaging",
+    "ai_runtime.adapters", "ai_runtime.entrypoints", "ai_runtime.bootstrap",
+]
+
+[[tool.importlinter.contracts]]
+name = "OpenAI SDK faqat adapters qatlamida"
+type = "forbidden"
+source_modules = ["ai_runtime.entrypoints", "ai_runtime.bootstrap"]
+forbidden_modules = ["openai"]
+allow_indirect_imports = "True"
 
 [[tool.importlinter.contracts]]
 name = "Qatlamlar"

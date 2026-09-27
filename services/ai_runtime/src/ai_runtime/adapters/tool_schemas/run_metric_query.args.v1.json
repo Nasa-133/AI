@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/run_metric_query.args.v1.json",
+  "title": "run_metric_query argumentlari",
+  "description": "Allowlist metrikalar bo‘yicha deterministik hisob. currency=null va bir nechta valyuta bo‘lsa natija valyuta bo‘yicha ajratiladi, hech qachon qo‘shilmaydi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "metric_ids",
+    "date_range",
+    "dimensions",
+    "filters",
+    "currency",
+    "limit"
+  ],
+  "properties": {
+    "metric_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "minItems": 1,
+      "maxItems": 6
+    },
+    "date_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date"
+        },
+        "to": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "description": "Korxona vaqt mintaqasidagi kunlar, ikkala chegara ham kiradi."
+    },
+    "dimensions": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "month",
+          "week",
+          "day",
+          "branch",
+          "product",
+          "customer",
+          "currency"
+        ]
+      },
+      "maxItems": 2
+    },
+    "filters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_codes",
+        "product_codes",
+        "customer_codes"
+      ],
+      "properties": {
+        "branch_codes": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "maxItems": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "product_codes": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "maxItems": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "customer_codes": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "maxItems": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "currency": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "limit": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
