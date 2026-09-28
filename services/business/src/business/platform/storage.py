@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from pathlib import Path
 from typing import IO, Any
 
 import boto3
@@ -99,3 +100,26 @@ class S3ObjectStorage:
             yield pending
         if digest.hexdigest() != ref.checksum_sha256:
             raise ChecksumMismatch(f"{ref.key}: checksum mos emas.")
+
+    async def put_file(self, bucket: str, key: str, path: Path, *, content_type: str) -> ObjectRef:
+        digest = await asyncio.to_thread(_sha256_file, path)
+        await asyncio.to_thread(self._client.upload_file, str(path), bucket, key,
+                                ExtraArgs={"ContentType": content_type})
+        size = (await asyncio.to_thread(path.stat)).st_size
+        return ObjectRef(bucket, key, digest, size)
+
+    async def download_to(self, ref: ObjectRef, path: Path) -> None:
+        await asyncio.to_thread(self._client.download_file, ref.bucket, ref.key, str(path))
+        if await asyncio.to_thread(_sha256_file, path) != ref.checksum_sha256:
+            raise ChecksumMismatch(f"{ref.key}: checksum mos emas.")
+
+    async def delete(self, bucket: str, key: str) -> None:
+        await asyncio.to_thread(self._client.delete_object, Bucket=bucket, Key=key)
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()

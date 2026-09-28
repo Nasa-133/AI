@@ -9,6 +9,7 @@ from business.contexts.identity.ports.security import IdentityNotifier
 from business.entrypoints.http import (
     analytics,
     dashboards,
+    documents,
     health,
     identity,
     integrations,
@@ -53,6 +54,7 @@ def create_app(
     app.include_router(workspace.router)
     app.include_router(analytics.router)
     app.include_router(dashboards.router)
+    app.include_router(documents.router)
     app.include_router(integrations.router)
     app.include_router(tools.router)
     return app

@@ -26,7 +26,10 @@ from business.platform.db import bind_request_context
 from business.platform.outbox import BoundOutbox
 from business.platform.storage import ChecksumMismatch
 
+from .wiring import DocumentServices, document_services
+
 ANALYTICS_QUEUE = "business.analytics"
+DOCUMENTS_QUEUE = "business.documents"
 WORKSPACE_QUEUE = "business.workspace"
 
 
@@ -88,6 +91,30 @@ class Consumers:
                 "SourceConfigured.v1": self.source_configured,
                 "SyncRunCompleted.v1": self.sync_completed,
                 "SyncRunFailed.v1": self.sync_failed}
+
+    # --- Hujjatlar (TZ 9) ---
+    def _documents(self, conn: AsyncConnection, env: Envelope) -> DocumentServices:
+        return document_services(self._c, conn, env.tenant_id)
+
+    async def process_document(self, conn: AsyncConnection, env: Envelope) -> None:
+        await self._documents(conn, env).ingest.process(UUID(env.payload["document_id"]),
+                                                        UUID(env.payload["version_id"]))
+
+    async def embeddings_generated(self, conn: AsyncConnection, env: Envelope) -> None:
+        await self._documents(conn, env).ingest.embeddings_ready(env.payload)
+
+    async def cleanup_document(self, conn: AsyncConnection, env: Envelope) -> None:
+        services = self._documents(conn, env)
+        document_id = UUID(env.payload["document_id"])
+        keys = [(v.bucket, v.object_key) for v in await services.store.versions(document_id)]
+        keys += [(self._c.settings.uploads_bucket, f"embeddings-in/{env.tenant_id}/{v_id}.jsonl")
+                 for v_id in [v.id for v in await services.store.versions(document_id)]]
+        await services.ingest.cleanup(document_id, UUID(env.payload["cleanup_job_id"]), keys)
+
+    def documents_routes(self) -> dict[str, Any]:
+        return {"ProcessDocument.v1": self.process_document,
+                "EmbeddingsGenerated.v1": self.embeddings_generated,
+                "CleanupDocument.v1": self.cleanup_document}
 
     def workspace_routes(self) -> dict[str, Any]:
         return {"AgentRunProgressed.v1": self.agent_progressed,

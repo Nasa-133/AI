@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/commands/CleanupDocument.v1.json",
+  "title": "CleanupDocument v1 (payload)",
+  "description": "Business ichki: o‘chirilgan hujjat fayllarini ombordan tozalash (TZ 17).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "cleanup_job_id"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "cleanup_job_id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

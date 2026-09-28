@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/commands/ProcessDocument.v1.json",
+  "title": "ProcessDocument v1 (payload)",
+  "description": "Business ichki: yuklangan versiyani skaner → parse → parcha → embedding so‘rovi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "version_id"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

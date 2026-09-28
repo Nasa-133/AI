@@ -14,7 +14,7 @@ from abo_messaging.rabbit import RabbitConsumer, RabbitPublisher, connect
 from business.bootstrap.container import build_container
 from business.bootstrap.settings import Settings
 
-from .consumers import ANALYTICS_QUEUE, WORKSPACE_QUEUE, Consumers
+from .consumers import ANALYTICS_QUEUE, DOCUMENTS_QUEUE, WORKSPACE_QUEUE, Consumers
 
 logger = logging.getLogger("business.worker")
 
@@ -26,7 +26,8 @@ async def run(settings: Settings) -> None:
     connection = await connect(settings.amqp_url)
     consumers = Consumers(container)
     for queue, routes in ((ANALYTICS_QUEUE, consumers.analytics_routes()),
-                          (WORKSPACE_QUEUE, consumers.workspace_routes())):
+                          (WORKSPACE_QUEUE, consumers.workspace_routes()),
+                          (DOCUMENTS_QUEUE, consumers.documents_routes())):
         processor = InboxProcessor(engine, consumer=queue, handlers=routes,
                                    on_transaction_start=consumers.bind)
         await RabbitConsumer(connection, processor, queue=queue).start()

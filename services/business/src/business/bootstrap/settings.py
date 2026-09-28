@@ -26,3 +26,5 @@ class Settings(BaseSettings):
     s3_secret_key: str = ""
     s3_region: str = "us-east-1"
     uploads_bucket: str = "abo-business"
+    # AI Runtime ichki API’si (query embedding). Bo‘sh bo‘lsa qidiruv faqat matnli.
+    ai_runtime_url: str = ""

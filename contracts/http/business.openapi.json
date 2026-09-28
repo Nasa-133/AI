@@ -22,6 +22,20 @@
         "title": "AcceptInvitationRequest",
         "type": "object"
       },
+      "Body_upload_api_v1_documents_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_api_v1_documents_post",
+        "type": "object"
+      },
       "Body_upload_api_v1_uploads_post": {
         "properties": {
           "file": {
@@ -114,6 +128,48 @@
           }
         },
         "title": "DashboardEdit",
+        "type": "object"
+      },
+      "DraftIn": {
+        "properties": {
+          "base_version_id": {
+            "format": "uuid",
+            "title": "Base Version Id",
+            "type": "string"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "expected_version_id": {
+            "format": "uuid",
+            "title": "Expected Version Id",
+            "type": "string"
+          },
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/Operation"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Operations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "base_version_id",
+          "expected_version_id",
+          "operations"
+        ],
+        "title": "DraftIn",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -527,6 +583,47 @@
         "title": "OnboardRequest",
         "type": "object"
       },
+      "Operation": {
+        "properties": {
+          "find": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Find",
+            "type": "string"
+          },
+          "occurrence": {
+            "default": 1,
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Occurrence",
+            "type": "integer"
+          },
+          "op": {
+            "const": "replace_text",
+            "default": "replace_text",
+            "title": "Op",
+            "type": "string"
+          },
+          "replace": {
+            "maxLength": 1000,
+            "title": "Replace",
+            "type": "string"
+          },
+          "section_id": {
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Section Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "section_id",
+          "find",
+          "replace"
+        ],
+        "title": "Operation",
+        "type": "object"
+      },
       "PasswordResetConfirm": {
         "properties": {
           "new_password": {
@@ -580,6 +677,26 @@
           "to"
         ],
         "title": "Period",
+        "type": "object"
+      },
+      "PromoteIn": {
+        "properties": {
+          "expected_current_version_id": {
+            "format": "uuid",
+            "title": "Expected Current Version Id",
+            "type": "string"
+          },
+          "version_id": {
+            "format": "uuid",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version_id",
+          "expected_current_version_id"
+        ],
+        "title": "PromoteIn",
         "type": "object"
       },
       "QueryFilters": {
@@ -698,6 +815,37 @@
         ],
         "title": "Role",
         "type": "string"
+      },
+      "SearchIn": {
+        "properties": {
+          "document_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 50,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Ids"
+          },
+          "query": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "SearchIn",
+        "type": "object"
       },
       "SessionResponse": {
         "properties": {
@@ -1699,6 +1847,573 @@
         "summary": "Export Csv",
         "tags": [
           "dashboards"
+        ]
+      }
+    },
+    "/api/v1/documents": {
+      "get": {
+        "operationId": "list_documents_api_v1_documents_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response List Documents Api V1 Documents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Documents",
+        "tags": [
+          "documents"
+        ]
+      },
+      "post": {
+        "operationId": "upload_api_v1_documents_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_api_v1_documents_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Upload Api V1 Documents Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Upload",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/search": {
+      "post": {
+        "operationId": "search_api_v1_documents_search_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Search Api V1 Documents Search Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}": {
+      "delete": {
+        "operationId": "delete_api_v1_documents__document_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Delete Api V1 Documents  Document Id  Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete",
+        "tags": [
+          "documents"
+        ]
+      },
+      "get": {
+        "operationId": "detail_api_v1_documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Detail Api V1 Documents  Document Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detail",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/access": {
+      "put": {
+        "operationId": "share_api_v1_documents__document_id__access_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Share Api V1 Documents  Document Id  Access Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Share",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/diff": {
+      "get": {
+        "operationId": "diff_api_v1_documents__document_id__diff_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "left",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Left",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "right",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Right",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Diff Api V1 Documents  Document Id  Diff Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Diff",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/drafts": {
+      "post": {
+        "operationId": "create_draft_api_v1_documents__document_id__drafts_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Draft Api V1 Documents  Document Id  Drafts Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Draft",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/promote": {
+      "post": {
+        "operationId": "promote_api_v1_documents__document_id__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Promote Api V1 Documents  Document Id  Promote Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/download": {
+      "get": {
+        "description": "ACL tekshiruvidan keyin fayl API orqali beriladi (bucket private, TZ 18).",
+        "operationId": "download_api_v1_documents__document_id__versions__version_id__download_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/sections": {
+      "get": {
+        "operationId": "sections_api_v1_documents__document_id__versions__version_id__sections_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response Sections Api V1 Documents  Document Id  Versions  Version Id  Sections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sections",
+        "tags": [
+          "documents"
         ]
       }
     },
