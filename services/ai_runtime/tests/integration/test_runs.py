@@ -7,7 +7,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from ai_runtime.adapters.fake_provider import FakeProvider
+from ai_runtime.adapters.hash_embedder import HashEmbedder
 from ai_runtime.adapters.http_tools import HttpBusinessTools
+from ai_runtime.adapters.s3_store import S3ObjectStore
 from ai_runtime.adapters.sql_rows import bind_tenant
 from ai_runtime.adapters.sql_store import SqlRunStore
 from ai_runtime.bootstrap.container import Container, make_runner
@@ -24,7 +26,9 @@ def make(engine: AsyncEngine, core: FakeCore, owner: str, lease: int = 30):  # t
     tools = HttpBusinessTools(base_url="http://core", service_token=SERVICE_TOKEN,
                               client=core.client(), backoff_seconds=0)
     container = Container(settings=Settings(lease_seconds=lease), engine=engine, tools=tools,
-                          provider=FakeProvider())
+                          provider=FakeProvider(), embedder=HashEmbedder(),
+                          objects=S3ObjectStore(endpoint_url="http://unused", access_key="",
+                                                secret_key=""))
     return make_runner(container, owner=owner)
 
 

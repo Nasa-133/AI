@@ -27,7 +27,8 @@ class Settings(BaseSettings):
     # Embedding: `hash` — lokal deterministik (kalitsiz), `openai` — OPENAI_MODEL_EMBEDDING.
     embedding_provider: Literal["hash", "openai"] = "hash"
     openai_model_embedding: str = Field(
-        default="", validation_alias=AliasChoices("OPENAI_MODEL_EMBEDDING",
+        default="", validation_alias=AliasChoices("OPENAI_EMBEDDING_MODEL",
+                                                  "OPENAI_MODEL_EMBEDDING",
                                                   "AI_OPENAI_MODEL_EMBEDDING"))
     embedding_dimensions: int | None = None
     s3_endpoint_url: str = "http://localhost:9000"

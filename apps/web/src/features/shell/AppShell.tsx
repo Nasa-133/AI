@@ -13,13 +13,13 @@ import styles from "./shell.module.css";
 const NAV = [
   { href: "/", label: "Ofis", icon: "⌂" },
   { href: "/?dashboards=all", label: "Dashboardlar", icon: "▦" },
+  { href: "/documents", label: "Hujjatlar", icon: "▤" },
   { href: "/integrations", label: "Integratsiyalar", icon: "⇄" },
   { href: "/settings", label: "Sozlamalar", icon: "⚙" },
 ] as const;
 
 // Hali tayyor bo‘lmagan bo‘limlar yashirilmaydi, lekin faol deb ko‘rsatilmaydi.
 const SOON = [
-  { label: "Hujjatlar", icon: "▤", stage: "Bosqich 3" },
   { label: "Vazifalar", icon: "☰", stage: "Bosqich 4" },
 ] as const;
 
@@ -96,6 +96,7 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
         <Link href="/" onClick={() => setMobileView("main")}>⌂<span>Ofis</span></Link>
         <Link href="/?dashboards=all" onClick={() => setMobileView("main")}>▦<span>Dashboard</span></Link>
         <button onClick={() => setMobileView("chat")}>✉<span>Chat</span></button>
+        <Link href="/documents" onClick={() => setMobileView("main")}>▤<span>Hujjat</span></Link>
         <Link href="/integrations" onClick={() => setMobileView("main")}>⇄<span>Ma’lumot</span></Link>
         <Link href="/settings" onClick={() => setMobileView("main")}>⚙<span>Sozlamalar</span></Link>
       </nav>

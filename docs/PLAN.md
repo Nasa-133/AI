@@ -196,9 +196,40 @@ Bosqich 2 yakunida qo‘shildi:
   2 marta ketma-ket barqaror.
 
 Keyingi bosqichlarga o‘tgan ishlar:
-- Chat’dagi faol hujjat/dataset “chip”i — Bosqich 3 (hujjatlar bilan).
+- Chat’dagi hujjat “chip”i — Bosqich 3 da qo‘shildi; dataset chip’i — P1.
 - Ofis sahnasi va jonli agent holatlari — Bosqich 4.
 - Email orqali haqiqiy yuborish (hozir `notifier=log` faqat lokal) — provayder tanlovi kerak.
 - Katta eksport uchun fon vazifasi (hozir widget natijasi ≤5000 satr, sinxron).
 - Integratsiya testlari lokal stek bilan bir bazani ishlatadi: stek ishlab tursa AI worker test
   run’ini olib ketishi mumkin (beqarorlik). Testlar uchun alohida bazalar — Bosqich 5.
+
+### Bosqich 3 — Hujjatlar: ✅ yakunlandi (FakeProvider bilan; OpenAI tekshiruvi — Bosqich 6)
+
+| Ish paketi | Holat | Izoh |
+|---|---|---|
+| 3.1 Yuklash va parse | ✅ | DOCX/PDF/TXT, 25 MB limit, tuzilma skaneri, alohida jarayonda parse (timeout, rlimit), skaner PDF → `needs_ocr` |
+| 3.2 Bo‘lim/parcha, qidiruv | ✅ | Locator’lar (¶, sahifa, jadval katagi), o‘zbekcha normalizator + FTS prefiks, pgvector, RRF; ACL qidiruvdan oldin |
+| 3.3 Embedding | ✅ | `GenerateEmbeddings` → AI Runtime (`ai_runtime.embeddings`) → vektorlar `abo-ai` bucket’da → `EmbeddingsGenerated`; so‘rov vektori `POST /internal/v1/embed` (servis tokeni, 2 s); AI uzilsa matnli rejim va ogohlantirish |
+| 3.4 Tahrir | ✅ | `replace_text` patch, DOCX run darajasida, draft versiya, bo‘lim diff’i, promote (409 VERSION_CONFLICT) |
+| 3.5 Tool API va agent | ✅ | `search_documents`, `read_document_section`, `compare_document_versions`, `create_document_draft`; Dilnoza (hujjat yordamchisi), koordinator va moliya — faqat o‘qish |
+| 3.6 Web | ✅ | Hujjatlar sahifasi (yuklash, holatlar, qidiruv, versiyalar, matn, farq, joriy qilish, yuklab olish, ulashish, o‘chirish); chat’da hujjat chip’i; draft havolasi |
+
+Qabul testlari:
+- Integratsiya (Postgres + S3): D01–D05, S03, ACL, chip → `context_refs`, pgvector saqlash va qidiruv.
+- Unit: FakeProvider hujjat rejasi — D01 (iqtibos, versiya, locator), D02 (“Hujjatda topilmadi”),
+  D06 (hujjat ichidagi buyruq bajarilmaydi), tahrir → draft, noaniq joy → aniqlashtiruvchi savol.
+- To‘liq stek (`make e2e`): yuklash → parse → embedding → gibrid qidiruv → iqtibosli javob → AI draft
+  → diff → promote.
+- Brauzer (Playwright): hujjat oqimi va mobil kenglik (375 px) — 5/5 ssenariy o‘tadi.
+
+Topilib tuzatilgan xatolar: app roli `vector` turini ko‘rmasligi (public sxemaga USAGE, 0010
+migratsiyasi) — embedding saqlash va vektor qidiruv ishlamas edi; AI draftdan keyin hujjat
+versiyalari yangilanmasligi; chat markdown’ida iqtibos va kursiv yo‘qligi.
+
+Ma’lum cheklovlar:
+- `hash` embedding — lokal/demo uchun (kalitsiz); sifatli semantik qidiruv uchun
+  `AI_EMBEDDING_PROVIDER=openai` va `OPENAI_EMBEDDING_MODEL` (Bosqich 6 da tekshiriladi).
+  Provayder almashtirilsa eski vektorlar o‘lcham bo‘yicha e’tiborsiz qoladi; qayta indekslash buyrug‘i — P1.
+- OCR yo‘q (skaner PDF faqat belgilanadi) — P1.
+- PDF tahriri draftda DOCX sifatida saqlanadi (asl PDF maketi saqlanmaydi).
+- O‘zbek tilidagi qidiruv eval to‘plami — Bosqich 6 eval bilan.

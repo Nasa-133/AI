@@ -67,14 +67,15 @@ export function useMessages(conversationId: string | null) {
 export function useSendMessage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { conversationId: string; content: string; agent: string | null }) =>
+    mutationFn: (input: { conversationId: string; content: string; agent: string | null;
+                          documentIds?: string[] }) =>
       unwrap(api.POST("/api/v1/conversations/{conversation_id}/messages", {
         params: {
           path: { conversation_id: input.conversationId },
           // Tarmoq qayta yuborsa ham bitta task yaratiladi (TZ T04).
           header: { "idempotency-key": crypto.randomUUID() },
         },
-        body: { content: input.content, agent: input.agent },
+        body: { content: input.content, agent: input.agent, document_ids: input.documentIds ?? [] },
       })) as Promise<{ task_id: string; agent_role_key: string; agent_name: string }>,
     onSuccess: (_d, input) => qc.invalidateQueries({ queryKey: keys.messages(input.conversationId) }),
   });

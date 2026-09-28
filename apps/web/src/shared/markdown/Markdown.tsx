@@ -7,6 +7,7 @@ function Inlines({ items }: { items: Inline[] }) {
     <>
       {items.map((it, i) => {
         if (it.kind === "strong") return <strong key={i}>{it.text}</strong>;
+        if (it.kind === "em") return <em key={i}>{it.text}</em>;
         if (it.kind === "code") return <code key={i} className="mono">{it.text}</code>;
         return <Fragment key={i}>{it.text}</Fragment>;
       })}
@@ -27,6 +28,8 @@ export function Markdown({ source }: { source: string }) {
           }
           case "paragraph":
             return <p key={i}><Inlines items={b.content} /></p>;
+          case "quote":
+            return <blockquote key={i} className="md-quote">{b.text}</blockquote>;
           case "list":
             return <ul key={i}>{b.items.map((it, j) => <li key={j}><Inlines items={it} /></li>)}</ul>;
           case "table":

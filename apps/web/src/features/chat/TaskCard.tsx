@@ -38,6 +38,9 @@ export function TaskCard({ taskId, conversationId, startedAt }: {
     void qc.invalidateQueries({ queryKey: keys.messages(conversationId) });
     // Agent dashboard yaratgan bo‘lishi mumkin — doskadagi kartochkalar yangilanadi (TZ 6, U05).
     void qc.invalidateQueries({ queryKey: ["dashboards"] });
+    // Hujjat yordamchisi draft yaratgan bo‘lishi mumkin — versiyalar ro‘yxati yangilanadi.
+    void qc.invalidateQueries({ queryKey: ["document"] });
+    void qc.invalidateQueries({ queryKey: ["documents"] });
   }, [qc, conversationId]);
   const stream = useTaskStream(taskId, onDone);
   const live = !TERMINAL.has(stream.status);

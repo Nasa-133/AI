@@ -19,3 +19,9 @@
 .composerRow { display: flex; gap: var(--space-2); align-items: flex-end; }
 .empty { margin: auto; text-align: center; display: flex; flex-direction: column; gap: var(--space-2); max-width: 300px; }
 .suggestion { text-align: left; }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chip { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 2px 4px 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip button { border: 0; background: none; color: inherit; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
+.picker { display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto; }
+.picker button { justify-content: flex-start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chipsUser { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }

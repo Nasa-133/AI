@@ -9,7 +9,7 @@ class OpenAIEmbedder:
     def __init__(self, *, api_key: str, model: str, dimensions: int | None = None,
                  timeout: float = 30.0, client: openai.AsyncOpenAI | None = None) -> None:
         if not model:
-            raise ValueError("OPENAI_MODEL_EMBEDDING berilmagan")
+            raise ValueError("OPENAI_EMBEDDING_MODEL berilmagan")
         self._client = client or openai.AsyncOpenAI(api_key=api_key, timeout=timeout,
                                                     max_retries=2)
         self._model = model

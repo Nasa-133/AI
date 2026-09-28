@@ -1,0 +1,30 @@
+.page { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-width: 1200px; }
+.layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; align-items: start; }
+.list { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.item { justify-content: space-between; gap: 8px; min-width: 0; text-align: left; }
+.item[aria-current="true"] { border-color: var(--accent); }
+.itemTitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.main { grid-column: span 2; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 900px) { .main { grid-column: 1 / -1; } }
+.detail { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.head h2 { margin-right: auto; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+.tableWrap { overflow-x: auto; }
+.rowActions { white-space: nowrap; text-align: right; }
+.comment { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.block { display: flex; flex-direction: column; gap: 8px; }
+.sections { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+.sections p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.sections p[data-kind="heading"] { font-weight: 600; }
+.locator { display: inline-block; min-width: 44px; margin-right: 8px; color: var(--text-muted); font-size: 12px; }
+.changes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.changes li { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
+.changeHead { display: flex; gap: 8px; align-items: center; }
+.before { background: var(--danger-soft); color: var(--danger); text-decoration: line-through; padding: 2px 4px; border-radius: 4px; }
+.after { background: var(--success-soft); color: var(--success); text-decoration: none; padding: 2px 4px; border-radius: 4px; }
+.share { position: relative; }
+.share > :global(.panel) { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; min-width: 240px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.hits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.hits button { text-align: left; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; height: auto; padding: 8px; width: 100%; white-space: normal; overflow-wrap: anywhere; }

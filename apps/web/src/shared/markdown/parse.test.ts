@@ -24,3 +24,16 @@ describe("parseMarkdown", () => {
     expect(parseInline("a **b** `c`").map((x) => x.kind)).toEqual(["text", "strong", "text", "code"]);
   });
 });
+
+describe("iqtibos va kursiv", () => {
+  it("> satrlarini matn sifatida iqtibosga yig‘adi", () => {
+    const blocks = parseMarkdown("Hujjatda:\n\n> To‘lov **30** kun\n> <b>x</b>\n\n— *Shartnoma*, v1");
+    expect(blocks[1]).toEqual({ kind: "quote", text: "To‘lov **30** kun\n<b>x</b>" });
+    expect(blocks[2]).toEqual({ kind: "paragraph", content: [
+      { kind: "text", text: "— " }, { kind: "em", text: "Shartnoma" }, { kind: "text", text: ", v1" }] });
+  });
+
+  it("ko‘paytirish belgisini kursiv deb olmaydi", () => {
+    expect(parseInline("2 * 3 = 6")).toEqual([{ kind: "text", text: "2 * 3 = 6" }]);
+  });
+});

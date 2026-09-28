@@ -69,6 +69,9 @@ export function describeError(error: unknown): { title: string; action: string }
     METRIC_SETTINGS_NOT_APPROVED: "Sozlamalar bo‘limida hisob qoidalarini tasdiqlang.",
     NO_DATA: "Integratsiyalar bo‘limida ma’lumot yuklang.",
     UNSUPPORTED_MEDIA_TYPE: "Faylni CSV (UTF-8) formatida saqlab qayta yuklang.",
+    DOCUMENT_UNREADABLE: "Faylni DOCX, matnli PDF yoki TXT sifatida qayta saqlab yuklang.",
+    PAYLOAD_TOO_LARGE: "Faylni kichikroq qismlarga bo‘lib yuklang.",
+    VERSION_CONFLICT: "Hujjat boshqa foydalanuvchi tomonidan yangilandi — sahifani yangilab, farqni qayta ko‘ring.",
   };
   const ref = error.traceId ? ` (kod: ${error.traceId.slice(0, 8)})` : "";
   return {

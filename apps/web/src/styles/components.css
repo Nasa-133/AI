@@ -50,3 +50,4 @@
 .table th, .table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); text-align: left; }
 .table th { font-weight: 600; color: var(--text-muted); background: var(--surface-2); position: sticky; top: 0; }
 .table td.num, .table th.num { text-align: right; }
+.md-quote { margin: 0; padding: var(--space-2) var(--space-3); border-left: 3px solid var(--accent); background: var(--surface); white-space: pre-wrap; overflow-wrap: anywhere; }
