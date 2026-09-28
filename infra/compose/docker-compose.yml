@@ -7,6 +7,7 @@ x-app-env: &app-env
 
 services:
   postgres:
+    networks: [data]
     image: pgvector/pgvector:pg16
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev}
@@ -26,6 +27,7 @@ services:
       retries: 20
 
   rabbitmq:
+    networks: [data]
     image: rabbitmq:3.13-management
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-abo}
@@ -37,11 +39,13 @@ services:
       retries: 20
 
   redis:
+    networks: [data]
     image: redis:7-alpine
     ports: ["56379:6379"]
 
   # S3-mos obyekt ombori (lokal). MinIO community image’lari endi ommaviy emas.
   objectstore:
+    networks: [data]
     image: chrislusf/seaweedfs:latest
     command: server -dir=/data -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json
     ports: ["9000:9000"]
@@ -50,6 +54,7 @@ services:
       - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
 
   business-api:
+    networks: [edge, tools, embed, data]
     profiles: ["apps"]
     build:
       context: ../..
@@ -64,6 +69,7 @@ services:
       postgres: { condition: service_healthy }
 
   business-worker:
+    networks: [embed, data]
     profiles: ["apps"]
     build:
       context: ../..
@@ -78,6 +84,7 @@ services:
       rabbitmq: { condition: service_healthy }
 
   ai-worker:
+    networks: [tools, data]
     profiles: ["apps"]
     build:
       context: ../..
@@ -95,6 +102,7 @@ services:
 
   # Ichki HTTP (faqat /internal/v1/embed va health) — tashqariga port ochilmaydi.
   ai-api:
+    networks: [embed, data]
     profiles: ["apps"]
     build:
       context: ../..
@@ -102,6 +110,7 @@ services:
     <<: *app-env
 
   integration-worker:
+    networks: [data]
     profiles: ["apps"]
     build:
       context: ../..
@@ -115,6 +124,14 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+
+# TZ 13.12 network egress (lokal ekvivalent): servislar faqat kerakli tarmoqlarda.
+# Production’da Kubernetes NetworkPolicy — infra/k8s/network-policies.yaml.
+networks:
+  edge: {}
+  tools: { internal: true }
+  embed: { internal: true }
+  data: {}
 
 volumes:
   pgdata:

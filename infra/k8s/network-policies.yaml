@@ -1,0 +1,71 @@
+# TZ 13.12 network egress — production uchun namunaviy NetworkPolicy’lar (namespace: abo).
+# Qoida: hamma narsa default taqiqlangan; har servisga faqat kerakli yo‘nalishlar ochiladi.
+#   Web → faqat Business API
+#   AI  → faqat Business Tool API, tasdiqlangan provider (OpenAI) va o‘z storage/broker/DB
+#   Integration → faqat broker, storage, o‘z DB va tanlangan ERP hostlari
+#   Parser (Business ichida alohida jarayon) internetga chiqmaydi — Business egress’i tashqariga yopiq.
+# Lokal ekvivalent: infra/compose/docker-compose.yml `networks`.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: default-deny, namespace: abo }
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: dns, namespace: abo }
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to: [{ namespaceSelector: {}, podSelector: { matchLabels: { k8s-app: kube-dns } } }]
+      ports: [{ protocol: UDP, port: 53 }, { protocol: TCP, port: 53 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: business-api, namespace: abo }
+spec:
+  podSelector: { matchLabels: { app: business-api } }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from: [{ podSelector: { matchLabels: { app: web } } }, { podSelector: { matchLabels: { app: edge } } }]
+    - from: [{ podSelector: { matchLabels: { app: ai-worker } } }]  # Tool API
+  egress:
+    - to: [{ podSelector: { matchLabels: { tier: data } } }]  # Postgres (business DB), Redis, S3, broker
+    - to: [{ podSelector: { matchLabels: { app: ai-api } } }]  # query embedding (2 s)
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: ai-worker, namespace: abo }
+spec:
+  podSelector: { matchLabels: { app: ai-worker } }
+  policyTypes: [Ingress, Egress]
+  egress:
+    - to: [{ podSelector: { matchLabels: { app: business-api } } }]
+      ports: [{ protocol: TCP, port: 8000 }]
+    - to: [{ podSelector: { matchLabels: { tier: data } } }]
+    - to: [{ ipBlock: { cidr: 0.0.0.0/0 } }]  # faqat egress gateway orqali api.openai.com (FQDN allowlist)
+      ports: [{ protocol: TCP, port: 443 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: ai-api, namespace: abo }
+spec:
+  podSelector: { matchLabels: { app: ai-api } }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from: [{ podSelector: { matchLabels: { app: business-api } } }, { podSelector: { matchLabels: { app: business-worker } } }]
+  egress:
+    - to: [{ ipBlock: { cidr: 0.0.0.0/0 } }]  # embeddings provider (egress gateway, FQDN allowlist)
+      ports: [{ protocol: TCP, port: 443 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: { name: integration-worker, namespace: abo }
+spec:
+  podSelector: { matchLabels: { app: integration-worker } }
+  policyTypes: [Ingress, Egress]
+  egress:
+    - to: [{ podSelector: { matchLabels: { tier: data } } }]  # broker, S3, o‘z DB — Business/AI API’ga yo‘l yo‘q
+    - to: [{ ipBlock: { cidr: 10.20.0.0/16 } }]  # tanlangan ERP hostlari (tenant sozlamasidan, namuna)

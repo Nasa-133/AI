@@ -85,6 +85,8 @@ jobs:
       - run: docker compose -f infra/compose/docker-compose.yml up -d --wait postgres redis rabbitmq objectstore
       - run: make sync
       - run: make migrate
+      - name: Migratsiya (gate 8) — toza bazada upgrade/downgrade/upgrade
+        run: make migration-check
       - run: make test-integration
 
   secrets:
