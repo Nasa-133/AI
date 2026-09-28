@@ -4,7 +4,7 @@ PACKAGES := abo_messaging
 BUSINESS_MIGRATIONS_DATABASE_URL ?= postgresql+asyncpg://business_owner:business_owner_dev@localhost:55432/business
 export BUSINESS_MIGRATIONS_DATABASE_URL
 
-.PHONY: eval eval-openai degradation migration-check test-db up down reset sync migrate dev worker ai-worker integration-worker check e2e e2e-ui stack web-lint web-test test test-unit test-integration test-repo lint openapi synthetic
+.PHONY: load eval eval-openai degradation migration-check test-db up down reset sync migrate dev worker ai-worker integration-worker check e2e e2e-ui stack web-lint web-test test test-unit test-integration test-repo lint openapi synthetic
 
 up:            ## Platformani ko‘tarish (Postgres, RabbitMQ, Redis, S3 ombori)
 	$(COMPOSE) up -d --wait postgres rabbitmq redis objectstore
@@ -61,6 +61,9 @@ eval:          ## Release eval (TZ 20) fake provayder bilan; hisobot docs/report
 
 eval-openai:   ## Real OpenAI eval (OPENAI_API_KEY, OPENAI_MODEL_MAIN, OPENAI_EMBEDDING_MODEL kerak)
 	EVAL_MODE=openai ./scripts/eval.sh
+
+load:          ## Pilot yuklama (TZ 19): 1 mln satr, 20 foydalanuvchi, 5 parallel vazifa; hisobot docs/reports/
+	./scripts/load.sh
 
 degradation:   ## I03/I05/gate 5,7: AI, Integration, broker o‘chirilgandagi xatti-harakat (make stack to‘xtatilgan bo‘lsin)
 	./scripts/degradation.sh

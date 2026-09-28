@@ -158,3 +158,35 @@ async def test_handler_can_emit_follow_up_atomically(db: AsyncEngine) -> None:
             "SELECT envelope->>'causation_id', envelope->>'correlation_id'"
             " FROM messaging.outbox"))).one()
     assert row == (str(source.event_id), str(source.correlation_id))
+
+
+async def test_replay_republishes_window_and_consumers_dedup(db: AsyncEngine) -> None:
+    """Replay mashqi: yuborilgan eventlarni qayta yuborish takroriy ta’sir bermaydi."""
+    from abo_messaging import replay_outbox
+
+    # Vaqt oynasi DB soatidan (host va konteyner soati farq qilishi mumkin — ADR 004).
+    async with db.connect() as conn:
+        start = (await conn.execute(text("SELECT now()"))).scalar_one()
+    envelopes = [event() for _ in range(3)]
+    async with db.connect() as conn, conn.begin():
+        for env in envelopes:
+            await enqueue(conn, env)
+        await enqueue(conn, event("Other.v1"))
+    publisher = FakePublisher()
+    relay = OutboxRelay(db, publisher, base_backoff=timedelta(0))
+    await relay.run_once()
+    processor = InboxProcessor(db, consumer="analytics", handlers={"SourceBatchReady.v1": _record})
+    for _, body in publisher.published:
+        if b"SourceBatchReady" in body:
+            await processor.process(body, attempt=1, max_attempts=3)
+    assert await count(db, "SELECT count(*) FROM public.effects") == 3
+
+    replayed = await replay_outbox(db, since=start, event_types=["SourceBatchReady.v1"])
+    assert replayed == 3
+    publisher.published.clear()
+    await relay.run_once()
+    assert len(publisher.published) == 3  # faqat tanlangan tur qayta yuborildi
+    outcomes = [await processor.process(body, attempt=1, max_attempts=3)
+                for _, body in publisher.published]
+    assert outcomes == [Outcome.DUPLICATE] * 3
+    assert await count(db, "SELECT count(*) FROM public.effects") == 3  # ta’sir takrorlanmadi

@@ -17,3 +17,6 @@ build/
 .dev-logs/
 .eval-logs/
 .degradation-logs/
+.load-logs/
+.load-data/
+.backups/

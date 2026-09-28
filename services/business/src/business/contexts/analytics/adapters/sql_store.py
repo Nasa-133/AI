@@ -15,7 +15,7 @@ from .sql_query import SqlAggregates
 class SqlAnalyticsStore(SqlIngestion, SqlAggregates):
     def __init__(self, conn: AsyncConnection, tenant_id: UUID) -> None:
         SqlIngestion.__init__(self, conn, tenant_id)
-        SqlAggregates.__init__(self, conn)
+        SqlAggregates.__init__(self, conn, tenant_id)
 
     async def active_snapshots(self) -> dict[Entity, SnapshotRef]:
         rows = (await self._c.execute(text(

@@ -78,4 +78,23 @@ async def test_outbox_to_consumer_with_retry_and_dlq(db: AsyncEngine) -> None:
                     .message_count)
 
     await wait_until(dead_lettered)
+
+    # Runbook: sabab tuzatilgach DLQ xabari faqat shu consumer navbatiga qaytariladi.
+    from abo_messaging.replay import requeue_dlq
+
+    healed: list[str] = []
+
+    async def fixed(conn: AsyncConnection, env: Envelope) -> None:
+        healed.append(str(env.event_id))
+
+    processor._handlers[poison_type] = fixed
+    assert await requeue_dlq(connection, queue) == 1
+
+    async def replayed() -> bool:
+        return bool(healed)
+
+    await wait_until(replayed)
+    # DLQ bo‘sh (aio_pika e’lon natijasini keshlaydi — shuning uchun haqiqiy `get` bilan).
+    leftover = await (await channel.get_queue(dlq.name)).get(fail=False)
+    assert leftover is None
     await connection.close()

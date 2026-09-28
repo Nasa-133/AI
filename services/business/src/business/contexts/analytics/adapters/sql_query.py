@@ -1,7 +1,7 @@
 """Yig‘indi (komponent) so‘rovlari. SQL faqat oq ro‘yxatdagi bo‘laklardan yig‘iladi; qiymatlar
 har doim bind parametr. Metrika ma’nosi domain/metrics.py’da."""
 
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -68,9 +68,37 @@ def _filters(spec: QuerySpec, f: Filters, params: dict[str, Any], *,
     return sql
 
 
+class _SnapshotCache:
+    """Snapshot o‘zgarmas (dataset_id + seq): uning qamrovi va nomlar lug‘ati bir marta hisoblanadi.
+
+    Yangi snapshot — yangi kalit, shuning uchun eskirgan qiymat qaytmaydi. Kalitda tenant ham bor;
+    qiymat har doim tenant RLS kontekstida hisoblangan. Hajmi cheklangan (LRU).
+    """
+
+    def __init__(self, size: int = 512) -> None:
+        self._data: OrderedDict[tuple[Any, ...], Any] = OrderedDict()
+        self._size = size
+
+    def get(self, key: tuple[Any, ...]) -> Any:
+        if key in self._data:
+            self._data.move_to_end(key)
+            return self._data[key]
+        return None
+
+    def put(self, key: tuple[Any, ...], value: Any) -> None:
+        self._data[key] = value
+        self._data.move_to_end(key)
+        while len(self._data) > self._size:
+            self._data.popitem(last=False)
+
+
+SNAPSHOT_CACHE = _SnapshotCache()
+
+
 class SqlAggregates:
-    def __init__(self, conn: AsyncConnection) -> None:
+    def __init__(self, conn: AsyncConnection, tenant_id: UUID | None = None) -> None:
         self._c = conn
+        self._cache_tenant = tenant_id
 
     async def _sums(self, table: str, snapshot: SnapshotRef, sums: dict[C, str],
                     spec: QuerySpec, period: Period, dims: tuple[D, ...],
@@ -132,16 +160,26 @@ class SqlAggregates:
         if dimension not in _NAME_SQL or snap is None or not codes:
             return {}
         code_col, name_col, table = _NAME_SQL[dimension]
-        rows = (await self._c.execute(text(
-            f"SELECT {code_col} AS code, max({name_col}) AS name FROM {table}"
-            f" WHERE {visible()} AND {code_col} = ANY(:codes) GROUP BY 1"),
-            {"ds": snap.dataset_id, "seq": snap.seq, "codes": codes})).all()
-        return {r.code: r.name for r in rows if r.name}
+        key = (self._cache_tenant, "names", dimension.value, snap.dataset_id, snap.seq)
+        names: dict[str, str] | None = SNAPSHOT_CACHE.get(key)
+        if names is None:
+            # Butun snapshot lug‘ati bir marta (kod ustunida indeks yo‘q — har so‘rovda skan emas).
+            rows = (await self._c.execute(text(
+                f"SELECT {code_col} AS code, max({name_col}) AS name FROM {table}"
+                f" WHERE {visible()} GROUP BY 1"),
+                {"ds": snap.dataset_id, "seq": snap.seq})).all()
+            names = {r.code: r.name for r in rows if r.name}
+            SNAPSHOT_CACHE.put(key, names)
+        return {c: names[c] for c in codes if c in names}
 
     async def coverage(self, snapshots: dict[Entity, SnapshotRef]) -> Coverage:
         snap = snapshots.get(Entity.SALES_ORDER_LINE)
         if snap is None:
             return Coverage(None, None, [])
+        key = (self._cache_tenant, "coverage", snap.dataset_id, snap.seq)
+        cached: Coverage | None = SNAPSHOT_CACHE.get(key)
+        if cached is not None:
+            return cached
         params = {"ds": snap.dataset_id, "seq": snap.seq}
         r = (await self._c.execute(text(
             f"SELECT min(local_date) AS a, max(local_date) AS b FROM analytics.order_lines"
@@ -149,7 +187,9 @@ class SqlAggregates:
         currencies: list[str] = list((await self._c.execute(text(
             f"SELECT DISTINCT currency FROM analytics.order_lines WHERE {visible()} ORDER BY 1"),
             params)).scalars().all())
-        return Coverage(r.a, r.b, [str(c).strip() for c in currencies])
+        coverage = Coverage(r.a, r.b, [str(c).strip() for c in currencies])
+        SNAPSHOT_CACHE.put(key, coverage)
+        return coverage
 
 
 def snapshot_ids(snapshots: dict[Entity, SnapshotRef]) -> list[UUID]:
