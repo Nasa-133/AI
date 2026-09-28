@@ -169,8 +169,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Dashboards */
-        get: operations["dashboards_api_v1_dashboards_get"];
+        /** Cards */
+        get: operations["cards_api_v1_dashboards_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -186,8 +186,86 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Dashboard */
-        get: operations["dashboard_api_v1_dashboards__dashboard_id__get"];
+        /** Detail */
+        get: operations["detail_api_v1_dashboards__dashboard_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Edit
+         * @description Nom, tavsif, widget tartibi/turi/o‘chirish — har o‘zgarish yangi versiya.
+         */
+        patch: operations["edit_api_v1_dashboards__dashboard_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/dashboards/{dashboard_id}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Share
+         * @description Ruxsat bilan ulashish (TZ 8.2): faqat korxona a’zolariga.
+         */
+        put: operations["share_api_v1_dashboards__dashboard_id__access_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{dashboard_id}/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh
+         * @description Ruxsat bilan yangilash: oxirgi snapshot bo‘yicha qayta hisob (LLM ishtirokisiz).
+         */
+        post: operations["refresh_api_v1_dashboards__dashboard_id__refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{dashboard_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versions */
+        get: operations["versions_api_v1_dashboards__dashboard_id__versions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/dashboards/{dashboard_id}/widgets/{widget_id}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Csv */
+        get: operations["export_csv_api_v1_dashboards__dashboard_id__widgets__widget_id__export_csv_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -564,6 +642,15 @@ export interface components {
              */
             title?: string;
         };
+        /** DashboardEdit */
+        DashboardEdit: {
+            /** Description */
+            description?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Widgets */
+            widgets?: components["schemas"]["WidgetEdit"][] | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -809,6 +896,16 @@ export interface components {
              */
             user_id: string;
         };
+        /** ShareIn */
+        ShareIn: {
+            /** User Ids */
+            user_ids?: string[];
+            /**
+             * Visibility
+             * @enum {string}
+             */
+            visibility: "private" | "tenant";
+        };
         /** SourceIn */
         SourceIn: {
             /**
@@ -851,6 +948,15 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WidgetEdit */
+        WidgetEdit: {
+            /** Id */
+            id: string;
+            /** Title */
+            title?: string | null;
+            /** Type */
+            type?: ("kpi" | "line" | "bar" | "table" | "text") | null;
         };
     };
     responses: never;
@@ -1193,7 +1299,7 @@ export interface operations {
             };
         };
     };
-    dashboards_api_v1_dashboards_get: {
+    cards_api_v1_dashboards_get: {
         parameters: {
             query?: {
                 q?: string | null;
@@ -1227,7 +1333,7 @@ export interface operations {
             };
         };
     };
-    dashboard_api_v1_dashboards__dashboard_id__get: {
+    detail_api_v1_dashboards__dashboard_id__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1247,6 +1353,178 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_api_v1_dashboards__dashboard_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboard_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    share_api_v1_dashboards__dashboard_id__access_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboard_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_api_v1_dashboards__dashboard_id__refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboard_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    versions_api_v1_dashboards__dashboard_id__versions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboard_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_csv_api_v1_dashboards__dashboard_id__widgets__widget_id__export_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboard_id: string;
+                widget_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

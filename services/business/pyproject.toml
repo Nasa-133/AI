@@ -66,6 +66,7 @@ ignore = ["S101", "RUF001", "RUF002", "RUF003"]
 # SQL bo‘laklari faqat konstanta oq ro‘yxatlardan (jadval, o‘lcham ifodasi); qiymatlar bind parametr.
 "src/business/contexts/analytics/adapters/sql_ingest.py" = ["S608"]
 "src/business/contexts/analytics/adapters/sql_query.py" = ["S608"]
+"src/business/contexts/dashboards/adapters/sql.py" = ["S608"]
 
 [tool.mypy]
 strict = true

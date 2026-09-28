@@ -151,3 +151,12 @@ class QueryService:
                                              [s.id for s in snaps.values()], data, ctx.user_id,
                                              ctx.task_id))
         return data, source_refs(snaps, query_id)
+
+
+async def rerun_stored(service: QueryService, ctx: QueryContext, query_id: UUID) -> UUID | None:
+    """Dashboard yangilash uchun: faqat oddiy query (taqqoslash/hissa emas) qayta hisoblanadi."""
+    stored = await service.store.get_query(query_id)
+    if stored is None or stored.kind != "query":
+        return None
+    data, _ = await service.run(ctx, stored.spec)
+    return UUID(data["query_spec_id"])

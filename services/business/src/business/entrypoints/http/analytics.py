@@ -2,18 +2,15 @@
 
 from datetime import UTC, datetime
 from typing import Any, Literal
-from uuid import UUID
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from business.contexts.analytics.adapters.sql_store import SqlAnalyticsStore
 from business.contexts.analytics.application.queries import QueryContext, QueryService
 from business.contexts.analytics.domain.metrics import CATALOG
 from business.contexts.analytics.ports.store import MetricSettings
-from business.contexts.dashboards.adapters.sql import AnalyticsQueryResults, SqlDashboardStore
-from business.contexts.dashboards.application.service import DashboardService
 from business.contexts.identity.domain.errors import Forbidden
 from business.contexts.identity.public import Role
 from business.platform.db import tenant_transaction
@@ -95,23 +92,3 @@ async def run_query(body: QueryIn, ctx: AuthCtx, container: ContainerDep) -> dic
             QueryContext(ctx.user_id, None, today, profile.timezone),
             body.model_dump(by_alias=True))
     return {"data": data, "source_refs": refs}
-
-
-@router.get("/dashboards")
-async def dashboards(ctx: AuthCtx, container: ContainerDep,
-                     q: str | None = Query(default=None, max_length=200),
-                     limit: int = Query(default=50, ge=1, le=200)) -> list[dict[str, Any]]:
-    async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
-                                  user_id=ctx.user_id) as conn:
-        service = DashboardService(SqlDashboardStore(conn, ctx.tenant_id),
-                                   AnalyticsQueryResults(SqlAnalyticsStore(conn, ctx.tenant_id)))
-        return await service.cards(limit=limit, query=q)
-
-
-@router.get("/dashboards/{dashboard_id}")
-async def dashboard(dashboard_id: UUID, ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
-    async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
-                                  user_id=ctx.user_id) as conn:
-        service = DashboardService(SqlDashboardStore(conn, ctx.tenant_id),
-                                   AnalyticsQueryResults(SqlAnalyticsStore(conn, ctx.tenant_id)))
-        return await service.detail(dashboard_id)
