@@ -29,7 +29,8 @@ def fixture_data(tool: str) -> dict[str, Any]:
 def default_data() -> dict[str, dict[str, Any]]:
     data = {name: fixture_data(name) for name in (
         "list_available_metrics", "run_metric_query", "compare_periods",
-        "explain_contributions", "create_dashboard")}
+        "explain_contributions", "create_dashboard", "search_documents",
+        "read_document_section", "compare_document_versions", "create_document_draft")}
     catalog = data["list_available_metrics"]
     catalog["currencies"] = ["UZS"]
     catalog["metrics"].append({

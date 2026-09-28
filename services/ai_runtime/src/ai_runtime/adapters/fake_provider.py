@@ -13,6 +13,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from ..ports.model import ModelRequest, ModelResponse, ToolCall
+from . import fake_documents as docs
 
 _APOSTROPHES = str.maketrans({c: "'" for c in "‘’ʻʼ`´"})
 
@@ -352,6 +353,9 @@ class FakeProvider:
             if item.get("type") == "function_call_output" and item["call_id"] in calls:
                 outputs[calls[item["call_id"]]["name"]] = json.loads(item["output"])
         available = {t.name for t in request.tools}
+        context_ids = docs.context_document_ids(request.items)
+        if docs.is_document_request(text, available, bool(context_ids)):
+            return self._documents(request, text, context_ids, available)
 
         if "list_available_metrics" not in outputs:
             return self._call(request, "list_available_metrics", {"subject": "all"}, available)
@@ -406,6 +410,68 @@ class FakeProvider:
         return self._final(request, answer, partial=bool(limitations), limitations=limitations)
 
     # --- javob elementlari -------------------------------------------------------------
+    def _documents(self, request: ModelRequest, text: str, context_ids: list[str],
+                   available: set[str]) -> ModelResponse:
+        calls = {i["call_id"]: i for i in request.items if i.get("type") == "function_call"}
+        done: list[tuple[str, dict[str, Any], dict[str, Any]]] = [
+            (calls[i["call_id"]]["name"], json.loads(calls[i["call_id"]]["arguments"]),
+             json.loads(i["output"]))
+            for i in request.items
+            if i.get("type") == "function_call_output" and i["call_id"] in calls]
+        last = {name: result for name, _, result in done}
+        if "search_documents" not in last:
+            return self._call(request, "search_documents", {
+                "query": docs.search_query(text), "document_ids": context_ids or None,
+                "limit": 8}, available)
+        search = last["search_documents"]
+        if search["status"] != "ok":
+            return self._final(request, self._tool_error_text(search), partial=True)
+        edit = docs.parse_edit(text)
+        if edit is None:
+            answer, found = docs.answer_question(text, search["data"])
+            return self._final(request, answer,
+                               limitations=[] if found else ["Hujjatda topilmadi"])
+
+        candidates = docs.edit_candidates(edit, search["data"])
+        by_doc = {h["document_id"]: h for h in candidates}
+        if "create_document_draft" in last:
+            draft = last["create_document_draft"]
+            if draft["status"] != "ok":
+                return self._final(request, self._tool_error_text(draft), partial=True)
+            hit = by_doc.get(draft["data"]["document_id"]) or candidates[0]
+            return self._final(request, docs.draft_answer(draft["data"], hit))
+        if not candidates:
+            return self._final(request, f"“{edit.find}” matni hujjatda topilmadi — "
+                               "o‘zgartirish taklif qilinmadi.",
+                               limitations=["Hujjatda topilmadi"])
+        # Joylar: bitta bo‘limli parcha — bo‘lim ma’lum; ko‘p bo‘limli — bo‘limlar o‘qiladi.
+        read = {(a["version_id"], a["section_id"]): r for n, a, r in done
+                if n == "read_document_section"}
+        places: dict[tuple[str, str], tuple[dict[str, Any], int]] = {}
+        for hit in candidates:
+            if len(hit["section_ids"]) == 1:
+                key = (hit["version_id"], hit["section_ids"][0])
+                places[key] = (hit, max(places.get(key, (hit, 0))[1],
+                                        docs.count(hit["text"], edit.find)))
+                continue
+            for sid in hit["section_ids"][:10]:
+                result = read.get((hit["version_id"], sid))
+                if result is None:
+                    return self._call(request, "read_document_section", {
+                        "document_id": hit["document_id"], "version_id": hit["version_id"],
+                        "section_id": sid}, available)
+                if result["status"] == "ok" and (n := docs.count(result["data"]["text"],
+                                                                 edit.find)):
+                    places[(hit["version_id"], sid)] = (
+                        {**hit, "locator": result["data"]["locator"]}, n)
+        if len(places) != 1 or next(iter(places.values()))[1] > 1:
+            hits = [h for h, _ in places.values()] or candidates
+            return self._final(request, docs.ambiguity_question(edit, hits),
+                               clarification=True)
+        (_, section_id), (hit, _) = next(iter(places.items()))
+        return self._call(request, "create_document_draft",
+                          docs.draft_arguments(hit, section_id, edit), available)
+
     @staticmethod
     def _usage(request: ModelRequest, out: str) -> tuple[int, int]:
         return len(json.dumps(request.items, ensure_ascii=False)) // 4, len(out) // 4

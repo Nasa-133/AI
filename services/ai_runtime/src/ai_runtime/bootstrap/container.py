@@ -8,12 +8,16 @@ from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from ..adapters.fake_provider import FakeProvider
+from ..adapters.hash_embedder import HashEmbedder
 from ..adapters.http_tools import HttpBusinessTools
+from ..adapters.openai_embedder import OpenAIEmbedder
 from ..adapters.openai_provider import OpenAIResponsesProvider
+from ..adapters.s3_store import S3ObjectStore
 from ..adapters.sql_store import SqlRunStore
 from ..adapters.tool_catalog import load_tool_specs
 from ..application.runner import AgentRunner
 from ..ports.clock import SystemClock
+from ..ports.embeddings import EmbeddingProvider
 from ..ports.model import ModelProvider
 from ..ports.tools import BusinessTools
 from .settings import Settings
@@ -25,6 +29,8 @@ class Container:
     engine: AsyncEngine
     tools: HttpBusinessTools
     provider: ModelProvider
+    embedder: EmbeddingProvider
+    objects: S3ObjectStore
 
 
 def make_provider(settings: Settings) -> ModelProvider:
@@ -34,6 +40,14 @@ def make_provider(settings: Settings) -> ModelProvider:
     return FakeProvider()
 
 
+def make_embedder(settings: Settings) -> EmbeddingProvider:
+    if settings.embedding_provider == "openai":
+        return OpenAIEmbedder(api_key=settings.openai_api_key,
+                              model=settings.openai_model_embedding,
+                              dimensions=settings.embedding_dimensions)
+    return HashEmbedder(settings.embedding_dimensions or 256)
+
+
 def build_container(settings: Settings) -> Container:
     return Container(
         settings=settings,
@@ -41,6 +55,10 @@ def build_container(settings: Settings) -> Container:
         tools=HttpBusinessTools(base_url=settings.business_tools_url,
                                 service_token=settings.business_tools_token),
         provider=make_provider(settings),
+        embedder=make_embedder(settings),
+        objects=S3ObjectStore(endpoint_url=settings.s3_endpoint_url,
+                              access_key=settings.s3_access_key,
+                              secret_key=settings.s3_secret_key, region=settings.s3_region),
     )
 
 

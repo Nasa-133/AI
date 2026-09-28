@@ -82,8 +82,17 @@ async def test_clarification_makes_run_partial_without_computation() -> None:
 
 
 async def test_role_without_tools_does_not_call_core() -> None:
-    _, core, run = await run_to_end("savdo", role="document_assistant")
+    _, core, run = await run_to_end("savdo", role="unknown_role")
     assert core.calls == [] and run.status is RunStatus.PARTIAL
+
+
+async def test_document_assistant_answers_from_search() -> None:
+    store, core, run = await run_to_end("To‘lov muddati qancha?", role="document_assistant")
+    assert core.names() == ["search_documents"]
+    assert run.status is RunStatus.SUCCEEDED
+    result = completed(store)["result_candidate"]
+    assert "15 kun" in result["answer_markdown"]
+    assert result["kind"] == "answer"
 
 
 async def test_tool_budget_stops_with_partial() -> None:

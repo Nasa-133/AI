@@ -176,7 +176,9 @@ class AgentRunner:
             "agent_run_id": str(run.id),
             "status": status.value,
             "result_candidate": None if answer is None else {
-                "kind": "answer", "answer_markdown": answer,
+                "kind": "document_patch" if any(
+                    r.status == "ok" and "draft_version_id" in (r.data or {}) for r in outputs)
+                else "answer", "answer_markdown": answer,
                 "structured": _structured(run, outputs)},
             "source_refs": _source_refs(outputs),
             "limitations": [x[:500] for x in dict.fromkeys(limitations + warnings)],
@@ -215,8 +217,12 @@ def _source_refs(outputs: list[ToolResult]) -> list[dict[str, Any]]:
 def _structured(run: AgentRun, outputs: list[ToolResult]) -> dict[str, Any]:
     query_ids: list[str] = []
     dashboards: list[str] = []
+    drafts: list[dict[str, str]] = []
     for result in outputs:
         data = result.data or {}
+        if result.status == "ok" and "draft_version_id" in data:
+            drafts.append({"document_id": str(data["document_id"]),
+                           "version_id": str(data["draft_version_id"])})
         if "query_spec_id" in data:
             query_ids.append(str(data["query_spec_id"]))
         if "dashboard_id" in data:
@@ -224,4 +230,5 @@ def _structured(run: AgentRun, outputs: list[ToolResult]) -> dict[str, Any]:
     return {"prompt_version": PROMPT_VERSION, "role_key": run.role_key,
             "query_spec_ids": list(dict.fromkeys(query_ids)),
             "dashboard_ids": list(dict.fromkeys(dashboards)),
+            "document_drafts": drafts,
             "tool_calls_used": run.tool_calls_used}

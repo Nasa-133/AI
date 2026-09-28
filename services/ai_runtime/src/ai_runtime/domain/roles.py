@@ -11,16 +11,22 @@ ANALYTICS_TOOLS: tuple[str, ...] = (
     "explain_contributions",
     "create_dashboard",
 )
+DOCUMENT_READ_TOOLS: tuple[str, ...] = (
+    "search_documents",
+    "read_document_section",
+    "compare_document_versions",
+)
+DOCUMENT_TOOLS: tuple[str, ...] = (*DOCUMENT_READ_TOOLS, "create_document_draft")
 
-KNOWN_TOOLS: frozenset[str] = frozenset(ANALYTICS_TOOLS)
+KNOWN_TOOLS: frozenset[str] = frozenset(ANALYTICS_TOOLS + DOCUMENT_TOOLS)
 
 ROLE_TOOLS: dict[str, tuple[str, ...]] = {
-    "coordinator": ANALYTICS_TOOLS,
+    # Koordinator hujjatni o‘qiy oladi; tahrir — hujjat yordamchisi orqali.
+    "coordinator": ANALYTICS_TOOLS + DOCUMENT_READ_TOOLS,
     "sales_analyst": ANALYTICS_TOOLS,
-    "finance_analyst": ANALYTICS_TOOLS,
+    "finance_analyst": ANALYTICS_TOOLS + DOCUMENT_READ_TOOLS,
     "inventory_analyst": ANALYTICS_TOOLS,
-    # Hujjat vositalari Bosqich 3 da qo‘shiladi.
-    "document_assistant": (),
+    "document_assistant": DOCUMENT_TOOLS,
 }
 
 

@@ -24,6 +24,17 @@ class Settings(BaseSettings):
         default="", validation_alias=AliasChoices("OPENAI_MODEL_MAIN", "AI_OPENAI_MODEL_MAIN"))
     openai_model_fast: str = Field(
         default="", validation_alias=AliasChoices("OPENAI_MODEL_FAST", "AI_OPENAI_MODEL_FAST"))
+    # Embedding: `hash` — lokal deterministik (kalitsiz), `openai` — OPENAI_MODEL_EMBEDDING.
+    embedding_provider: Literal["hash", "openai"] = "hash"
+    openai_model_embedding: str = Field(
+        default="", validation_alias=AliasChoices("OPENAI_MODEL_EMBEDDING",
+                                                  "AI_OPENAI_MODEL_EMBEDDING"))
+    embedding_dimensions: int | None = None
+    s3_endpoint_url: str = "http://localhost:9000"
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_region: str = "us-east-1"
+    vectors_bucket: str = "abo-ai"
     max_tool_calls: int = 20
     lease_seconds: int = 60
     runner_concurrency: int = 4
