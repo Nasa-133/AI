@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useLogout, useSwitchTenant, type Me } from "@/features/auth/api";
+import { chatTarget } from "@/features/chat/chatTarget";
 import { ChatPanel } from "@/features/chat/ChatPanel";
 import { ThemeSelect } from "@/shared/theme/ThemeSelect";
 
@@ -14,14 +15,11 @@ const NAV = [
   { href: "/", label: "Ofis", icon: "⌂" },
   { href: "/?dashboards=all", label: "Dashboardlar", icon: "▦" },
   { href: "/documents", label: "Hujjatlar", icon: "▤" },
+  { href: "/tasks", label: "Vazifalar", icon: "☰" },
   { href: "/integrations", label: "Integratsiyalar", icon: "⇄" },
   { href: "/settings", label: "Sozlamalar", icon: "⚙" },
 ] as const;
 
-// Hali tayyor bo‘lmagan bo‘limlar yashirilmaydi, lekin faol deb ko‘rsatilmaydi.
-const SOON = [
-  { label: "Vazifalar", icon: "☰", stage: "Bosqich 4" },
-] as const;
 
 export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
   const pathname = usePathname();
@@ -32,6 +30,11 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [mobileView, setMobileView] = useState<"main" | "chat">("main");
   const current = me.memberships.find((m) => m.tenant_id === me.current_tenant_id);
+  // “Chatga yozish” — chat yig‘ilgan bo‘lsa ochiladi, mobil’da chat ko‘rinishiga o‘tiladi.
+  useEffect(() => chatTarget.listen(() => {
+    setChatCollapsed(false);
+    setMobileView("chat");
+  }), []);
 
   return (
     <div className={styles.shell} data-nav={navCollapsed ? "collapsed" : "open"}
@@ -46,13 +49,6 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
             <span className={styles.navIcon} aria-hidden>{item.icon}</span>
             {!navCollapsed && item.label}
           </Link>
-        ))}
-        {SOON.map((item) => (
-          <span key={item.label} className={styles.navLink} aria-disabled="true"
-                title={`${item.label} — ${item.stage}`} style={{ opacity: 0.5 }}>
-            <span className={styles.navIcon} aria-hidden>{item.icon}</span>
-            {!navCollapsed && <>{item.label} <span className="badge">tez orada</span></>}
-          </span>
         ))}
         <div className={styles.navSpacer} />
         <button className="btn btn-ghost btn-sm" onClick={() => setNavCollapsed(!navCollapsed)}

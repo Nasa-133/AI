@@ -187,3 +187,31 @@ async def test_document_upload_search_answer_draft_promote(tmp_path: Path) -> No
         assert r.status_code == 200, r.text
         promoted = (await c.get(f"{BASE}/api/v1/documents/{doc}")).json()
         assert promoted["current_version_id"] == drafts[0]["version_id"]
+
+
+async def test_t01_agent_queue_drains_with_real_workers() -> None:
+    """Limit 1: uchta vazifa Ali navbatida (o‘rin 1, 2), hammasi ketma-ket yakunlanadi."""
+    async with httpx.AsyncClient(timeout=30) as c:
+        await register(c, "Navbat E2E MChJ")
+        conv = (await c.post(f"{BASE}/api/v1/conversations", headers=csrf(c),
+                             json={"title": "Navbat"})).json()["id"]
+        async def post(i: int) -> dict[str, Any]:
+            r = await c.post(f"{BASE}/api/v1/conversations/{conv}/messages", headers=csrf(c),
+                             json={"content": f"Ali, {i + 1}-savol: savdo qancha?"})
+            assert r.status_code == 202, r.text
+            return dict(r.json())
+
+        sent = list(await asyncio.gather(*(post(i) for i in range(3))))
+        positions = sorted((s["queue_position"] or 0) for s in sent)
+        assert positions == [0, 1, 2], positions  # bittasi ishlaydi, ikkitasi navbatda
+
+        async def all_done() -> list[dict[str, Any]] | None:
+            tasks = [(await c.get(f"{BASE}/api/v1/tasks/{s['task_id']}")).json() for s in sent]
+            terminal = {"succeeded", "partial", "failed", "cancelled"}
+            return tasks if all(t["status"] in terminal for t in tasks) else None
+
+        tasks = await until(all_done, "navbatdagi vazifalar yakunlanishi", timeout=90)
+        assert all(t["status"] != "failed" for t in tasks), tasks
+        office = (await c.get(f"{BASE}/api/v1/office")).json()
+        ali = next(a for a in office["agents"] if a["role_key"] == "sales_analyst")
+        assert (ali["active_count"], ali["queue_length"]) == (0, 0)

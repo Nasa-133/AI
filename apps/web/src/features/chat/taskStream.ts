@@ -8,30 +8,38 @@ export type StreamState = {
   phase: string | null;
   toolCalls: number;
   limitations: string[];
+  queuePosition: number | null;
+  needsInput: boolean;
   connection: "connecting" | "open" | "reconnecting" | "closed";
 };
 
 export type StreamEvent =
-  | { type: "task.created"; data: { status: string } }
+  | { type: "task.created"; data: { status: string; queue_position?: number | null } }
+  | { type: "task.queued"; data: { queue_position: number | null } }
   | { type: "task.progress"; data: { phase: string; tool_calls_used: number } }
   | { type: "task.cancel_requested"; data: Record<string, unknown> }
-  | { type: "task.completed"; data: { status: string; limitations: string[] } }
+  | { type: "task.completed"; data: { status: string; limitations: string[]; needs_input?: boolean } }
   | { type: "connection"; data: { state: StreamState["connection"] } };
 
 export const initialStream: StreamState = {
-  status: "queued", phase: null, toolCalls: 0, limitations: [], connection: "connecting",
+  status: "queued", phase: null, toolCalls: 0, limitations: [], queuePosition: null,
+  needsInput: false, connection: "connecting",
 };
 
 export function reduceStream(state: StreamState, e: StreamEvent): StreamState {
   switch (e.type) {
     case "task.created":
-      return { ...state, status: e.data.status };
+      return { ...state, status: e.data.status, queuePosition: e.data.queue_position ?? null };
+    case "task.queued":
+      return { ...state, queuePosition: e.data.queue_position };
     case "task.progress":
-      return { ...state, status: "running", phase: e.data.phase, toolCalls: e.data.tool_calls_used };
+      return { ...state, status: "running", phase: e.data.phase, toolCalls: e.data.tool_calls_used,
+               queuePosition: null };
     case "task.cancel_requested":
       return { ...state, status: "cancelling" };
     case "task.completed":
-      return { ...state, status: e.data.status, limitations: e.data.limitations, connection: "closed" };
+      return { ...state, status: e.data.status, limitations: e.data.limitations, queuePosition: null,
+               needsInput: Boolean(e.data.needs_input), connection: "closed" };
     case "connection":
       return state.connection === "closed" ? state : { ...state, connection: e.data.state };
   }
@@ -47,7 +55,7 @@ export const PHASES: Record<string, string> = {
   waiting_tool: "Hisob natijasini kutmoqda",
 };
 
-const EVENTS = ["task.created", "task.progress", "task.cancel_requested", "task.completed"] as const;
+const EVENTS = ["task.created", "task.queued", "task.progress", "task.cancel_requested", "task.completed"] as const;
 
 export function useTaskStream(taskId: string, onDone: () => void): StreamState {
   const [state, dispatch] = useReducer(reduceStream, initialStream);

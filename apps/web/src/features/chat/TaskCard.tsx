@@ -41,6 +41,8 @@ export function TaskCard({ taskId, conversationId, startedAt }: {
     // Hujjat yordamchisi draft yaratgan bo‘lishi mumkin — versiyalar ro‘yxati yangilanadi.
     void qc.invalidateQueries({ queryKey: ["document"] });
     void qc.invalidateQueries({ queryKey: ["documents"] });
+    void qc.invalidateQueries({ queryKey: ["office"] });
+    void qc.invalidateQueries({ queryKey: ["tasks"] });
   }, [qc, conversationId]);
   const stream = useTaskStream(taskId, onDone);
   const live = !TERMINAL.has(stream.status);
@@ -58,7 +60,11 @@ export function TaskCard({ taskId, conversationId, startedAt }: {
       </div>
       {live && (
         <div className={styles.cardRow}>
-          <span>{stream.phase ? PHASES[stream.phase] ?? stream.phase : "Boshlanishini kutmoqda"}</span>
+          <span>
+            {stream.phase ? PHASES[stream.phase] ?? stream.phase
+              : stream.queuePosition ? `${agent?.name ?? "Agent"} band — navbatda ${stream.queuePosition}-o‘rin`
+                : "Boshlanishini kutmoqda"}
+          </span>
           <span className="muted num">· {elapsed} s</span>
           {stream.toolCalls > 0 && <span className="muted">· {stream.toolCalls} ta hisob</span>}
           {stream.connection === "reconnecting" && <span className="badge badge-warning">Qayta ulanmoqda</span>}

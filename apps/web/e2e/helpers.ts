@@ -33,5 +33,5 @@ export async function importCsv(page: Page, file: string) {
 
 export async function ask(page: Page, text: string) {
   await page.getByLabel("Xabar").fill(text);
-  await page.getByRole("button", { name: "Yuborish" }).click();
+  await page.getByRole("button", { name: "Yuborish", exact: true }).click();
 }

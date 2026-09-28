@@ -42,6 +42,9 @@ class Dispatcher:
             await self._send(q, role)
         positions = {q.task_id: i for i, q in enumerate(waiting[len(sent):], start=1)}
         if announce:
+            for q in sent:  # navbatdan chiqdi — AI’ga yuborildi
+                await self._s.add_event(q.task_id, "task.queued",
+                                        {"status": "queued", "queue_position": None})
             for task_id, position in positions.items():
                 await self._s.add_event(task_id, "task.queued",
                                         {"status": "queued", "queue_position": position})

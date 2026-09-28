@@ -233,3 +233,31 @@ Ma’lum cheklovlar:
 - OCR yo‘q (skaner PDF faqat belgilanadi) — P1.
 - PDF tahriri draftda DOCX sifatida saqlanadi (asl PDF maketi saqlanmaydi).
 - O‘zbek tilidagi qidiruv eval to‘plami — Bosqich 6 eval bilan.
+
+### Bosqich 4 — Virtual ofis: ✅ yakunlandi
+
+| Ish paketi | Holat | Izoh |
+|---|---|---|
+| 4.1 Agent navbati | ✅ | Har agent uchun korxona bo‘yicha parallel limit (`BUSINESS_AGENT_PARALLEL_LIMIT`, standart 3); to‘lsa — shu agent navbati, o‘rni ko‘rsatiladi, boshqa mutaxassislikka o‘tkazilmaydi; advisory lock bilan poygasiz; slot bo‘shaganda keyingisi yuboriladi; navbatdagi vazifani bekor qilish — AI’ga hech narsa yuborilmaydi |
+| 4.2 Holat mapping’i | ✅ | TZ 6 jadvali domen funksiyasi sifatida: step turi AI bosqichidan (read/retrieve/compute/analyze/draft), ustuvorlik, yakuniy holat 30 s dan so‘ng `idle`, aniqlashtirish → `awaiting_input` (javob berilguncha) |
+| 4.3 API | ✅ | `GET /api/v1/office` (agent holati, joriy ishlar / limit, navbat, joriy vazifa; boshqa foydalanuvchi vazifasi matni yashirin), `GET /api/v1/tasks`; SSE’da `task.queued` |
+| 4.4 Ofis sahnasi | ✅ | DOM/SVG: 5 ta stol, personaj, holat belgisi; strelkalar/Home/End, Enter — agent kartasi (non-modal, Escape va fokus qaytishi); `prefers-reduced-motion`; “Ro‘yxat” ko‘rinishi — sahnasiz muqobil (U01) |
+| 4.5 Agent kartasi va Vazifalar | ✅ | Faol vazifalar, bosqich, navbatdagi o‘rin, to‘xtatish, “Chatga yozish” (agent tanlanadi, fokus), suhbatni ochish; Vazifalar sahifasi |
+
+Qabul testlari:
+- Unit: holat mapping jadvali, ustuvorlik, 30 s qoida, aniqlashtirish.
+- Integratsiya: T01 (limit 1 → o‘rinlar 1, 2; boshqa agent darhol; slot bo‘shaganda navbat siljiydi),
+  T05 (navbatdagini bekor qilish), ofis holati progress eventidan, `awaiting_input`.
+- To‘liq stek: uchta parallel so‘rov → bittasi ishlaydi, ikkitasi navbatda → hammasi yakunlanadi.
+- Brauzer: ofis holati, klaviatura, karta, “Chatga yozish”, ro‘yxat ko‘rinishi (saqlanadi),
+  Vazifalar, mobil kenglik; aniqlashtirish → “Javobingizni kutmoqda”, reduced-motion’da animatsiya
+  yo‘q (odatiy rejimda borligi ham tekshiriladi). Jami 7/7.
+
+Topilib tuzatilgan xatolar: navbatdagi bir nechta vazifadan eng oxirgisi “joriy” deb ko‘rsatilishi
+(endi AI’ga yuborilgan va eng eskisi); vosita xatosi matnida ikki nuqta.
+
+Ma’lum cheklovlar:
+- Agent profillari (ism sozlash, doimiy UUID) — P1; hozir standart ismlar.
+- `awaiting_approval` holati mapping’da bor, lekin tasdiq talab qiladigan qadam hali yo‘q.
+- Ofis holati 2 s polling bilan yangilanadi (backend holatidan); tenant SSE kanali — P1.
+- Osilib qolgan (15 daqiqadan oshgan) vazifa slotni band qilmaydi; uni avtomatik `failed` qilish — Bosqich 5.

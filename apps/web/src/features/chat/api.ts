@@ -95,6 +95,10 @@ export function useCancelTask() {
   return useMutation({
     mutationFn: (taskId: string) =>
       unwrap(api.POST("/api/v1/tasks/{task_id}/cancel", { params: { path: { task_id: taskId } } })),
-    onSuccess: (_d, taskId) => qc.invalidateQueries({ queryKey: keys.task(taskId) }),
+    onSuccess: (_d, taskId) => {
+      void qc.invalidateQueries({ queryKey: keys.task(taskId) });
+      void qc.invalidateQueries({ queryKey: ["tasks"] });
+      void qc.invalidateQueries({ queryKey: ["office"] });
+    },
   });
 }

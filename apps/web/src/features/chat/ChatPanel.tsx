@@ -7,6 +7,7 @@ import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 import { AGENTS, useConversations, useCreateConversation, useMessages, useSendMessage } from "./api";
 import styles from "./chat.module.css";
+import { chatTarget } from "./chatTarget";
 import { contextDocs, useContextDocs } from "./contextDocs";
 import { MessageItem } from "./MessageItem";
 import { TaskCard } from "./TaskCard";
@@ -40,6 +41,7 @@ export function ChatPanel() {
   const [text, setText] = useState("");
   const [agent, setAgent] = useState<string>("");
   const listRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const attached = useContextDocs();
   const [picking, setPicking] = useState(false);
   const documents = useDocuments();
@@ -53,6 +55,13 @@ export function ChatPanel() {
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [items.length]);
+
+  // Ofis/vazifalardan “Chatga yozish”: agent tanlanadi, kerak bo‘lsa suhbat almashadi, fokus.
+  useEffect(() => chatTarget.listen((target) => {
+    if (target.agent) setAgent(target.agent);
+    if (target.conversationId) { setSelected(target.conversationId); remember(target.conversationId); }
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }), []);
 
   async function ensureConversation(): Promise<string> {
     if (conversationId) return conversationId;
@@ -156,7 +165,7 @@ export function ChatPanel() {
         )}
         <div className={styles.composerRow}>
           <label className="sr-only" htmlFor="chat-input">Xabar</label>
-          <textarea id="chat-input" className="textarea" rows={2} value={text} maxLength={20000}
+          <textarea id="chat-input" ref={inputRef} className="textarea" rows={2} value={text} maxLength={20000}
                     placeholder="Masalan: Ali, o‘tgan oy filiallar savdosini solishtir"
                     onChange={(e) => setText(e.target.value)} onKeyDown={onKey} />
           <button className="btn btn-primary" disabled={!text.trim() || send.isPending}>Yuborish</button>
