@@ -572,4 +572,4 @@ class FakeProvider:
     @staticmethod
     def _tool_error_text(result: dict[str, Any]) -> str:
         reason = str(result.get("error_message") or result.get("error_code")).rstrip(". ")
-        return f"Hisoblash vositasi natija bermadi: {reason}. Raqam taxmin qilinmadi."
+        return f"Hisoblab bo‘lmadi. {reason}. Raqam taxmin qilinmadi."

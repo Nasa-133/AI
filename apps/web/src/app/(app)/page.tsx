@@ -8,6 +8,7 @@ import { Board } from "@/features/dashboards/Board";
 import { DashboardWindow } from "@/features/dashboards/DashboardWindow";
 import { Picker } from "@/features/dashboards/Picker";
 import { OfficeFloor } from "@/features/office/OfficeFloor";
+import { SetupChecklist } from "@/features/onboarding/SetupChecklist";
 
 function Workspace() {
   const router = useRouter();
@@ -34,6 +35,7 @@ function Workspace() {
 
   return (
     <>
+      <SetupChecklist />
       <Board onOpen={(id) => open(id)} onShowAll={() => router.push(`${pathname}?dashboards=all`, { scroll: false })} />
       <OfficeFloor />
       {dashboardId && (

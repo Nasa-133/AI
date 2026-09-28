@@ -13,6 +13,8 @@ from ..domain.query import Filters, Period, QuerySpec
 from ..ports.store import AnalyticsStore, ComponentRow, SnapshotRef, StoredQuery
 from . import results as R
 
+_ENTITY_LABEL = {Entity.SALES_ORDER_LINE: "Savdo", Entity.FINANCE_RECEIVABLE: "Debitorlik"}
+
 
 class NoData(BusinessError):
     code = "NO_DATA"
@@ -113,12 +115,15 @@ class QueryService:
                             snapshots: dict[Entity, SnapshotRef] | None = None,
                             ) -> dict[Entity, SnapshotRef]:
         if await self._s.metric_settings() is None:
-            raise SettingsNotApproved("Metrika sozlamalari (QQS, qaytarish, chegirma qoidasi) "
-                                      "tasdiqlanmagan — moliyaviy xulosa chiqarilmaydi.")
+            raise SettingsNotApproved(
+                "Hisob qoidalari (QQS, qaytarish, chegirma) hali tasdiqlanmagan, shuning uchun "
+                "moliyaviy raqam chiqarilmaydi. Korxona egasi yoki administrator: Sozlamalar → "
+                "Hisob qoidalari → “Tasdiqlash”.")
         snaps = snapshots if snapshots is not None else await self._s.active_snapshots()
         needed = (Entity.FINANCE_RECEIVABLE if spec.is_receivable else Entity.SALES_ORDER_LINE)
         if needed not in snaps:
-            raise NoData(f"{needed.value} uchun tasdiqlangan ma’lumot hali yuklanmagan.")
+            raise NoData(f"{_ENTITY_LABEL.get(needed, needed.value)} ma’lumoti hali yuklanmagan. "
+                         "Integratsiyalar sahifasida ERP’ni ulang yoki CSV fayl yuklang.")
         keep = ({Entity.FINANCE_RECEIVABLE} if spec.is_receivable
                 else {Entity.SALES_ORDER_LINE, Entity.SALES_RETURN})
         return {e: s for e, s in snaps.items() if e in keep}

@@ -1,0 +1,17 @@
+.card { margin: var(--space-4) var(--space-4) 0; padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-4); }
+.head { display: flex; flex-direction: column; gap: 4px; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.step {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+}
+.step[data-done="true"] { background: var(--surface-2); }
+.mark {
+  display: grid; place-items: center; width: 34px; height: 34px; flex: none; border-radius: 10px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.step[data-done="true"] .mark { background: var(--success-soft); color: var(--success); }
+.mark svg { width: 18px; height: 18px; }
+.body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; font-size: var(--text-sm); }
+.body strong { font-size: var(--text-md); display: flex; align-items: center; }
+@media (max-width: 700px) { .step { flex-wrap: wrap; } }

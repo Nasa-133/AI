@@ -185,6 +185,9 @@ test("mobil: xarita balandroq va boshida yaqinlashtirilgan", async ({ browser })
   await expect(page.getByText("200%")).toBeVisible();
   // Boshlang‘ich kadr agentlarga qaratilgan: hammasi (dam olish zonasida) ko‘rinishda.
   await expect.poll(async () => {
+    // Sahifa tepasidagi kartochkalar (masalan, “Ishni boshlash”) keyin yuklanib xaritani surishi
+    // mumkin — xarita har tekshiruvda qayta o‘lchanadi.
+    const box = (await map.boundingBox())!;
     const inside = await Promise.all(["coordinator", "sales_analyst", "finance_analyst",
       "inventory_analyst", "document_assistant"].map(async (role) => {
       const b = await page.locator(`[data-agent="${role}"] circle`).first().boundingBox();
