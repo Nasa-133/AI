@@ -217,3 +217,39 @@ class SqlWorkspaceStore:
             " ORDER BY task_id, created_at DESC"), {"ids": task_ids})).all()
         return {r.task_id: {"content": r.content, "structured": r.structured,
                             "source_refs": r.source_refs} for r in rows}
+
+    async def stuck_tasks(self, older_than_seconds: int) -> list[TaskView]:
+        rows = (await self._c.execute(text(
+            "SELECT id, conversation_id, initiator_id, agent_role_key, status, cancel_requested,"
+            " error_code, limitations, created_at, updated_at FROM workspace.tasks"
+            " WHERE dispatched_at < now() - make_interval(secs => :s)"
+            " AND status NOT IN ('succeeded', 'partial', 'failed', 'cancelled')"
+            " ORDER BY dispatched_at LIMIT 200 FOR UPDATE SKIP LOCKED"),
+            {"s": older_than_seconds})).all()
+        return [TaskView(*r) for r in rows]
+
+    async def purge_conversations(self, *, days: int) -> int:
+        """Eski suhbat va unga bog‘liq hamma narsa; faol vazifasi bor suhbat o‘chirilmaydi."""
+        params = {"d": days}
+        old = ("SELECT c.id FROM workspace.conversations c WHERE c.updated_at < now()"
+               " - make_interval(days => :d) AND NOT EXISTS (SELECT 1 FROM workspace.tasks t"
+               " WHERE t.conversation_id = c.id AND t.status NOT IN"
+               " ('succeeded', 'partial', 'failed', 'cancelled'))")
+        tasks = f"SELECT t.id FROM workspace.tasks t WHERE t.conversation_id IN ({old})"  # noqa: S608
+        for table in ("task_events", "tool_calls", "task_steps"):
+            await self._c.execute(text(
+                f"DELETE FROM workspace.{table} WHERE task_id IN ({tasks})"), params)  # noqa: S608
+        await self._c.execute(text(
+            f"DELETE FROM workspace.tasks WHERE conversation_id IN ({old})"), params)  # noqa: S608
+        await self._c.execute(text(
+            f"DELETE FROM workspace.messages WHERE conversation_id IN ({old})"),  # noqa: S608
+            params)
+        r = await self._c.execute(text(
+            f"DELETE FROM workspace.conversations WHERE id IN ({old})"), params)  # noqa: S608
+        return int(r.rowcount or 0)
+
+    async def purge_idempotency_keys(self, *, days: int) -> int:
+        r = await self._c.execute(text(
+            "DELETE FROM workspace.idempotency_keys WHERE created_at < now()"
+            " - make_interval(days => :d)"), {"d": days})
+        return int(r.rowcount or 0)

@@ -35,3 +35,8 @@ class Settings(BaseSettings):
     budget_monthly_limit: Decimal | None = Decimal("50")
     budget_daily_limit: Decimal | None = None
     budget_task_reservation: Decimal = Decimal("0.05")
+    # Fon ishlari va saqlash muddatlari (TZ 17; mahsulot defaultlari, mijoz talabi bilan o‘zgaradi).
+    maintenance_interval_seconds: int = Field(default=60, ge=5)
+    retention_conversation_days: int = Field(default=90, ge=1)
+    retention_draft_days: int = Field(default=90, ge=1)
+    retention_audit_days: int = Field(default=365, ge=30)

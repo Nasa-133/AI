@@ -15,6 +15,7 @@ from business.bootstrap.container import build_container
 from business.bootstrap.settings import Settings
 
 from .consumers import ANALYTICS_QUEUE, DOCUMENTS_QUEUE, WORKSPACE_QUEUE, Consumers
+from .jobs import maintenance_loop
 
 logger = logging.getLogger("business.worker")
 
@@ -38,7 +39,7 @@ async def run(settings: Settings) -> None:
         loop.add_signal_handler(sig, stop.set)
     logger.info("Business worker ishga tushdi")
     try:
-        await relay.run_forever(stop)
+        await asyncio.gather(relay.run_forever(stop), maintenance_loop(container, stop))
     finally:
         await connection.close()
         await engine.dispose()

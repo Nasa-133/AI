@@ -186,3 +186,26 @@ class SqlDocumentRecords:
                 "INSERT INTO documents.document_shares (tenant_id, document_id, user_id,"
                 " created_by, created_at) VALUES (:t, :d, :u, :by, now())"),
                 [{"t": self._t, "d": document_id, "u": u, "by": user_id} for u in shared_with])
+
+    async def retryable_cleanups(self, max_attempts: int) -> list[tuple[UUID, UUID, int]]:
+        # Kutish 10 · 2^urinish daqiqa (yo‘qolgan “pending” ham shu qoidaga tushadi).
+        rows = (await self._c.execute(text(
+            "SELECT document_id, id, attempts FROM documents.cleanup_jobs"
+            " WHERE status IN ('failed', 'pending') AND attempts < :m"
+            " AND created_at < now() - make_interval(mins => 10 * power(2, attempts)::int)"
+            " ORDER BY created_at LIMIT 100"), {"m": max_attempts})).all()
+        return [(r.document_id, r.id, r.attempts) for r in rows]
+
+    async def stale_drafts(self, days: int) -> list[VersionRecord]:
+        rows = (await self._c.execute(text(
+            f"SELECT {_VERSION_COLS} FROM documents.versions v WHERE v.kind = 'draft'"
+            " AND v.created_at < now() - make_interval(days => :d)"
+            " AND NOT EXISTS (SELECT 1 FROM documents.documents d"
+            "   WHERE d.current_version_id = v.id)"
+            " AND NOT EXISTS (SELECT 1 FROM documents.versions c WHERE c.base_version_id = v.id)"
+            " ORDER BY v.created_at LIMIT 200"), {"d": days})).all()
+        return [VersionRecord(*r) for r in rows]
+
+    async def delete_version(self, version_id: UUID) -> None:
+        await self._c.execute(text("DELETE FROM documents.versions WHERE id = :id"),
+                              {"id": version_id})
