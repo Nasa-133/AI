@@ -5,8 +5,10 @@ worker checkpoint’dan davom etadi: tugallangan tool chaqiruvi takrorlanmaydi, 
 chaqiruv o‘sha `tool_call_id` bilan qayta yuboriladi (Core deduplikatsiya qiladi).
 """
 
+import asyncio
 import json
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import timedelta
 from typing import Any
 
@@ -15,7 +17,7 @@ from ..domain.pricing import Pricing
 from ..domain.roles import allowed_tools
 from ..domain.run import AgentRun, RunStatus
 from ..ports.clock import Clock
-from ..ports.model import ModelProvider, ModelRequest, ModelResponse, ToolSpec
+from ..ports.model import ModelProvider, ModelRequest, ModelResponse, ModelUnavailable, ToolSpec
 from ..ports.store import LeaseLost, PendingEvent, RunStore
 from ..ports.tools import BusinessTools, ToolAuthError, ToolResult, ToolUnavailable
 from .prompts import PROMPT_VERSION, instructions_for
@@ -40,6 +42,10 @@ _PHASE_BY_TOOL = {
 CLARIFICATION_REQUIRED = "CLARIFICATION_REQUIRED"
 
 
+PROVIDER_ERROR_TEXT = ("AI modeli so‘rovni qabul qilmadi (sozlama xatosi). "
+                       "Javob taxmin qilinmadi.")
+
+
 class _Finished(Exception):
     """Run yakuniy holatga o‘tdi va saqlandi."""
 
@@ -56,8 +62,14 @@ class AgentRunner:
         owner: str,
         lease: timedelta,
         pricing: Pricing | None = None,
+        model_attempts: int = 3,
+        backoff_seconds: float = 2.0,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
         self._pricing = pricing or Pricing()
+        self._model_attempts = max(1, model_attempts)
+        self._backoff = backoff_seconds
+        self._sleep = sleep
         self._store = store
         self._provider = provider
         self._tools = tools
@@ -101,7 +113,7 @@ class AgentRunner:
             if pending:
                 await self._execute_tool(run, pending[0])
                 continue
-            response = await self._provider.respond(ModelRequest(
+            response = await self._respond(run, ModelRequest(
                 instructions=instructions_for(run.role_key),
                 items=run.checkpoint.items,
                 tools=[self._tool_specs[n] for n in allowed_tools(run.role_key)
@@ -154,6 +166,27 @@ class AgentRunner:
         run.checkpoint.items.append({"type": "function_call_output", "call_id": call_id,
                                      "output": json.dumps(result.to_json(), ensure_ascii=False)})
         await self._commit(run)
+
+    async def _respond(self, run: AgentRun, request: ModelRequest) -> ModelResponse:
+        """T03: 429/timeout — cheklangan qayta urinish (kutish bilan, holat ko‘rinadi);
+        tugasa aniq xato bilan yakun, soxta javob yo‘q."""
+        for attempt in range(1, self._model_attempts + 1):
+            try:
+                return await self._provider.respond(request)
+            except ModelUnavailable as exc:
+                if not exc.retryable:
+                    await self._finish(run, RunStatus.FAILED, None, [PROVIDER_ERROR_TEXT],
+                                       error_code="PROVIDER_ERROR")
+                if attempt == self._model_attempts or run.is_past_deadline(self._clock.now()):
+                    await self._finish(run, RunStatus.FAILED, None, [
+                        "AI modeli hozir javob bermayapti (band yoki vaqt tugadi). Soxta javob "
+                        "berilmadi — birozdan keyin qayta yuboring."],
+                        error_code="PROVIDER_UNAVAILABLE")
+                delay = min(exc.retry_after or self._backoff * 2 ** (attempt - 1), 30.0)
+                note = f"AI modeli band — {attempt + 1}-urinish {delay:.0f} s dan so‘ng"
+                await self._commit(run, self._progress(run, "waiting_tool", note))
+                await self._sleep(delay)
+        raise AssertionError("yetib bo‘lmaydi")
 
     # --- yakunlash ---------------------------------------------------------------------
     async def _complete_with_answer(self, run: AgentRun, response: ModelResponse) -> None:

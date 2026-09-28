@@ -39,6 +39,15 @@ class ModelResponse:
     limitations: list[str] = field(default_factory=list)
 
 
+class ModelUnavailable(Exception):
+    """Provayder javob bermadi. `retryable` — 429/timeout/5xx; aks holda konfiguratsiya xatosi."""
+
+    def __init__(self, message: str, *, retryable: bool, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retryable = retryable
+        self.retry_after = retry_after
+
+
 class ModelProvider(Protocol):
     @property
     def name(self) -> str: ...

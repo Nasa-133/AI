@@ -9,9 +9,13 @@
 
 from typing import Any, Literal
 
+import openai
 from openai import AsyncOpenAI
 
-from ..ports.model import ModelRequest, ModelResponse, ToolCall
+from ..ports.model import ModelRequest, ModelResponse, ModelUnavailable, ToolCall
+
+_RETRYABLE = (openai.RateLimitError, openai.APITimeoutError, openai.APIConnectionError,
+              openai.InternalServerError)
 
 
 class OpenAIResponsesProvider:
@@ -22,7 +26,8 @@ class OpenAIResponsesProvider:
         if not api_key or not model:
             raise ValueError("OpenAI provayderi uchun AI_OPENAI_API_KEY va AI_OPENAI_MODEL_MAIN "
                              "majburiy (fake’ga yashirin o‘tish yo‘q)")
-        self._client = client or AsyncOpenAI(api_key=api_key)
+        # Qayta urinish runner’da (cheklangan, holat bilan) — SDK ichidagi yashirin retry o‘chiq.
+        self._client = client or AsyncOpenAI(api_key=api_key, max_retries=0, timeout=60.0)
         self._model = model
         self._max_output_tokens = max_output_tokens
 
@@ -32,15 +37,21 @@ class OpenAIResponsesProvider:
         kwargs: dict[str, Any] = {}
         if self._max_output_tokens:
             kwargs["max_output_tokens"] = self._max_output_tokens
-        response = await self._client.responses.create(
-            model=self._model,
-            instructions=request.instructions,
-            input=request.items,  # type: ignore[arg-type]
-            tools=tools,
-            store=False,
-            include=["reasoning.encrypted_content"],
-            **kwargs,
-        )
+        try:
+            response = await self._client.responses.create(
+                model=self._model,
+                instructions=request.instructions,
+                input=request.items,  # type: ignore[arg-type]
+                tools=tools,
+                store=False,
+                include=["reasoning.encrypted_content"],
+                **kwargs,
+            )
+        except _RETRYABLE as exc:
+            raise ModelUnavailable(f"OpenAI: {type(exc).__name__}", retryable=True,
+                                   retry_after=_retry_after(exc)) from exc
+        except openai.OpenAIError as exc:
+            raise ModelUnavailable(f"OpenAI: {type(exc).__name__}", retryable=False) from exc
         output_items: list[dict[str, Any]] = []
         tool_calls: list[ToolCall] = []
         texts: list[str] = []
@@ -73,3 +84,12 @@ class OpenAIResponsesProvider:
             output_tokens=usage.output_tokens if usage else 0,
             limitations=limitations,
         )
+
+
+def _retry_after(exc: Exception) -> float | None:
+    response = getattr(exc, "response", None)
+    value = response.headers.get("retry-after") if response is not None else None
+    try:
+        return float(value) if value else None
+    except ValueError:
+        return None
