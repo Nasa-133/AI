@@ -1,4 +1,4 @@
-"""Dashboard tahriri, versiyalar, ulashish (ACL), yangilash va CSV eksport (TZ 3, 8.2, 9.4)."""
+"""Dashboard tahriri, versiyalar, ulashish (ACL), yangilash, CSV eksport, 50 ta doska (TZ 3, 8.2, 9.4, U04)."""
 
 from uuid import UUID, uuid4
 
@@ -103,3 +103,44 @@ def test_csv_formula_injection_is_neutralized() -> None:
     assert csv_safe("@SUM(A1)") == "'@SUM(A1)"
     assert csv_safe("-100.00") == "-100.00"  # oddiy manfiy son o‘zgarmaydi
     assert csv_safe(None) == ""
+
+
+async def test_u04_fifty_dashboards_listed_and_searchable_without_llm(
+    client: httpx.AsyncClient, app_engine: AsyncEngine,
+) -> None:
+    from sqlalchemy import text
+
+    from business.contexts.dashboards.adapters.sql import AnalyticsQueryResults, SqlDashboardStore
+    from business.contexts.dashboards.application.service import DashboardService
+
+    async with new_client(client) as owner:
+        _, body = await onboard(owner, "Ellik MChJ")
+        await complete_mfa(owner)
+        tenant, owner_id = UUID(body["tenant_id"]), UUID(body["user_id"])
+        async with tenant_transaction(app_engine, tenant_id=tenant, user_id=owner_id) as conn:
+            await load_golden(SqlAnalyticsStore(conn, tenant), uuid4())
+        query_id = await monthly_query(owner)
+        async with tenant_transaction(app_engine, tenant_id=tenant, user_id=owner_id) as conn:
+            service = DashboardService(SqlDashboardStore(conn, tenant),
+                                       AnalyticsQueryResults(SqlAnalyticsStore(conn, tenant)))
+            for i in range(50):
+                await service.create(user_id=owner_id, task_id=None,
+                                     title=f"Hisobot {i:02d}" + (" — Buxoro" if i == 37 else ""),
+                                     description=None, widgets=[
+                                         {"title": "Oylar", "type": "line",
+                                          "query_spec_id": query_id, "text": None}])
+
+        cards = (await owner.get("/api/v1/dashboards", params={"limit": 200})).json()
+        assert len(cards) == 50
+        assert all(c["status"] == "ready" and c["period"] for c in cards)
+        assert len((await owner.get("/api/v1/dashboards")).json()) == 50  # standart limit
+        found = (await owner.get("/api/v1/dashboards", params={"q": "buxoro"})).json()
+        assert [c["title"] for c in found] == ["Hisobot 37 — Buxoro"]
+        detail = await owner.get(f"/api/v1/dashboards/{found[0]['id']}")
+        assert detail.status_code == 200 and detail.json()["widgets"][0]["status"] == "ready"
+        # Doska va tafsilot AI’ga hech narsa yubormaydi (U04: sahifa LLM chaqirmaydi).
+        async with tenant_transaction(app_engine, tenant_id=tenant, user_id=None) as conn:
+            sent = (await conn.execute(text(
+                "SELECT count(*) FROM messaging.outbox WHERE event_type = 'RunAgent.v1'"
+                " AND tenant_id = :t"), {"t": tenant})).scalar()
+        assert sent == 0

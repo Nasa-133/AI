@@ -1,4 +1,4 @@
-"""T01: agent parallel limiti va navbat; ofis holati; navbatdagi vazifani bekor qilish (T05)."""
+"""T01, T02, T04, T05: agent navbati, ofis holati, SSE qayta ulanish, idempotentlik, bekor qilish."""
 
 from typing import Any
 from uuid import UUID, uuid4
@@ -134,3 +134,69 @@ async def test_clarification_shows_awaiting_input_until_answered(
         await c.post(url, headers=csrf(c), json={"content": "Madina, yalpi foyda"})
         madina = agents((await c.get("/api/v1/office")).json())["finance_analyst"]
         assert madina["state"] == "queued"  # javob berildi — yangi vazifa navbatda/yuborilgan
+
+
+def sse_events(body: str) -> list[tuple[int, str]]:
+    out = []
+    for block in body.split("\n\n"):
+        fields = dict(line.split(": ", 1) for line in block.splitlines() if ": " in line
+                      and not line.startswith(":"))
+        if "id" in fields:
+            out.append((int(fields["id"]), fields["event"]))
+    return out
+
+
+async def test_t02_sse_resumes_from_last_event_id_without_rerun(
+    client: httpx.AsyncClient, app_engine: AsyncEngine,
+) -> None:
+    async with owner(client, "SSE MChJ") as (c, tenant):
+        conv = (await c.post("/api/v1/conversations", headers=csrf(c), json={})).json()["id"]
+        task = (await c.post(f"/api/v1/conversations/{conv}/messages", headers=csrf(c),
+                             json={"content": "Ali, savdo qancha?"})).json()["task_id"]
+        step = (await c.get(f"/api/v1/tasks/{task}")).json()["steps"][0]["id"]
+        run_id = str(uuid4())
+        for seq, phase in enumerate(("retrieving", "calculating"), start=1):
+            await agent_event(client, app_engine, tenant, "progressed", {
+                "task_id": task, "task_step_id": step, "agent_run_id": run_id, "phase": phase,
+                "message": phase, "tool_calls_used": seq, "sequence": seq})
+        await agent_event(client, app_engine, tenant, "completed", {
+            "task_id": task, "task_step_id": step, "agent_run_id": run_id,
+            "status": "succeeded", "source_refs": [], "limitations": [], "error_code": None,
+            "result_candidate": {"kind": "answer", "answer_markdown": "Tayyor",
+                                 "structured": None},
+            "usage": {"input_tokens": 0, "output_tokens": 0, "cost_estimate": "0",
+                      "currency": "USD"}})
+
+        url = f"/api/v1/tasks/{task}/events"
+        full = sse_events((await c.get(url)).text)
+        assert full[-1][1] == "task.completed" and len(full) >= 4
+        assert [i for i, _ in full] == sorted(i for i, _ in full)  # tartib saqlanadi
+        # Uzilish: mijoz 2-eventni oldi → qayta ulanishda faqat keyingilari, takrorsiz.
+        cut = full[1][0]
+        resumed = sse_events((await c.get(url, headers={"Last-Event-ID": str(cut)})).text)
+        assert resumed == [e for e in full if e[0] > cut]
+        # Qayta ulanish vazifani qayta ishga tushirmaydi (T02).
+        assert await run_agent_count(app_engine, tenant, [task]) == 1
+        assert (await c.get(f"/api/v1/tasks/{task}")).json()["status"] == "succeeded"
+
+
+async def test_t04_same_idempotency_key_creates_one_task(
+    client: httpx.AsyncClient, app_engine: AsyncEngine,
+) -> None:
+    async with owner(client, "Idem MChJ") as (c, tenant):
+        conv = (await c.post("/api/v1/conversations", headers=csrf(c), json={})).json()["id"]
+        url = f"/api/v1/conversations/{conv}/messages"
+        headers = {**csrf(c), "Idempotency-Key": f"msg-{uuid4()}"}
+        first = await c.post(url, headers=headers, json={"content": "Ali, savdo qancha?"})
+        again = await c.post(url, headers=headers, json={"content": "Ali, savdo qancha?"})
+        assert first.status_code == again.status_code == 202
+        assert first.json() == again.json()
+        messages = (await c.get(url)).json()
+        assert sum(1 for m in messages if m["author_kind"] == "user") == 1
+        tasks = (await c.get("/api/v1/tasks")).json()
+        assert [t["id"] for t in tasks] == [first.json()["task_id"]]
+        assert await run_agent_count(app_engine, tenant, [first.json()["task_id"]]) == 1
+        # Boshqa kalit — yangi vazifa.
+        other = await c.post(url, headers={**csrf(c), "Idempotency-Key": f"msg-{uuid4()}"},
+                             json={"content": "Ali, savdo qancha?"})
+        assert other.json()["task_id"] != first.json()["task_id"]

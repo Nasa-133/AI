@@ -1,4 +1,4 @@
-"""Analytics: golden ma’lumot → ingestion → query (TZ A01, A02, A04, A06, A07)."""
+"""Analytics: golden ma’lumot → ingestion → query (TZ A01–A07)."""
 
 from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime
@@ -184,3 +184,76 @@ async def test_query_guards(tenant_conn: tuple[AsyncConnection, UUID]) -> None:
     await store.save_metric_settings(MetricSettings(1, {}, uuid4(), datetime.now(UTC)))
     with pytest.raises(NoData):
         await QueryService(store).run(ctx(), args(["net_sales"], "2026-01-01", "2026-01-31"))
+
+
+async def test_a03_partial_month_and_mixed_currencies(
+    tenant_conn: tuple[AsyncConnection, UUID],
+) -> None:
+    conn, tenant = tenant_conn
+    store = SqlAnalyticsStore(conn, tenant)
+    records = order_lines(GOLDEN / "sotuvlar.csv")
+    records.append({**records[6], "source_id": "S-USD", "currency": "USD",
+                    "gross_amount": "40.00", "vat_amount": "0.00", "cost_amount": "10.00"})
+    reader = MemoryReader({"o": jsonl(records)})
+    await ingest_batch(store, reader, Outbox(), batch(Entity.SALES_ORDER_LINE, "o", uuid4()),
+                       timezone="Asia/Tashkent")
+    await store.save_metric_settings(MetricSettings(1, {}, uuid4(), datetime.now(UTC)))
+    q = QueryService(store)
+    mid_april = ctx(date(2026, 4, 15))
+
+    # Yarim oy + ikki valyuta: yig‘indi valyuta bo‘yicha ajratiladi, hech qachon qo‘shilmaydi.
+    data, _ = await q.run(mid_april, args(["net_sales"], "2026-04-01", "2026-04-30"))
+    assert [c["name"] for c in data["columns"]] == ["currency", "net_sales"]
+    assert sorted(data["rows"]) == [["USD", "40.00"], ["UZS", "450.00"]]
+    assert data["currency"] is None
+    assert "Bir nechta valyuta: natija valyuta bo‘yicha ajratilgan, qo‘shilmagan." in data["notes"]
+    assert any(n.startswith("Davr hali tugamagan") for n in data["notes"])
+    # Valyuta tanlansa — bitta qator, ajratish izohi yo‘q; tugagan davrda MTD izohi yo‘q.
+    uzs, _ = await q.run(mid_april, {**args(["net_sales"], "2026-04-01", "2026-04-30"),
+                                     "currency": "UZS"})
+    assert uzs["rows"] == [["450.00"]] and uzs["currency"] == "UZS"
+    assert not any(n.startswith("Bir nechta valyuta") for n in uzs["notes"])
+    march, _ = await q.run(mid_april, args(["net_sales"], "2026-03-01", "2026-03-31"))
+    assert not any(n.startswith("Davr hali tugamagan") for n in march["notes"])
+
+
+class BrokenReader:
+    """Kanonik batch o‘qilayotganda uzilish (obyekt oqimi yarim yo‘lda)."""
+
+    async def read(self, object_ref: dict[str, Any], entity: Entity) -> list[dict[str, Any]]:
+        raise ConnectionError("S3 oqimi uzildi")
+
+
+class FailingOutbox(Outbox):
+    """Snapshot yozilgandan keyin, commitdan oldin xato — butun tranzaksiya bekor bo‘lishi kerak."""
+
+    async def publish(self, event_type: str, payload: dict[str, Any], *, aggregate_id: UUID,
+                      aggregate_version: int) -> None:
+        raise RuntimeError("broker/outbox xatosi")
+
+
+async def test_a05_failed_ingestion_keeps_previous_snapshot(
+    tenant_conn: tuple[AsyncConnection, UUID],
+) -> None:
+    conn, tenant = tenant_conn
+    store = SqlAnalyticsStore(conn, tenant)
+    source = uuid4()
+    await load_golden(store, source)
+    q = QueryService(store)
+    before, _ = await q.run(ctx(), args(["net_sales"], "2026-01-01", "2026-04-30"))
+    active = await store.active_snapshots()
+
+    changed = order_lines(GOLDEN / "sotuvlar.csv")[:2]
+    for reader, outbox in ((BrokenReader(), Outbox()),
+                           (MemoryReader({"o2": jsonl(changed)}), FailingOutbox())):
+        # Inbox handler bilan bir xil: bitta tranzaksiya (bu yerda savepoint).
+        with pytest.raises((ConnectionError, RuntimeError)):
+            async with conn.begin_nested():
+                await ingest_batch(store, reader, outbox,
+                                   batch(Entity.SALES_ORDER_LINE, "o2", source),
+                                   timezone="Asia/Tashkent")
+
+    assert await store.active_snapshots() == active
+    after, _ = await q.run(ctx(), args(["net_sales"], "2026-01-01", "2026-04-30"))
+    assert after["rows"] == before["rows"] == [["1800.00"]]
+    assert after["dataset_snapshot_ids"] == before["dataset_snapshot_ids"]
