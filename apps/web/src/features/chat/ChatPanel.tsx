@@ -6,6 +6,8 @@ import { useDocuments } from "@/features/documents/api";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 import { AGENTS, useConversations, useCreateConversation, useMessages, useSendMessage } from "./api";
+import { FileText, Paperclip, Plus, SendHorizontal, Sparkles, X } from "lucide-react";
+
 import styles from "./chat.module.css";
 import { chatTarget } from "./chatTarget";
 import { contextDocs, useContextDocs } from "./contextDocs";
@@ -101,17 +103,17 @@ export function ChatPanel() {
   return (
     <section className={styles.panel}>
       <div className={styles.header}>
-        <select className="select" aria-label="Suhbat" value={conversationId ?? ""}
+        <select className="select select-sm" aria-label="Suhbat" value={conversationId ?? ""}
                 onChange={(e) => { setSelected(e.target.value); remember(e.target.value); }}
                 disabled={!conversations.data?.length}>
           {!conversations.data?.length && <option value="">Suhbat yo‘q</option>}
           {conversations.data?.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
         </select>
-        <button className="btn btn-sm" disabled={create.isPending}
+        <button className="btn btn-sm" disabled={create.isPending} title="Yangi suhbat"
                 onClick={() => create.mutate("Yangi suhbat", {
                   onSuccess: ({ id }) => { setSelected(id); remember(id); },
                 })}>
-          + Yangi
+          <Plus aria-hidden /> Yangi
         </button>
       </div>
 
@@ -120,6 +122,7 @@ export function ChatPanel() {
         {messages.isLoading && <div className="skeleton" style={{ height: 60 }} />}
         {!items.length && !messages.isLoading && (
           <div className={styles.empty}>
+            <span className={styles.emptyIcon} aria-hidden><Sparkles /></span>
             <strong>Savolingizni yozing</strong>
             <span className="muted">Agent hisobni tekshiriladigan vositalar bilan bajaradi va manbani ko‘rsatadi.</span>
             {SUGGESTIONS.map((s) => (
@@ -136,49 +139,53 @@ export function ChatPanel() {
 
       <form className={styles.composer} onSubmit={submit}>
         <ErrorNotice error={send.error ?? create.error} />
-        <div className={styles.composerRow}>
-          <label className="sr-only" htmlFor="chat-agent">Agent</label>
-          <select id="chat-agent" className="select" style={{ width: "auto" }} value={agent}
-                  onChange={(e) => setAgent(e.target.value)}>
-            <option value="">@ avtomatik</option>
-            {Object.entries(AGENTS).map(([key, a]) => (
-              <option key={key} value={key}>@{a.name} — {a.title}</option>
-            ))}
-          </select>
-          <button type="button" className="btn btn-sm" aria-expanded={picking}
-                  onClick={() => setPicking(!picking)}>
-            + Hujjat
-          </button>
-        </div>
         {picking && (
           <div className={styles.picker} role="listbox" aria-label="Hujjat biriktirish">
             {!attachable.length && <span className="muted">Biriktirish uchun tayyor hujjat yo‘q.</span>}
             {attachable.slice(0, 20).map((d) => (
-              <button key={d.id} type="button" role="option" aria-selected="false" className="btn btn-sm"
+              <button key={d.id} type="button" role="option" aria-selected="false" className="btn btn-sm btn-ghost"
                       onClick={() => { contextDocs.add({ id: d.id, title: d.title }); setPicking(false); }}>
-                ▤ {d.title}
+                <FileText aria-hidden /> {d.title}
               </button>
             ))}
           </div>
         )}
-        {attached.length > 0 && (
-          <div className={styles.chips} aria-label="Biriktirilgan hujjatlar">
-            {attached.map((d) => (
-              <span key={d.id} className={styles.chip}>
-                ▤ {d.title}
-                <button type="button" aria-label={`${d.title} — olib tashlash`}
-                        onClick={() => contextDocs.remove(d.id)}>×</button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div className={styles.composerRow}>
+        <div className={styles.box}>
+          {attached.length > 0 && (
+            <div className={styles.chips} aria-label="Biriktirilgan hujjatlar">
+              {attached.map((d) => (
+                <span key={d.id} className={styles.chip}>
+                  <FileText aria-hidden /> {d.title}
+                  <button type="button" aria-label={`${d.title} — olib tashlash`}
+                          onClick={() => contextDocs.remove(d.id)}><X aria-hidden /></button>
+                </span>
+              ))}
+            </div>
+          )}
           <label className="sr-only" htmlFor="chat-input">Xabar</label>
-          <textarea id="chat-input" ref={inputRef} className="textarea" rows={2} value={text} maxLength={20000}
+          <textarea id="chat-input" ref={inputRef} className={styles.input} rows={2} value={text} maxLength={20000}
                     placeholder="Masalan: Ali, o‘tgan oy filiallar savdosini solishtir"
                     onChange={(e) => setText(e.target.value)} onKeyDown={onKey} />
-          <button className="btn btn-primary" disabled={!text.trim() || send.isPending}>Yuborish</button>
+          <div className={styles.toolbar}>
+            <label className="sr-only" htmlFor="chat-agent">Agent</label>
+            <select id="chat-agent" className="select select-sm select-auto" value={agent}
+                    onChange={(e) => setAgent(e.target.value)}>
+              <option value="">@ avtomatik</option>
+              {Object.entries(AGENTS).map(([key, a]) => (
+                <option key={key} value={key}>@{a.name} — {a.title}</option>
+              ))}
+            </select>
+            <button type="button" className="btn btn-sm btn-ghost" aria-expanded={picking}
+                    title="Hujjat biriktirish" onClick={() => setPicking(!picking)}>
+              <Paperclip aria-hidden /> Hujjat
+            </button>
+            <span className="grow" />
+            <button className="btn btn-sm btn-primary" disabled={!text.trim() || send.isPending}>
+              <SendHorizontal aria-hidden /> Yuborish
+            </button>
+          </div>
         </div>
+        <span className={styles.kbd}>Enter — yuborish · Shift+Enter — yangi qator</span>
       </form>
     </section>
   );

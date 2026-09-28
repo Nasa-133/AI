@@ -1,55 +1,78 @@
 .shell {
   display: grid; height: 100vh;
   grid-template-columns: var(--nav-width) minmax(0, 1fr) var(--chat-width);
-  grid-template-rows: 52px minmax(0, 1fr);
+  grid-template-rows: 56px minmax(0, 1fr);
   grid-template-areas: "nav top chat" "nav main chat";
 }
-.shell[data-nav="collapsed"] { grid-template-columns: 64px minmax(0, 1fr) var(--chat-width); }
+.shell[data-nav="collapsed"] { grid-template-columns: 68px minmax(0, 1fr) var(--chat-width); }
 .shell[data-chat="collapsed"] { grid-template-columns: var(--nav-width) minmax(0, 1fr) 0; }
-.shell[data-nav="collapsed"][data-chat="collapsed"] { grid-template-columns: 64px minmax(0, 1fr) 0; }
+.shell[data-nav="collapsed"][data-chat="collapsed"] { grid-template-columns: 68px minmax(0, 1fr) 0; }
+
 .nav {
-  grid-area: nav; display: flex; flex-direction: column; gap: var(--space-1);
-  padding: var(--space-3); background: var(--surface); border-right: 1px solid var(--border);
-}
-.brand { font-weight: 700; padding: var(--space-2) var(--space-3) var(--space-4); white-space: nowrap; overflow: hidden; }
-.navLink {
-  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm); color: var(--text); text-decoration: none; white-space: nowrap;
+  grid-area: nav; display: flex; flex-direction: column; gap: 2px;
+  padding: 0 var(--space-3) var(--space-3); background: var(--surface); border-right: 1px solid var(--border);
   overflow: hidden;
 }
-.navLink:hover { background: var(--surface-2); }
-.navLink[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.navIcon { width: 20px; text-align: center; flex: none; }
-.navSpacer { flex: 1; }
-.top {
-  grid-area: top; display: flex; align-items: center; gap: var(--space-3);
-  padding: 0 var(--space-4); border-bottom: 1px solid var(--border); background: var(--surface);
+.brand {
+  display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 6px; margin-bottom: var(--space-2);
+  white-space: nowrap; overflow: hidden; flex: none;
 }
+.logo {
+  display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+}
+.brandText { font-size: var(--text-md); font-weight: 650; letter-spacing: -0.01em; }
+.navLink {
+  display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px;
+  border-radius: var(--radius-sm); color: var(--text-muted); text-decoration: none; white-space: nowrap;
+  font-size: var(--text-md); font-weight: 500; overflow: hidden; transition: background 0.12s, color 0.12s;
+}
+.navLink:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.navLink[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+.navIcon { width: 18px; height: 18px; flex: none; }
+.shell[data-nav="collapsed"] .navLink { justify-content: center; padding: 0; }
+.shell[data-nav="collapsed"] .brand { justify-content: center; padding: 0; }
+.navSpacer { flex: 1; }
+.collapse { justify-content: flex-start; width: 100%; }
+.shell[data-nav="collapsed"] .collapse { justify-content: center; }
+
+.top {
+  grid-area: top; display: flex; align-items: center; gap: var(--space-2);
+  padding: 0 var(--space-5); border-bottom: 1px solid var(--border); background: var(--surface);
+  min-width: 0;
+}
+.tenant { font-size: var(--text-md); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 260px; }
 .topSpacer { flex: 1; }
+.email { flex: 0 1 auto; min-width: 0; color: var(--text-muted); font-size: var(--text-sm); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 var(--space-2); }
 .main { grid-area: main; overflow: auto; position: relative; }
 .chat { grid-area: chat; border-left: 1px solid var(--border); background: var(--surface); min-width: 0; overflow: hidden; }
 .mobileNav { display: none; }
 
+@media (max-width: 1200px) { .email { display: none; } }
+
 @media (max-width: 900px) {
   .shell, .shell[data-nav="collapsed"], .shell[data-chat="collapsed"] {
     /* minmax(0, …) — uzun matn yoki jadval sahifani ekrandan kengaytirmasin. */
-    grid-template-columns: minmax(0, 1fr); grid-template-rows: 52px minmax(0, 1fr) 56px;
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: 52px minmax(0, 1fr) 60px;
     grid-template-areas: "top" "main" "mobile";
   }
   .nav { display: none; }
   .chat { display: none; }
   .desktopOnly { display: none; }
-  .top { gap: var(--space-2); padding: 0 var(--space-3); }
+  .top { gap: var(--space-2); padding: 0 var(--space-4); }
   .main { overflow-x: hidden; }
   .shell[data-mobile-view="chat"] .chat { display: block; grid-area: main; border: 0; }
   .shell[data-mobile-view="chat"] .main { display: none; }
   .mobileNav {
     grid-area: mobile; display: grid; grid-template-columns: repeat(6, 1fr);
-    border-top: 1px solid var(--border); background: var(--surface);
+    border-top: 1px solid var(--border); background: var(--surface); padding-bottom: env(safe-area-inset-bottom);
   }
   .mobileNav button, .mobileNav a {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border: 0; background: none; font-size: 11px; color: var(--text-muted); text-decoration: none;
-    min-width: 0; overflow: hidden;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    border: 0; background: none; font-size: 11px; font-weight: 500; color: var(--text-muted);
+    text-decoration: none; min-width: 0; overflow: hidden; cursor: pointer;
   }
+  .mobileNav svg { width: 20px; height: 20px; }
+  .mobileNav [aria-current="page"] { color: var(--accent); }
 }

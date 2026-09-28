@@ -1,5 +1,6 @@
 "use client";
 
+import { Maximize2, Minimize2, Scan, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
 
 import { stateLabel, type OfficeAgent } from "./api";
@@ -208,12 +209,14 @@ export function OfficeMap({ agents, selected, onSelect }: {
          onKeyDown={(e) => { if (full && e.key === "Escape") { e.stopPropagation(); setFull(false); } }}>
       <div className={styles.controls} role="group" aria-label="Xarita boshqaruvi">
         <span className={styles.hint}>G‘ildirak yoki +/− — masshtab, sichqoncha bilan torting — surish.</span>
-        <button className="btn btn-sm" aria-label="Yaqinlashtirish" onClick={() => setCamera((c) => zoomAt(c, 0.8))}>+</button>
-        <span className={styles.zoom} aria-live="polite">{zoomLevel(camera)}%</span>
-        <button className="btn btn-sm" aria-label="Uzoqlashtirish" onClick={() => setCamera((c) => zoomAt(c, 1.25))}>−</button>
-        <button className="btn btn-sm" onClick={() => setCamera(() => fit())}>Butun ofis</button>
+        <div className="btn-group">
+          <button className="btn btn-sm btn-icon" aria-label="Uzoqlashtirish" title="Uzoqlashtirish" onClick={() => setCamera((c) => zoomAt(c, 1.25))}><ZoomOut aria-hidden /></button>
+          <span className={`btn btn-sm ${styles.zoom}`} aria-live="polite">{zoomLevel(camera)}%</span>
+          <button className="btn btn-sm btn-icon" aria-label="Yaqinlashtirish" title="Yaqinlashtirish" onClick={() => setCamera((c) => zoomAt(c, 0.8))}><ZoomIn aria-hidden /></button>
+        </div>
+        <button className="btn btn-sm" onClick={() => setCamera(() => fit())}><Scan aria-hidden /> Butun ofis</button>
         <button className="btn btn-sm" aria-pressed={full} onClick={() => setFull(!full)}>
-          {full ? "Kichraytirish" : "To‘liq ekran"}
+          {full ? <Minimize2 aria-hidden /> : <Maximize2 aria-hidden />} {full ? "Kichraytirish" : "To‘liq ekran"}
         </button>
       </div>
       <div className={styles.wrap} ref={measure}>

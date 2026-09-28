@@ -15,7 +15,7 @@ const CONTRACT = [
 test("hujjat: yuklash → chip bilan savol → AI draft → farq → joriy qilish", async ({ page }) => {
   await registerOwner(page, "Hujjat UI MChJ");
   await page.getByRole("link", { name: "Hujjatlar" }).click();
-  await page.getByLabel(/Hujjat \(DOCX, PDF yoki TXT/).setInputFiles({
+  await page.getByLabel(/\(DOCX, PDF yoki TXT/).setInputFiles({
     name: "Shartnoma.txt", mimeType: "text/plain", buffer: Buffer.from(CONTRACT, "utf-8"),
   });
   await page.getByRole("button", { name: "Yuklash" }).click();
@@ -31,7 +31,7 @@ test("hujjat: yuklash → chip bilan savol → AI draft → farq → joriy qilis
   // Chip → hujjat yordamchisi iqtibos bilan javob beradi (D01).
   await detail.getByRole("button", { name: "Chatda so‘rash" }).click();
   const chips = page.getByLabel("Biriktirilgan hujjatlar");
-  await expect(chips.getByText("▤ Shartnoma")).toBeVisible();
+  await expect(chips.getByText("Shartnoma")).toBeVisible();
   await ask(page, "To‘lov muddati necha kun?");
   await expect(chips).toHaveCount(0);  // yuborilgach chip tozalanadi
   const chat = page.getByRole("complementary", { name: "Chat" });

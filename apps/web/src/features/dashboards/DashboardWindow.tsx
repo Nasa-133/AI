@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeft, History, LayoutGrid, Lock, Pencil, RefreshCw, RotateCcw, Share2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
@@ -69,29 +70,36 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
   return (
     <div className={styles.overlay} role="region" aria-label="Dashboard oynasi">
       <div className={styles.windowHead}>
+        <button className="btn btn-sm btn-ghost" onClick={onClose} title="Ofisga qaytish (Esc)">
+          <ArrowLeft aria-hidden /> Ofisga qaytish
+        </button>
+        <span className={styles.headDivider} aria-hidden />
         <h2 ref={heading} tabIndex={-1} className={styles.windowTitle}>{d?.title ?? "Dashboard"}</h2>
         {fresh.data?.state === "stale" && (
           <span className="badge badge-warning" title={fresh.data.message ?? undefined}>Eskirgan</span>
         )}
-        {steps.length > 0 && (
-          <button className="btn btn-sm" onClick={() => { setSteps([]); setResults({}); }}>Filtrlarni tiklash</button>
-        )}
-        {d?.can_edit && (
-          <>
-            <button className="btn btn-sm" aria-pressed={panel === "edit"} onClick={() => setPanel(panel === "edit" ? null : "edit")}>Tahrirlash</button>
-            <button className="btn btn-sm" aria-pressed={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
-              Ulashish{d.visibility === "private" ? " 🔒" : ""}
-            </button>
-            <button className="btn btn-sm" disabled={refresh.isPending}
-                    title="Oxirgi yuklangan ma’lumot bilan qayta hisoblash (yangi versiya)"
-                    onClick={() => { setSteps([]); setResults({}); refresh.mutate(); }}>
-              {refresh.isPending ? "Yangilanmoqda…" : "Yangilash"}
-            </button>
-          </>
-        )}
-        {d && <button className="btn btn-sm" aria-pressed={panel === "versions"} onClick={() => setPanel(panel === "versions" ? null : "versions")}>v{d.version}</button>}
-        <button className="btn btn-sm" onClick={onShowAll}>Barcha dashboardlar</button>
-        <button className="btn btn-sm btn-primary" onClick={onClose}>Ofisga qaytish</button>
+        <div className={styles.headActions}>
+          {steps.length > 0 && (
+            <button className="btn btn-sm" aria-label="Filtrlarni tiklash" title="Filtrlarni tiklash" onClick={() => { setSteps([]); setResults({}); }}><RotateCcw aria-hidden /><span className={styles.lbl}>Filtrlarni tiklash</span></button>
+          )}
+          {d?.can_edit && (
+            <>
+              <button className="btn btn-sm btn-toggle" aria-label="Tahrirlash" title="Tahrirlash" aria-pressed={panel === "edit"} onClick={() => setPanel(panel === "edit" ? null : "edit")}><Pencil aria-hidden /><span className={styles.lbl}>Tahrirlash</span></button>
+              <button className="btn btn-sm btn-toggle" aria-pressed={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}
+                      title="Ulashish" aria-label={d.visibility === "private" ? "Ulashish (yopiq)" : "Ulashish"}>
+                {d.visibility === "private" ? <Lock aria-hidden /> : <Share2 aria-hidden />}<span className={styles.lbl}>Ulashish</span>
+              </button>
+              <button className="btn btn-sm" disabled={refresh.isPending}
+                      aria-label="Yangilash" title="Oxirgi yuklangan ma’lumot bilan qayta hisoblash (yangi versiya)"
+                      onClick={() => { setSteps([]); setResults({}); refresh.mutate(); }}>
+                <RefreshCw aria-hidden /><span className={styles.lbl}>{refresh.isPending ? "Yangilanmoqda…" : "Yangilash"}</span>
+              </button>
+            </>
+          )}
+          {d && <button className="btn btn-sm btn-toggle" aria-pressed={panel === "versions"} title="Versiyalar tarixi" aria-label={`v${d.version} — versiyalar tarixi`}
+                        onClick={() => setPanel(panel === "versions" ? null : "versions")}><History aria-hidden /><span className={styles.lbl}>v{d.version}</span></button>}
+          <button className="btn btn-sm" aria-label="Barcha dashboardlar" title="Barcha dashboardlar" onClick={onShowAll}><LayoutGrid aria-hidden /><span className={styles.lbl}>Barcha dashboardlar</span></button>
+        </div>
       </div>
       <div className={styles.windowBody}>
         <ErrorNotice error={dashboard.error ?? run.error ?? refresh.error} />

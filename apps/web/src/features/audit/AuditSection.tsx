@@ -62,7 +62,7 @@ export function AuditSection() {
         Muhim amallar: kim, qachon, nima qildi. Yozuvlarni o‘zgartirib bo‘lmaydi; 365 kun saqlanadi.
       </p>
       <ErrorNotice error={audit.error} />
-      <div style={{ overflowX: "auto", maxHeight: 420, overflowY: "auto" }}>
+      <div className="table-wrap" style={{ maxHeight: 420, overflowY: "auto" }}>
         <table className="table">
           <caption className="sr-only">Audit yozuvlari</caption>
           <thead><tr><th>Vaqt</th><th>Amal</th><th>Kim</th><th>Obyekt</th><th>IP</th></tr></thead>

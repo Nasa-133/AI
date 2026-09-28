@@ -19,7 +19,7 @@ export function ResultTable({ result, metricNames, onSelect, canSelect }: {
   };
   if (!result.rows.length) return <p className="muted">Bu kesimda ma’lumot yo‘q.</p>;
   return (
-    <div style={{ overflowX: "auto", maxHeight: 360 }}>
+    <div className="table-wrap" style={{ maxHeight: 360 }}>
       <table className="table">
         <thead>
           <tr>{result.columns.map((c) => <th key={c.name} className={c.kind === "dimension" ? undefined : "num"}>{header(c)}</th>)}</tr>

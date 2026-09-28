@@ -60,7 +60,7 @@ export function MembersSection() {
     <section className="panel panel-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <h2>A’zolar</h2>
       <ErrorNotice error={members.error ?? changeRole.error ?? remove.error} />
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-wrap">
         <table className="table">
           <thead><tr><th>Email</th><th>Rol</th><th title="Bo‘sh — barcha filiallar">Filiallar</th><th>Qo‘shilgan</th><th /></tr></thead>
           <tbody>

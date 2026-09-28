@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Markdown } from "@/shared/markdown/Markdown";
 
 import { AGENTS, type ChatMessage } from "./api";
+import { FileText, LayoutDashboard } from "lucide-react";
+
 import styles from "./chat.module.css";
 
 export function MessageItem({ message }: { message: ChatMessage }) {
@@ -13,7 +15,7 @@ export function MessageItem({ message }: { message: ChatMessage }) {
         {docs.length > 0 && (
           <div className={styles.chipsUser}>
             {docs.map((d) => (
-              <Link key={d.id} className={styles.chip} href={`/documents?doc=${d.id}`}>▤ {d.title}</Link>
+              <Link key={d.id} className={styles.chip} href={`/documents?doc=${d.id}`}><FileText aria-hidden /> {d.title}</Link>
             ))}
           </div>
         )}
@@ -44,7 +46,7 @@ export function MessageItem({ message }: { message: ChatMessage }) {
         ))}
         {dashboards.map((id) => (
           // Dashboard majburan ochilmaydi — foydalanuvchi o‘zi tanlaydi (TZ 8, U05).
-          <Link key={id} className="btn btn-sm" href={`/?dashboard=${id}`}>Dashboardni ochish</Link>
+          <Link key={id} className="btn btn-sm" href={`/?dashboard=${id}`}><LayoutDashboard aria-hidden /> Dashboardni ochish</Link>
         ))}
       </div>
     </div>

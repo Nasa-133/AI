@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
     return [{ source: "/api/:path*", destination: `${businessApi}/api/:path*` }];
   },
   poweredByHeader: false,
+  // Dev belgisi yon menyudagi tugmani yopib qo‘yardi.
+  devIndicators: false,
 };
 
 export default nextConfig;

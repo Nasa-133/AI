@@ -48,7 +48,7 @@ export function Board({ onOpen, onShowAll }: {
       <div className={styles.boardHead}>
         <button className={styles.boardTitle} onClick={onShowAll}>Dashboardlar</button>
         <button className="btn btn-sm" onClick={onShowAll}>Barchasi ({count})</button>
-        <input className={`input ${styles.boardSearch}`} type="search" placeholder="Qidirish"
+        <input className={`input input-sm ${styles.boardSearch}`} type="search" placeholder="Dashboard qidirish"
                aria-label="Dashboard qidirish" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       <ErrorNotice error={cards.error} />

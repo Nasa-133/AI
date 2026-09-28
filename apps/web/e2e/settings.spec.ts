@@ -87,7 +87,7 @@ test("dashboard: tahrir, versiya, ulashish, yangilash, CSV, mavzu", async ({ pag
   await win.getByRole("button", { name: "Ulashish" }).click();
   await win.getByLabel(/Faqat men/).check();
   await win.getByRole("button", { name: "Saqlash" }).click();
-  await expect(win.getByRole("button", { name: /Ulashish 🔒/ })).toBeVisible();
+  await expect(win.getByRole("button", { name: "Ulashish (yopiq)" })).toBeVisible();
 
   await win.getByRole("button", { name: "Yangilash" }).click();
   await expect(win.getByText(/3-versiya yaratildi/)).toBeVisible();

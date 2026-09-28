@@ -1,17 +1,34 @@
 /* Dizayn tokenlari: sokin, professional, o‘qilishi oson (TZ 6). */
 :root {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  --bg: #f6f7f9;
+  /* Tipografiya shkalasi: har joyda faqat shu o‘lchamlar. */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+
+  /* Boshqaruv elementlari balandligi: tugma, input, select bir qatorda bir xil turadi. */
+  --control-sm: 32px;
+  --control-md: 38px;
+  --control-lg: 44px;
+
+  --bg: #f5f6f8;
   --surface: #ffffff;
-  --surface-2: #f0f2f5;
-  --border: #dde1e7;
-  --text: #1c2430;
-  --text-muted: #5b6573;
-  --accent: #1f6feb;
+  --surface-2: #f1f3f6;
+  --surface-hover: #eceff3;
+  --border: #e1e5eb;
+  --border-strong: #cdd3dc;
+  --text: #111827;
+  --text-muted: #5f6b7a;
+  --text-subtle: #8a94a3;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
   --accent-contrast: #ffffff;
-  --accent-soft: #e6effd;
+  --accent-soft: #eaf1fe;
   --success: #1a7f4b;
   --success-soft: #e3f4ea;
   --warning: #9a6200;
@@ -20,10 +37,11 @@
   --danger-soft: #fdecea;
   --focus: #1f6feb;
 
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --shadow: 0 1px 2px rgb(16 24 40 / 6%), 0 1px 3px rgb(16 24 40 / 8%);
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow-xs: 0 1px 2px rgb(16 24 40 / 5%);
+  --shadow: 0 1px 2px rgb(16 24 40 / 4%), 0 1px 3px rgb(16 24 40 / 6%);
   --shadow-lg: 0 12px 32px rgb(16 24 40 / 14%);
 
   --nav-width: 232px;
@@ -49,10 +67,14 @@
     --bg: #0f141a;
     --surface: #161c24;
     --surface-2: #1d2530;
+    --surface-hover: #232d3a;
     --border: #2a3441;
+    --border-strong: #3a4656;
     --text: #e6eaf0;
     --text-muted: #9aa5b4;
+    --text-subtle: #737f8f;
     --accent: #5b9dff;
+    --accent-hover: #7aafff;
     --accent-contrast: #0b1220;
     --accent-soft: #1b2b44;
     --success: #4ccb8a;
@@ -72,10 +94,14 @@
   --bg: #0f141a;
   --surface: #161c24;
   --surface-2: #1d2530;
+  --surface-hover: #232d3a;
   --border: #2a3441;
+  --border-strong: #3a4656;
   --text: #e6eaf0;
   --text-muted: #9aa5b4;
+  --text-subtle: #737f8f;
   --accent: #5b9dff;
+  --accent-hover: #7aafff;
   --accent-contrast: #0b1220;
   --accent-soft: #1b2b44;
   --success: #4ccb8a;

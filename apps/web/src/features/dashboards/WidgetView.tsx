@@ -1,5 +1,7 @@
 "use client";
 
+import { Download, TriangleAlert } from "lucide-react";
+
 import { formatValue } from "@/shared/format/number";
 import { Markdown } from "@/shared/markdown/Markdown";
 
@@ -27,7 +29,7 @@ export function WidgetView({ widget, dashboardId, metricNames, onDrill, allowDri
         <h3 style={{ marginRight: "auto" }}>{widget.title}</h3>
         {data && (
           <a className="btn btn-sm" href={exportUrl(dashboardId, widget.id)} download
-             title="Jadvalni CSV sifatida yuklab olish">CSV</a>
+             title="Jadvalni CSV sifatida yuklab olish"><Download aria-hidden /> CSV</a>
         )}
       </div>
       {widget.type === "text" && widget.text && <Markdown source={widget.text} />}
@@ -55,7 +57,7 @@ export function WidgetView({ widget, dashboardId, metricNames, onDrill, allowDri
         <p className="muted" style={{ fontSize: 12 }}>
           Davr: {(data.period ?? data.current_period)?.from} — {(data.period ?? data.current_period)?.to}
           {data.currency ? ` · ${data.currency}` : ""} · snapshot: {data.dataset_snapshot_ids.length} ta
-          {data.notes.map((n) => <span key={n} style={{ display: "block" }}>⚠ {n}</span>)}
+          {data.notes.map((n) => <span key={n} className="icon-text" style={{ display: "flex", alignItems: "flex-start" }}><TriangleAlert aria-hidden style={{ width: 13, height: 13, marginTop: 2, color: "var(--warning)" }} /> {n}</span>)}
         </p>
       )}
     </section>

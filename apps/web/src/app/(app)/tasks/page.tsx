@@ -1,5 +1,7 @@
 "use client";
 
+import { ListChecks } from "lucide-react";
+
 import { useCancelTask } from "@/features/chat/api";
 import { chatTarget } from "@/features/chat/chatTarget";
 import { PHASES } from "@/features/chat/taskStream";
@@ -19,15 +21,20 @@ export default function TasksPage() {
   const items = tasks.data ?? [];
 
   return (
-    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16, maxWidth: 1100 }}>
-      <h1>Vazifalar</h1>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Vazifalar</h1>
+          <p>Agentlarga bergan topshiriqlaringiz: holat, bosqich va natija.</p>
+        </div>
+      </div>
       <ErrorNotice error={tasks.error ?? cancel.error} />
       {tasks.isLoading && <div className="skeleton" style={{ height: 120 }} />}
       {!items.length && !tasks.isLoading && (
-        <p className="muted">Hali vazifa yo‘q. Chatda savol bering — u shu yerda kuzatiladi.</p>
+        <div className="panel empty"><ListChecks aria-hidden /><span>Hali vazifa yo‘q. Chatda savol bering — u shu yerda kuzatiladi.</span></div>
       )}
       {items.length > 0 && (
-        <div style={{ overflowX: "auto" }}>
+        <div className="table-wrap">
           <table className="table">
             <caption className="sr-only">Mening vazifalarim</caption>
             <thead>

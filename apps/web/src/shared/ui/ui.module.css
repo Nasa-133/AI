@@ -1,0 +1,8 @@
+.filePicker {
+  display: flex; align-items: center; gap: var(--space-2); min-width: 0; flex: 1 1 auto;
+  height: var(--control-md); padding: 0 4px; border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm); background: var(--surface);
+}
+.filePicker:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.fileInput { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.fileName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: var(--text-sm); }

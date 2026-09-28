@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  Building2, FileText, LayoutDashboard, ListChecks, LogOut, MessageSquare, PanelLeftClose,
+  PanelLeftOpen, PanelRightClose, PanelRightOpen, Plug, Settings, type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -12,14 +16,14 @@ import { ThemeSelect } from "@/shared/theme/ThemeSelect";
 
 import styles from "./shell.module.css";
 
-const NAV = [
-  { href: "/", label: "Ofis", icon: "⌂" },
-  { href: "/?dashboards=all", label: "Dashboardlar", icon: "▦" },
-  { href: "/documents", label: "Hujjatlar", icon: "▤" },
-  { href: "/tasks", label: "Vazifalar", icon: "☰" },
-  { href: "/integrations", label: "Integratsiyalar", icon: "⇄" },
-  { href: "/settings", label: "Sozlamalar", icon: "⚙" },
-] as const;
+const NAV: { href: string; label: string; short: string; icon: LucideIcon }[] = [
+  { href: "/", label: "Ofis", short: "Ofis", icon: Building2 },
+  { href: "/?dashboards=all", label: "Dashboardlar", short: "Dashboard", icon: LayoutDashboard },
+  { href: "/documents", label: "Hujjatlar", short: "Hujjat", icon: FileText },
+  { href: "/tasks", label: "Vazifalar", short: "Vazifa", icon: ListChecks },
+  { href: "/integrations", label: "Integratsiyalar", short: "Ma’lumot", icon: Plug },
+  { href: "/settings", label: "Sozlamalar", short: "Sozlama", icon: Settings },
+];
 
 
 export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
@@ -42,26 +46,30 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
     <div className={styles.shell} data-nav={navCollapsed ? "collapsed" : "open"}
          data-chat={chatCollapsed ? "collapsed" : "open"} data-mobile-view={mobileView}>
       <nav className={styles.nav} aria-label="Asosiy bo‘limlar">
-        <div className={styles.brand}>{navCollapsed ? "AI" : "AI Business Office"}</div>
+        <div className={styles.brand}>
+          <span className={styles.logo} aria-hidden>AI</span>
+          {!navCollapsed && <span className={styles.brandText}>Business Office</span>}
+        </div>
         {NAV.map((item) => (
           <Link key={item.href} href={item.href} className={styles.navLink}
                 aria-current={pathname === item.href.split("?")[0] && item.href !== "/?dashboards=all"
                   ? "page" : undefined}
                 title={item.label}>
-            <span className={styles.navIcon} aria-hidden>{item.icon}</span>
-            {!navCollapsed && item.label}
+            <item.icon className={styles.navIcon} aria-hidden strokeWidth={1.8} />
+            {!navCollapsed && <span>{item.label}</span>}
           </Link>
         ))}
         <div className={styles.navSpacer} />
-        <button className="btn btn-ghost btn-sm" onClick={() => setNavCollapsed(!navCollapsed)}
-                aria-label={navCollapsed ? "Menyuni kengaytirish" : "Menyuni yig‘ish"}>
-          {navCollapsed ? "»" : "« Yig‘ish"}
+        <button className={`btn btn-ghost btn-sm ${styles.collapse}`} onClick={() => setNavCollapsed(!navCollapsed)}
+                aria-label={navCollapsed ? "Menyuni kengaytirish" : "Menyuni yig‘ish"}
+                title={navCollapsed ? "Menyuni kengaytirish" : "Menyuni yig‘ish"}>
+          {navCollapsed ? <PanelLeftOpen aria-hidden /> : <><PanelLeftClose aria-hidden /> Yig‘ish</>}
         </button>
       </nav>
 
       <header className={styles.top}>
         {me.memberships.length > 1 ? (
-          <select className="select" style={{ width: "auto" }} aria-label="Korxona"
+          <select className="select select-sm select-auto" aria-label="Korxona"
                   value={me.current_tenant_id}
                   onChange={(e) => switchTenant.mutate(e.target.value)}>
             {me.memberships.map((m) => (
@@ -69,9 +77,9 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
             ))}
           </select>
         ) : (
-          <strong>{current?.tenant_name}</strong>
+          <strong className={styles.tenant}>{current?.tenant_name}</strong>
         )}
-        <span className="badge">{me.role}</span>
+        <span className="badge badge-outline">{me.role}</span>
         {budget.data && budget.data.state !== "ok" && (
           <Link href="/settings" className={budget.data.state === "exceeded" ? "badge badge-danger" : "badge badge-warning"}
                 title="AI budjeti — Sozlamalar">
@@ -80,14 +88,15 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
         )}
         <div className={styles.topSpacer} />
         <span className={styles.desktopOnly}><ThemeSelect /></span>
-        <span className={`muted ${styles.desktopOnly}`}>{me.email}</span>
-        <button className={`btn btn-ghost btn-sm ${styles.desktopOnly}`} onClick={() => setChatCollapsed(!chatCollapsed)}
-                aria-pressed={!chatCollapsed}>
+        <span className={`${styles.email} ${styles.desktopOnly}`} title={me.email}>{me.email}</span>
+        <button className={`btn btn-sm ${styles.desktopOnly}`} onClick={() => setChatCollapsed(!chatCollapsed)}
+                aria-pressed={!chatCollapsed} title={chatCollapsed ? "Chatni ochish" : "Chatni yig‘ish"}>
+          {chatCollapsed ? <PanelRightOpen aria-hidden /> : <PanelRightClose aria-hidden />}
           {chatCollapsed ? "Chatni ochish" : "Chatni yig‘ish"}
         </button>
-        <button className="btn btn-sm"
+        <button className="btn btn-sm" title="Tizimdan chiqish"
                 onClick={() => logout.mutate(undefined, { onSettled: () => router.replace("/login") })}>
-          Chiqish
+          <LogOut aria-hidden /> Chiqish
         </button>
       </header>
 
@@ -97,12 +106,21 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
       </aside>
 
       <nav className={styles.mobileNav} aria-label="Mobil navigatsiya">
-        <Link href="/" onClick={() => setMobileView("main")}>⌂<span>Ofis</span></Link>
-        <Link href="/?dashboards=all" onClick={() => setMobileView("main")}>▦<span>Dashboard</span></Link>
-        <button onClick={() => setMobileView("chat")}>✉<span>Chat</span></button>
-        <Link href="/documents" onClick={() => setMobileView("main")}>▤<span>Hujjat</span></Link>
-        <Link href="/integrations" onClick={() => setMobileView("main")}>⇄<span>Ma’lumot</span></Link>
-        <Link href="/settings" onClick={() => setMobileView("main")}>⚙<span>Sozlamalar</span></Link>
+        {NAV.filter((n) => n.href !== "/tasks").slice(0, 2).map((n) => (
+          <Link key={n.href} href={n.href} aria-label={n.label} onClick={() => setMobileView("main")}
+                aria-current={mobileView === "main" && pathname === n.href.split("?")[0] && n.href === "/" ? "page" : undefined}>
+            <n.icon aria-hidden strokeWidth={1.8} /><span>{n.short}</span>
+          </Link>
+        ))}
+        <button onClick={() => setMobileView("chat")} aria-current={mobileView === "chat" ? "page" : undefined}>
+          <MessageSquare aria-hidden strokeWidth={1.8} /><span>Chat</span>
+        </button>
+        {NAV.filter((n) => ["/documents", "/integrations", "/settings"].includes(n.href)).map((n) => (
+          <Link key={n.href} href={n.href} aria-label={n.label} onClick={() => setMobileView("main")}
+                aria-current={mobileView === "main" && pathname === n.href ? "page" : undefined}>
+            <n.icon aria-hidden strokeWidth={1.8} /><span>{n.short}</span>
+          </Link>
+        ))}
       </nav>
     </div>
   );

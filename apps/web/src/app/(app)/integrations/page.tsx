@@ -1,11 +1,15 @@
 "use client";
 
+import { Database, FileSpreadsheet, RefreshCw, Server, Upload } from "lucide-react";
 import { useState } from "react";
 
 import { useConnectErp, useCreateSource, useSource, useSources, useSync } from "@/features/integrations/api";
 import { useFreshness } from "@/features/dashboards/freshness";
 import { MappingEditor } from "@/features/integrations/MappingEditor";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
+import { FilePicker } from "@/shared/ui/FilePicker";
+
+import styles from "./integrations.module.css";
 
 const STATUS: Record<string, [string, string]> = {
   discovering: ["Manba o‘qilmoqda", "badge badge-accent"],
@@ -41,9 +45,9 @@ function SourceDetail({ id }: { id: string }) {
   const entity = entities[Math.min(index, entities.length - 1)];
   const canSync = s.status === "ready" || s.status === "synced" || (s.status === "failed" && s.mapping_version != null);
   return (
-    <section className="panel panel-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <h2 style={{ marginRight: "auto" }}>{s.name}</h2>
+    <section className="panel panel-pad stack">
+      <div className="panel-head">
+        <h2>{s.name}</h2>
         {s.connector_id === "demo_erp" && <span className="badge badge-warning">DEMO — haqiqiy ERP emas</span>}
         {s.connector_id === "erp_api" && <span className="badge" title="Integration Runtime sozlamasidagi ERP API">ERP API</span>}
         <Status status={s.status} id={s.id} />
@@ -55,10 +59,10 @@ function SourceDetail({ id }: { id: string }) {
         <>
           {entities.length > 1 && (
             <label className="field" style={{ maxWidth: 420 }}>
-              <span>Fayl turi</span>
+              <span>Obyekt turi</span>
               <select className="select" value={index} onChange={(e) => setChoice(Number(e.target.value))}>
                 {entities.map((e, i) => (
-                  <option key={e.entity} value={i}>{e.entity} — moslik {Math.round(e.match_score * 100)}%</option>
+                  <option key={`${e.entity}:${e.source_name}`} value={i}>{e.entity} ← {e.source_name} — moslik {Math.round(e.match_score * 100)}%</option>
                 ))}
               </select>
             </label>
@@ -67,12 +71,12 @@ function SourceDetail({ id }: { id: string }) {
         </>
       )}
       {canSync && (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          <span className="muted">Mapping versiyasi: {s.mapping_version} · {s.entity}</span>
+        <div className="row">
           <button className="btn btn-primary" disabled={sync.isPending} onClick={() => sync.mutate()}>
-            {s.status === "ready" ? "Sinxronlash" : "Qayta sinxronlash"}
+            <RefreshCw aria-hidden /> {s.status === "ready" ? "Sinxronlash" : "Qayta sinxronlash"}
           </button>
-          {s.connector_id === "erp_api" && <span className="hint">ERP avtomatik qayta o‘qiladi (standart: har 15 daqiqada).</span>}
+          <span className="muted">Mapping v{s.mapping_version} · <span className="mono">{s.entity}</span></span>
+          {s.connector_id === "erp_api" && <span className="hint">· ERP har 15 daqiqada avtomatik qayta o‘qiladi</span>}
         </div>
       )}
       <ErrorNotice error={sync.error} />
@@ -89,46 +93,60 @@ export default function IntegrationsPage() {
   const current = selected ?? sources.data?.[0]?.id ?? null;
 
   return (
-    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16, maxWidth: 1100 }}>
-      <h1>Integratsiyalar</h1>
-      <section className="panel panel-pad" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
-        <div className="field" style={{ minWidth: 260 }}>
-          <label htmlFor="csv">CSV fayl (UTF-8, sarlavhali)</label>
-          <input id="csv" className="input" type="file" accept=".csv,text/csv"
-                 onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          <span className="hint">XLSX importi P1 bosqichida. Faylni Excel’dan “CSV UTF-8” sifatida saqlang.</span>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Integratsiyalar</h1>
+          <p>Ma’lumot manbalari: ERP yoki fayl. Mapping tasdiqlangach sinxronlanadi.</p>
         </div>
-        <button className="btn btn-primary" disabled={!file || create.isPending}
-                onClick={() => file && create.mutate({ connector: "file_import", file },
-                  { onSuccess: ({ id }) => { setSelected(id); setFile(null); } })}>
-          Yuklash
-        </button>
-        <button className="btn" disabled={connectErp.isPending}
-                title="ERP REST API: sotuvlar, qaytarishlar, ombor, debitorlik — har biri alohida manba"
-                onClick={() => connectErp.mutate(undefined, { onSuccess: (list) => setSelected(list[0]?.id ?? null) })}>
-          ERP ulash (API)
-        </button>
-        <button className="btn" disabled={create.isPending}
-                onClick={() => create.mutate({ connector: "demo_erp" }, { onSuccess: ({ id }) => setSelected(id) })}>
-          Demo ERP ulash (sintetik fayl)
-        </button>
-        <ErrorNotice error={create.error ?? connectErp.error} />
-      </section>
+      </div>
+      <div className={styles.connect}>
+        <section className="panel panel-pad stack">
+          <div className="icon-text"><Server aria-hidden /><h2>ERP tizimi (API)</h2></div>
+          <p className="muted">Sotuvlar, qaytarishlar, ombor va debitorlik — har biri alohida manba sifatida ulanadi va avtomatik yangilanadi.</p>
+          <div className="row">
+            <button className="btn btn-primary" disabled={connectErp.isPending}
+                    title="ERP REST API: sotuvlar, qaytarishlar, ombor, debitorlik — har biri alohida manba"
+                    onClick={() => connectErp.mutate(undefined, { onSuccess: (list) => setSelected(list[0]?.id ?? null) })}>
+              <Database aria-hidden /> ERP ulash (API)
+            </button>
+            <button className="btn" disabled={create.isPending}
+                    onClick={() => create.mutate({ connector: "demo_erp" }, { onSuccess: ({ id }) => setSelected(id) })}>
+              Demo ERP ulash (sintetik fayl)
+            </button>
+          </div>
+        </section>
+        <section className="panel panel-pad stack">
+          <div className="icon-text"><FileSpreadsheet aria-hidden /><h2>CSV fayl</h2></div>
+          <div className="field">
+            <label htmlFor="csv">CSV fayl (UTF-8, sarlavhali)</label>
+            <div className="row" style={{ flexWrap: "nowrap" }}>
+              <FilePicker id="csv" accept=".csv,text/csv" file={file} onChange={setFile} />
+              <button className="btn btn-primary" disabled={!file || create.isPending}
+                      onClick={() => file && create.mutate({ connector: "file_import", file },
+                        { onSuccess: ({ id }) => { setSelected(id); setFile(null); } })}>
+                <Upload aria-hidden /> Yuklash
+              </button>
+            </div>
+            <span className="hint">XLSX importi P1 bosqichida. Excel’dan “CSV UTF-8” sifatida saqlang.</span>
+          </div>
+        </section>
+      </div>
+      <ErrorNotice error={create.error ?? connectErp.error} />
       <ErrorNotice error={sources.error} />
-      {/* Tor ekranda (chat ochiq bo‘lsa ham) manbalar ro‘yxati tepaga o‘tadi. */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: 16 }}>
-        <nav aria-label="Manbalar" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {!sources.data?.length && !sources.isLoading && <p className="muted">Hali manba yo‘q.</p>}
+      <div className={styles.sources}>
+        <nav aria-label="Manbalar" className={`panel ${styles.list}`}>
+          <span className="section-title" style={{ padding: "4px 8px" }}>Manbalar</span>
+          {!sources.data?.length && !sources.isLoading && <p className="muted" style={{ padding: 8 }}>Hali manba yo‘q.</p>}
           {sources.data?.map((s) => (
-            <button key={s.id} className="btn" aria-current={s.id === current ? "true" : undefined}
-                    style={{ justifyContent: "space-between", borderColor: s.id === current ? "var(--accent)" : undefined }}
+            <button key={s.id} className={styles.item} aria-current={s.id === current ? "true" : undefined}
                     onClick={() => setSelected(s.id)}>
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
-              <Status status={s.status} id={s.id} />
+              <span className={styles.itemName}>{s.name}</span>
+              <span><Status status={s.status} id={s.id} /></span>
             </button>
           ))}
         </nav>
-        {current && <div style={{ gridColumn: "1 / -1", minWidth: 0 }}><SourceDetail key={current} id={current} /></div>}
+        <div style={{ minWidth: 0 }}>{current && <SourceDetail key={current} id={current} />}</div>
       </div>
     </div>
   );

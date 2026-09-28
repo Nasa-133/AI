@@ -62,9 +62,10 @@
   .wrap { aspect-ratio: 4 / 5; }
   .hint { display: none; }
 }
-.controls { display: flex; gap: 4px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.controls { display: flex; gap: var(--space-2); align-items: center; justify-content: flex-end; flex-wrap: wrap; }
 .hint { font-size: 12px; color: var(--text-muted); margin-right: auto; }
-.zoom { min-width: 44px; text-align: center; font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.zoom { min-width: 60px; cursor: default; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.zoom:hover { background: var(--surface) !important; }
 
 /* Pastki holat satri: har agent — rang, ism, haqiqiy holat (bosilsa karta va kamera). */
 .statusBar { list-style: none; margin: 0; padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }

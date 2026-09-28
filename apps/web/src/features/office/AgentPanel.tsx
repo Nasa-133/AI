@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -91,7 +92,7 @@ export function AgentPanel({ agent, onClose, onShowOnMap }: {
           <h3>{agent.name}</h3>
           <span className="muted">{agent.title}</span>
         </div>
-        <button className="btn btn-sm btn-ghost" aria-label="Kartani yopish" onClick={onClose}>×</button>
+        <button className="btn btn-sm btn-ghost btn-icon" aria-label="Kartani yopish" title="Yopish" onClick={onClose}><X aria-hidden /></button>
       </div>
       <dl className={styles.facts}>
         <dt>Holat</dt><dd data-state={agent.state}>{stateLabel(agent)}</dd>

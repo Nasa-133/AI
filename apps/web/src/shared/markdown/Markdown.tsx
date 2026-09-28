@@ -32,11 +32,14 @@ export function Markdown({ source }: { source: string }) {
             return <blockquote key={i} className="md-quote">{b.text}</blockquote>;
           case "list":
             return <ul key={i}>{b.items.map((it, j) => <li key={j}><Inlines items={it} /></li>)}</ul>;
-          case "table":
+          case "table": {
+            // Ustundagi barcha qiymatlar son bo‘lsa — sarlavha ham o‘ngga (raqamlar ustma-ust tekis).
+            const numeric = b.header.map((_, k) => b.rows.length > 0 && b.rows.every(
+              (r) => NUMERIC.test((r[k] ?? []).map((x) => x.text).join(""))));
             return (
-              <div key={i} style={{ overflowX: "auto" }}>
+              <div key={i} className="table-wrap">
                 <table className="table">
-                  <thead><tr>{b.header.map((h, j) => <th key={j}><Inlines items={h} /></th>)}</tr></thead>
+                  <thead><tr>{b.header.map((h, j) => <th key={j} className={numeric[j] ? "num" : undefined}><Inlines items={h} /></th>)}</tr></thead>
                   <tbody>
                     {b.rows.map((r, j) => (
                       <tr key={j}>
@@ -50,6 +53,7 @@ export function Markdown({ source }: { source: string }) {
                 </table>
               </div>
             );
+          }
         }
       })}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { List, Map as MapIcon } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
@@ -61,9 +62,9 @@ export function OfficeFloor() {
       <div className={styles.head}>
         <h2>Ofis</h2>
         <span className="muted">Agentlar vazifa kelganda o‘z stoliga borib ishlaydi; holat backend’dagi vazifadan.</span>
-        <div className={styles.viewSwitch} role="group" aria-label="Ko‘rinish">
-          <button className="btn btn-sm" aria-pressed={view === "scene"} onClick={() => changeView("scene")}>Xarita</button>
-          <button className="btn btn-sm" aria-pressed={view === "list"} onClick={() => changeView("list")}>Ro‘yxat</button>
+        <div className={`btn-group ${styles.viewSwitch}`} role="group" aria-label="Ko‘rinish">
+          <button className="btn btn-sm" aria-pressed={view === "scene"} onClick={() => changeView("scene")}><MapIcon aria-hidden /> Xarita</button>
+          <button className="btn btn-sm" aria-pressed={view === "list"} onClick={() => changeView("list")}><List aria-hidden /> Ro‘yxat</button>
         </div>
       </div>
       <ErrorNotice error={office.error} />

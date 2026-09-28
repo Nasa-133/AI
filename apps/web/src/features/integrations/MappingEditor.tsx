@@ -29,9 +29,9 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
         Manba: <strong>{entity.source_name}</strong> → <span className="mono">{entity.entity}</span>
         {" "}· moslik {Math.round(entity.match_score * 100)}%
       </p>
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-wrap">
         <table className="table">
-          <thead><tr><th>Canonical maydon</th><th>Manba ustuni</th><th>O‘girish</th><th>Doimiy qiymat</th></tr></thead>
+          <thead><tr><th>Kanonik maydon</th><th>Manba ustuni</th><th>O‘girish</th><th>Doimiy qiymat</th></tr></thead>
           <tbody>
             {items.map((it, i) => (
               <tr key={it.canonical_field}>
@@ -40,7 +40,7 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
                     <span className="badge badge-danger" style={{ marginLeft: 6 }}>majburiy</span>}
                 </td>
                 <td>
-                  <select className="select" style={{ minWidth: 180 }} value={it.source_column ?? ""}
+                  <select className="select select-sm" style={{ minWidth: 150 }} value={it.source_column ?? ""}
                           aria-label={`${it.canonical_field} ustuni`}
                           onChange={(e) => update(i, { source_column: e.target.value || null })}>
                     <option value="">— yo‘q —</option>
@@ -48,7 +48,7 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
                   </select>
                 </td>
                 <td>
-                  <select className="select" style={{ minWidth: 150 }} value={it.transform}
+                  <select className="select select-sm" style={{ minWidth: 140 }} value={it.transform}
                           aria-label={`${it.canonical_field} o‘girish`}
                           onChange={(e) => update(i, { transform: e.target.value as MappingItem["transform"] })}>
                     {TRANSFORMS.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -56,7 +56,7 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
                 </td>
                 <td>
                   {it.transform === "const" ? (
-                    <input className="input" style={{ minWidth: 100 }} value={it.constant ?? ""} aria-label={`${it.canonical_field} qiymati`}
+                    <input className="input input-sm" style={{ minWidth: 90 }} value={it.constant ?? ""} aria-label={`${it.canonical_field} qiymati`}
                            onChange={(e) => update(i, { constant: e.target.value })} />
                   ) : <span className="muted">—</span>}
                 </td>
@@ -72,7 +72,7 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
           {statuses.map((s, i) => (
             <div key={s.source_value} style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>
               <span style={{ minWidth: 160 }}>{s.source_value}</span>→
-              <select className="select" style={{ width: "auto" }} value={s.canonical_value}
+              <select className="select select-sm select-auto" value={s.canonical_value}
                       aria-label={`${s.source_value} holati`}
                       onChange={(e) => setStatuses(statuses.map((x, j) => j === i ? { ...x, canonical_value: e.target.value } : x))}>
                 <option value="">— tanlang —</option>

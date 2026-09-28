@@ -24,6 +24,9 @@ export INTEGRATION_AMQP_URL=amqp://abo:abo_dev@localhost:5672/ INTEGRATION_S3_AC
 ERP_PORT="${FAKE_ERP_PORT:-8070}"
 export FAKE_ERP_API_KEY="${FAKE_ERP_API_KEY:-fake-erp-dev-key}"
 export INTEGRATION_ERP_API_URL="http://localhost:$ERP_PORT" INTEGRATION_ERP_API_KEY="$FAKE_ERP_API_KEY"
+# Lokalda testlar ko‘plab sinov korxonalarini yaratadi — ularning ERP manbalari worker’ni band
+# qilmasligi uchun avtomatik sinxron soatiga bir marta (production standarti: 15 daqiqa).
+export BUSINESS_ERP_AUTO_SYNC_SECONDS="${BUSINESS_ERP_AUTO_SYNC_SECONDS:-3600}"
 
 PIDS=()
 cleanup() { for p in "${PIDS[@]}"; do kill -TERM "$p" 2>/dev/null || true; done; wait 2>/dev/null || true; }

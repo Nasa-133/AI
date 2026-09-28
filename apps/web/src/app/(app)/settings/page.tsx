@@ -21,21 +21,26 @@ export default function SettingsPage() {
   const current = (metrics.data as Settings | undefined)?.settings;
 
   return (
-    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 16, maxWidth: 760 }}>
-      <h1>Sozlamalar</h1>
-      <section className="panel panel-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="page" style={{ maxWidth: 860 }}>
+      <div className="page-head">
+        <div>
+          <h1>Sozlamalar</h1>
+          <p>Hisob qoidalari, AI budjeti, maxfiylik, a’zolar va audit jurnali.</p>
+        </div>
+      </div>
+      <section className="panel panel-pad stack">
         <h2>Hisob qoidalari (metrika sozlamalari)</h2>
         <p className="muted">
           Tasdiqlanmaguncha moliyaviy xulosa chiqarilmaydi (TZ 7.1). Joriy standart:
         </p>
-        <ul style={{ margin: 0 }}>
+        <ul style={{ margin: 0, paddingLeft: 20, display: "flex", flexDirection: "column", gap: 2 }}>
           <li>Summalar QQSsiz hisoblanadi.</li>
           <li>Qaytarishlar sof savdodan ayriladi.</li>
           <li>Manbada ayrilgan chegirma qayta ayrilmaydi.</li>
           <li>Faqat tasdiqlangan hujjatlar hisobga olinadi.</li>
         </ul>
         {current ? (
-          <div className="notice">Tasdiqlangan: {current.version}-versiya, {new Date(current.approved_at).toLocaleString("uz")}</div>
+          <div className="notice notice-success">Tasdiqlangan: {current.version}-versiya, {new Date(current.approved_at).toLocaleString("uz")}</div>
         ) : (
           <div className="notice notice-warning">Hali tasdiqlanmagan.</div>
         )}
