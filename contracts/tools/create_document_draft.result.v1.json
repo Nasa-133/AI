@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/create_document_draft.result.v1.json",
+  "title": "create_document_draft natijasi (data)",
+  "description": "Yangi draft, o‘zgarishlar va ogohlantirishlar. Asl versiya o‘zgarmaydi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "draft_version_id",
+    "version_no",
+    "changes",
+    "warnings"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "draft_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_no": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "section_id",
+          "locator",
+          "change",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "section_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Odam o‘qiydigan manzil: sahifa 3, ¶2 / ¶12 / § Sarlavha › ¶3"
+          },
+          "change": {
+            "enum": [
+              "added",
+              "removed",
+              "changed"
+            ]
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    }
+  }
+}

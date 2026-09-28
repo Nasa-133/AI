@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/search_documents.args.v1.json",
+  "title": "search_documents argumentlari",
+  "description": "Ruxsatli hujjatlarning joriy versiyalarida qidirish. document_ids — ixtiyoriy qamrov; server ruxsatli ro‘yxat bilan kesishtiradi.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "query",
+    "document_ids",
+    "limit"
+  ],
+  "properties": {
+    "query": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "document_ids": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "maxItems": 50
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "limit": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

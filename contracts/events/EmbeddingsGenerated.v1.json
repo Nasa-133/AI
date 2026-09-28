@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/events/EmbeddingsGenerated.v1.json",
+  "title": "EmbeddingsGenerated v1 (payload)",
+  "description": "AI Runtime → Business. Parcha vektorlari JSONL ({chunk_id, embedding}) obyekt omborida; xato bo‘lsa vectors_ref null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "document_version_id",
+    "status",
+    "model",
+    "dimensions",
+    "vectors_ref",
+    "error_code",
+    "error_message"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "document_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "failed"
+      ]
+    },
+    "model": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dimensions": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8192
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "vectors_ref": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bucket",
+            "key",
+            "checksum_sha256",
+            "size_bytes"
+          ],
+          "properties": {
+            "bucket": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "key": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024
+            },
+            "checksum_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "size_bytes": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "error_code": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

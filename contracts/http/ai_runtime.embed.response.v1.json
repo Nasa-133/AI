@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/http/ai_runtime.embed.response.v1.json",
+  "title": "AI embed javobi v1",
+  "description": "Har matn uchun vektor, bir xil tartibda.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "model",
+    "dimensions",
+    "embeddings"
+  ],
+  "properties": {
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "dimensions": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8192
+    },
+    "embeddings": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        },
+        "minItems": 1,
+        "maxItems": 8192
+      },
+      "minItems": 1,
+      "maxItems": 16
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "document_id": "00000000-0000-4000-8000-000000000060",
+  "base_version_id": "00000000-0000-4000-8000-000000000061",
+  "expected_version_id": "00000000-0000-4000-8000-000000000061",
+  "operations": [
+    {
+      "op": "replace_text",
+      "section_id": "s12",
+      "find": "15 kun",
+      "replace": "30 kun",
+      "occurrence": 1
+    }
+  ],
+  "comment": null
+}

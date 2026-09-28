@@ -1,0 +1,15 @@
+{
+  "document_id": "00000000-0000-4000-8000-000000000060",
+  "draft_version_id": "00000000-0000-4000-8000-000000000063",
+  "version_no": 2,
+  "changes": [
+    {
+      "section_id": "s12",
+      "locator": "¶12",
+      "change": "changed",
+      "before": "To‘lov 15 kun ichida amalga oshiriladi.",
+      "after": "To‘lov 30 kun ichida amalga oshiriladi."
+    }
+  ],
+  "warnings": []
+}

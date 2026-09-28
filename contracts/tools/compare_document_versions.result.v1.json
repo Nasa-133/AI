@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/compare_document_versions.result.v1.json",
+  "title": "compare_document_versions natijasi (data)",
+  "description": "Bo‘lim darajasidagi farqlar.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "left_version_id",
+    "right_version_id",
+    "changes",
+    "unchanged_count"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "left_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "right_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "section_id",
+          "locator",
+          "change",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "section_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Odam o‘qiydigan manzil: sahifa 3, ¶2 / ¶12 / § Sarlavha › ¶3"
+          },
+          "change": {
+            "enum": [
+              "added",
+              "removed",
+              "changed"
+            ]
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 0,
+                "maxLength": 20000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "unchanged_count": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

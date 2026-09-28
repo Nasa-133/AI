@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/read_document_section.args.v1.json",
+  "title": "read_document_section argumentlari",
+  "description": "Aniq versiya va bo‘limni o‘qish.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "version_id",
+    "section_id"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "section_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    }
+  }
+}

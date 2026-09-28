@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/http/ai_runtime.embed.request.v1.json",
+  "title": "AI embed so‘rovi v1",
+  "description": "POST {AI}/internal/v1/embed — Core → AI yagona sinxron chaqiruv (13.3). Authorization: Bearer <servis tokeni>.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "texts",
+    "model_profile"
+  ],
+  "properties": {
+    "texts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4000
+      },
+      "minItems": 1,
+      "maxItems": 16
+    },
+    "model_profile": {
+      "enum": [
+        "embedding_default"
+      ]
+    }
+  }
+}

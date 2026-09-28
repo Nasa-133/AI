@@ -1,0 +1,19 @@
+{
+  "mode": "hybrid",
+  "results": [
+    {
+      "document_id": "00000000-0000-4000-8000-000000000060",
+      "document_title": "Shartnoma",
+      "version_id": "00000000-0000-4000-8000-000000000061",
+      "version_no": 1,
+      "chunk_id": "00000000-0000-4000-8000-000000000062",
+      "section_ids": [
+        "s12"
+      ],
+      "locator": "¶12",
+      "text": "To‘lov 15 kun ichida amalga oshiriladi.",
+      "score": 0.82
+    }
+  ],
+  "notes": []
+}

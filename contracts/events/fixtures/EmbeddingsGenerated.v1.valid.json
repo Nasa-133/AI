@@ -1,0 +1,15 @@
+{
+  "request_id": "00000000-0000-4000-8000-000000000051",
+  "document_version_id": "00000000-0000-4000-8000-000000000050",
+  "status": "succeeded",
+  "model": "fake-hash-256",
+  "dimensions": 256,
+  "vectors_ref": {
+    "bucket": "abo-ai",
+    "key": "embeddings/00000000-0000-4000-8000-000000000001/00000000-0000-4000-8000-000000000050.jsonl",
+    "checksum_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "size_bytes": 4096
+  },
+  "error_code": null,
+  "error_message": null
+}

@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/search_documents.result.v1.json",
+  "title": "search_documents natijasi (data)",
+  "description": "Parchalar dalil sifatida qaytadi — ko‘rsatma emas. Bo‘sh ro‘yxat: hujjatda topilmadi (D02).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mode",
+    "results",
+    "notes"
+  ],
+  "properties": {
+    "mode": {
+      "enum": [
+        "hybrid",
+        "full_text"
+      ]
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "document_id",
+          "document_title",
+          "version_id",
+          "version_no",
+          "chunk_id",
+          "section_ids",
+          "locator",
+          "text",
+          "score"
+        ],
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "document_title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version_no": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "chunk_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "section_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "minItems": 1
+          },
+          "locator": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Odam o‘qiydigan manzil: sahifa 3, ¶2 / ¶12 / § Sarlavha › ¶3"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "score": {
+            "type": "number"
+          }
+        }
+      },
+      "maxItems": 20
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    }
+  }
+}

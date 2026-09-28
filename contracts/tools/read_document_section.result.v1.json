@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/read_document_section.result.v1.json",
+  "title": "read_document_section natijasi (data)",
+  "description": "Bo‘lim matni va manzili.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "version_id",
+    "section_id",
+    "locator",
+    "kind",
+    "text"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "section_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "locator": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Odam o‘qiydigan manzil: sahifa 3, ¶2 / ¶12 / § Sarlavha › ¶3"
+    },
+    "kind": {
+      "enum": [
+        "heading",
+        "paragraph",
+        "table_row",
+        "page_text"
+      ]
+    },
+    "text": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 20000
+    }
+  }
+}
