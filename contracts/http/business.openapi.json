@@ -2945,6 +2945,30 @@
         ]
       }
     },
+    "/api/v1/office": {
+      "get": {
+        "description": "Agentlar holati (TZ 6): backend task/step holatidan hosil qilinadi, soxta progress yo‘q.",
+        "operationId": "office_api_v1_office_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Office Api V1 Office Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Office",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
     "/api/v1/session/tenant": {
       "post": {
         "operationId": "switch_tenant_api_v1_session_tenant_post",
@@ -2983,6 +3007,32 @@
         "summary": "Switch Tenant",
         "tags": [
           "identity"
+        ]
+      }
+    },
+    "/api/v1/tasks": {
+      "get": {
+        "operationId": "list_tasks_api_v1_tasks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response List Tasks Api V1 Tasks Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Tasks",
+        "tags": [
+          "workspace"
         ]
       }
     },

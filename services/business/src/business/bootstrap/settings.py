@@ -28,3 +28,5 @@ class Settings(BaseSettings):
     uploads_bucket: str = "abo-business"
     # AI Runtime ichki API’si (query embedding). Bo‘sh bo‘lsa qidiruv faqat matnli.
     ai_runtime_url: str = ""
+    # Har agent uchun korxona bo‘yicha parallel vazifalar limiti (TZ 4); to‘lsa — navbat.
+    agent_parallel_limit: int = Field(default=3, ge=1, le=20)

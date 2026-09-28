@@ -7,8 +7,10 @@ tekshiriladi, tasdiqlanmagani olib tashlanadi va cheklov sifatida ko‘rsatiladi
 from typing import Any
 from uuid import UUID
 
+from ..domain.office import CLARIFICATION, PHASE_KIND
 from ..domain.tasks import TaskStatus
 from ..ports.store import QueryRefs, WorkspaceStore
+from .dispatch import Dispatcher
 
 _STATUS = {"succeeded": TaskStatus.SUCCEEDED, "partial": TaskStatus.PARTIAL,
            "failed": TaskStatus.FAILED, "cancelled": TaskStatus.CANCELLED}
@@ -17,9 +19,11 @@ _STEP_STATUS = {"succeeded": "succeeded", "partial": "succeeded", "failed": "fai
 
 
 class AgentEventHandler:
-    def __init__(self, store: WorkspaceStore, query_refs: QueryRefs) -> None:
+    def __init__(self, store: WorkspaceStore, query_refs: QueryRefs,
+                 dispatcher: Dispatcher) -> None:
         self._s = store
         self._refs = query_refs
+        self._dispatcher = dispatcher
 
     async def progressed(self, p: dict[str, Any]) -> None:
         task_id, step_id = UUID(p["task_id"]), UUID(p["task_step_id"])
@@ -29,7 +33,8 @@ class AgentEventHandler:
         if p["sequence"] <= step.progress_seq:
             return  # eskirgan yoki takroriy event (tartib kafolatlanmaydi)
         await self._s.set_step(step_id, status="running", phase=p["phase"],
-                               progress_seq=p["sequence"], agent_run_id=UUID(p["agent_run_id"]))
+                               progress_seq=p["sequence"], agent_run_id=UUID(p["agent_run_id"]),
+                               kind=PHASE_KIND.get(p["phase"]))
         if task.status == TaskStatus.QUEUED:
             await self._s.set_task(task_id, status=TaskStatus.RUNNING)
         await self._s.add_event(task_id, "task.progress", {
@@ -66,4 +71,7 @@ class AgentEventHandler:
                                limitations=limitations)
         await self._s.add_event(task_id, "task.completed", {
             "status": status.value, "error_code": p["error_code"], "limitations": limitations,
-            "has_answer": bool(answer), "structured": (candidate or {}).get("structured")})
+            "has_answer": bool(answer), "structured": (candidate or {}).get("structured"),
+            "needs_input": p["error_code"] == CLARIFICATION})
+        # Slot bo‘shadi — shu agent navbatidagi keyingi vazifa yuboriladi (TZ 4).
+        await self._dispatcher.pump(task.agent_role_key)

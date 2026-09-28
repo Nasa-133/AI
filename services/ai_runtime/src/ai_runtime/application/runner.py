@@ -30,7 +30,13 @@ _PHASE_BY_TOOL = {
     "compare_periods": "computing",
     "explain_contributions": "analyzing",
     "create_dashboard": "drafting",
+    "search_documents": "retrieving",
+    "read_document_section": "reading",
+    "compare_document_versions": "analyzing",
+    "create_document_draft": "drafting",
 }
+# Aniqlashtiruvchi savol bilan to‘xtagan run: Business agentni “javob kutmoqda” deb ko‘rsatadi.
+CLARIFICATION_REQUIRED = "CLARIFICATION_REQUIRED"
 
 
 class _Finished(Exception):
@@ -150,14 +156,16 @@ class AgentRunner:
     async def _complete_with_answer(self, run: AgentRun, response: ModelResponse) -> None:
         limitations = list(response.limitations)
         status = RunStatus.SUCCEEDED
+        error_code = None
         if response.needs_clarification:
             status = RunStatus.PARTIAL
+            error_code = CLARIFICATION_REQUIRED
             limitations.append("Aniqlashtiruvchi savolga javob kerak")
         if response.status == "incomplete":
             status = RunStatus.PARTIAL
             limitations.append("Model javobi to‘liq emas")
         await self._commit(run, self._progress(run, "drafting", "Javob tayyorlanmoqda"))
-        await self._finish(run, status, response.text, limitations)
+        await self._finish(run, status, response.text, limitations, error_code=error_code)
 
     async def _finish_partial_from_evidence(self, run: AgentRun, limitations: list[str]) -> None:
         await self._finish(run, RunStatus.PARTIAL,

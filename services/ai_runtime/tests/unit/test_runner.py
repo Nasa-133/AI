@@ -79,6 +79,7 @@ async def test_clarification_makes_run_partial_without_computation() -> None:
     assert core.names() == ["list_available_metrics"]
     assert run.status is RunStatus.PARTIAL
     assert "Aniqlashtiruvchi" in completed(store)["limitations"][0]
+    assert completed(store)["error_code"] == "CLARIFICATION_REQUIRED"
 
 
 async def test_role_without_tools_does_not_call_core() -> None:

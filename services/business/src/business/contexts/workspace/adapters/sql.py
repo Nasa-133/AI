@@ -5,7 +5,18 @@ from uuid import UUID, uuid4
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-from ..ports.store import StepView, TaskEvent, TaskView
+from ..ports.store import AgentTaskRow, QueuedTask, StepView, TaskEvent, TaskView
+
+_ROWS = (
+    "SELECT t.id, t.conversation_id, t.initiator_id, t.agent_role_key, t.title, t.status,"
+    " t.error_code, t.dispatched_at IS NOT NULL AS dispatched, s.status AS step_status,"
+    " s.kind AS step_kind, s.phase AS step_phase, s.wait_reason,"
+    " EXISTS (SELECT 1 FROM workspace.tasks n WHERE n.conversation_id = t.conversation_id"
+    "   AND n.created_at > t.created_at) AS answered, t.created_at, t.updated_at"
+    " FROM workspace.tasks t JOIN LATERAL (SELECT * FROM workspace.task_steps x"
+    "   WHERE x.task_id = t.id ORDER BY x.created_at DESC LIMIT 1) s ON true"
+)
+_ACTIVE = "t.status NOT IN ('succeeded', 'partial', 'failed', 'cancelled')"
 
 
 def _j(value: Any) -> str:
@@ -58,13 +69,15 @@ class SqlWorkspaceStore:
             {"id": m["conversation_id"]})
 
     async def create_task(self, task_id: UUID, conversation_id: UUID, user_id: UUID, role: str,
-                          step_id: UUID) -> None:
+                          step_id: UUID, *, title: str, dispatch: dict[str, Any]) -> None:
         params = {"t": self._t, "id": task_id, "conv": conversation_id, "u": user_id,
-                  "role": role, "step": step_id}
+                  "role": role, "step": step_id, "title": title[:200], "d": _j(dispatch)}
+        # clock_timestamp: bir tranzaksiyadagi vazifalar ham navbatda aniq tartiblanadi.
         await self._c.execute(text(
             "INSERT INTO workspace.tasks (tenant_id, id, conversation_id, initiator_id,"
-            " agent_role_key, status, created_at, updated_at)"
-            " VALUES (:t, :id, :conv, :u, :role, 'queued', now(), now())"), params)
+            " agent_role_key, status, title, dispatch, created_at, updated_at)"
+            " VALUES (:t, :id, :conv, :u, :role, 'queued', :title, CAST(:d AS jsonb),"
+            " clock_timestamp(), clock_timestamp())"), params)
         await self._c.execute(text(
             "INSERT INTO workspace.task_steps (tenant_id, id, task_id, agent_role_key, kind,"
             " status, created_at, updated_at) VALUES (:t, :step, :id, :role, 'analyze',"
@@ -103,12 +116,68 @@ class SqlWorkspaceStore:
              "l": None if limitations is None else _j(limitations), "id": task_id})
 
     async def set_step(self, step_id: UUID, *, status: str, phase: str | None,
-                       progress_seq: int | None, agent_run_id: UUID | None) -> None:
+                       progress_seq: int | None, agent_run_id: UUID | None,
+                       kind: str | None = None) -> None:
         await self._c.execute(text(
             "UPDATE workspace.task_steps SET status = :s, phase = coalesce(:p, phase),"
-            " progress_seq = coalesce(:seq, progress_seq),"
+            " progress_seq = coalesce(:seq, progress_seq), kind = coalesce(:k, kind),"
             " agent_run_id = coalesce(:run, agent_run_id), updated_at = now() WHERE id = :id"),
-            {"s": status, "p": phase, "seq": progress_seq, "run": agent_run_id, "id": step_id})
+            {"s": status, "p": phase, "seq": progress_seq, "run": agent_run_id, "k": kind,
+             "id": step_id})
+
+    async def lock_agent(self, role: str) -> None:
+        await self._c.execute(text(
+            "SELECT pg_advisory_xact_lock(hashtextextended(:k, 0))"),
+            {"k": f"agent-queue:{self._t}:{role}"})
+
+    async def count_active(self, role: str) -> int:
+        r = await self._c.execute(text(
+            # Muddatidan (10 daq) ancha oshgan “osilib qolgan” vazifa slotni abadiy band qilmaydi.
+            "SELECT count(*) FROM workspace.tasks t WHERE t.agent_role_key = :r"
+            " AND t.dispatched_at > now() - interval '15 minutes'"
+            " AND t.status NOT IN ('succeeded', 'partial', 'failed', 'cancelled')"), {"r": role})
+        return int(r.scalar_one())
+
+    async def waiting(self, role: str) -> list[QueuedTask]:
+        rows = (await self._c.execute(text(
+            "SELECT t.id, (SELECT s.id FROM workspace.task_steps s WHERE s.task_id = t.id"
+            " ORDER BY s.created_at LIMIT 1) AS step_id, t.initiator_id, t.dispatch"
+            " FROM workspace.tasks t WHERE t.agent_role_key = :r AND t.dispatched_at IS NULL"
+            " AND t.status = 'queued' ORDER BY t.created_at, t.id"), {"r": role})).all()
+        return [QueuedTask(r.id, r.step_id, r.initiator_id, dict(r.dispatch)) for r in rows]
+
+    async def mark_dispatched(self, task_id: UUID) -> None:
+        await self._c.execute(text(
+            "UPDATE workspace.tasks SET dispatched_at = now(), dispatch = NULL, updated_at = now()"
+            " WHERE id = :id"), {"id": task_id})
+
+    async def is_dispatched(self, task_id: UUID) -> bool:
+        r = await self._c.execute(text(
+            "SELECT dispatched_at IS NOT NULL FROM workspace.tasks WHERE id = :id"),
+            {"id": task_id})
+        return bool(r.scalar_one_or_none())
+
+    async def queue_position(self, task_id: UUID) -> int | None:
+        r = (await self._c.execute(text(
+            "SELECT (SELECT count(*) FROM workspace.tasks o WHERE o.agent_role_key ="
+            " t.agent_role_key AND o.dispatched_at IS NULL AND o.status = 'queued'"
+            " AND (o.created_at, o.id) <= (t.created_at, t.id)) AS pos"
+            " FROM workspace.tasks t WHERE t.id = :id AND t.dispatched_at IS NULL"
+            " AND t.status = 'queued'"), {"id": task_id})).first()
+        return None if r is None else int(r.pos)
+
+    async def agent_tasks(self, since_seconds: int) -> list[AgentTaskRow]:
+        """Faol vazifalar va yaqinda yakunlanganlar (yakuniy holat va aniqlashtirish uchun)."""
+        rows = (await self._c.execute(text(
+            _ROWS + " WHERE " + _ACTIVE + " OR t.updated_at > now() - make_interval(secs => :s)"
+            " ORDER BY t.created_at"), {"s": since_seconds})).all()
+        return [AgentTaskRow(*r) for r in rows]
+
+    async def list_tasks(self, user_id: UUID, limit: int) -> list[AgentTaskRow]:
+        rows = (await self._c.execute(text(
+            _ROWS + " WHERE t.initiator_id = :u ORDER BY t.created_at DESC LIMIT :n"),
+            {"u": user_id, "n": limit})).all()
+        return [AgentTaskRow(*r) for r in rows]
 
     async def add_event(self, task_id: UUID, event_type: str, payload: dict[str, Any]) -> int:
         r = await self._c.execute(text(

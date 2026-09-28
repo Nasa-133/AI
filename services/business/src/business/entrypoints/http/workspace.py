@@ -14,15 +14,15 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 
 from business.bootstrap.container import Container
 from business.contexts.documents.application.common import Viewer
-from business.contexts.governance.public import POLICY_VERSION, tools_for
+from business.contexts.governance.public import tools_for
 from business.contexts.identity.public import AuthContext
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
+from business.contexts.workspace.application.office import OfficeView
 from business.contexts.workspace.application.tasks import Actor, TaskService
-from business.platform.capability import Capability
 from business.platform.db import tenant_transaction
 from business.platform.outbox import BoundOutbox
 
-from ..wiring import document_services
+from ..wiring import document_services, task_dispatcher
 from .deps import AuthCtx, ContainerDep
 
 router = APIRouter(prefix="/api/v1", tags=["workspace"])
@@ -31,20 +31,9 @@ SSE_HEARTBEAT_SECONDS = 15.0
 SSE_MAX_SECONDS = 15 * 60
 
 
-class _Issuer:
-    def __init__(self, container: Container) -> None:
-        self._signer = container.capabilities
-
-    def issue_for_task(self, *, task_id: UUID, tenant_id: UUID, user_id: UUID, role_key: str,
-                       tools: tuple[str, ...], expires_at: datetime) -> str:
-        return self._signer.issue(Capability(task_id, tenant_id, user_id, role_key, tools,
-                                             expires_at))
-
-
 def _service(container: Container, conn: AsyncConnection, ctx: AuthContext) -> TaskService:
-    return TaskService(SqlWorkspaceStore(conn, ctx.tenant_id),
-                       BoundOutbox(conn, ctx.tenant_id), _Issuer(container), tools_for,
-                       POLICY_VERSION)
+    return TaskService(SqlWorkspaceStore(conn, ctx.tenant_id), BoundOutbox(conn, ctx.tenant_id),
+                       task_dispatcher(container, conn, ctx.tenant_id), tools_for)
 
 
 def _actor(ctx: AuthContext) -> Actor:
@@ -107,6 +96,25 @@ async def post_message(conversation_id: UUID, body: MessageIn, ctx: AuthCtx,
             _actor(ctx), conversation_id, body.content, agent=body.agent,
             idempotency_key=idempotency_key, now=datetime.now(UTC),
             context_documents=documents)
+
+
+@router.get("/office")
+async def office(ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
+    """Agentlar holati (TZ 6): backend task/step holatidan hosil qilinadi, soxta progress yo‘q."""
+    async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
+                                  user_id=ctx.user_id) as conn:
+        view = OfficeView(SqlWorkspaceStore(conn, ctx.tenant_id),
+                          limit=container.settings.agent_parallel_limit)
+        return await view.snapshot(ctx.user_id, datetime.now(UTC))
+
+
+@router.get("/tasks")
+async def list_tasks(ctx: AuthCtx, container: ContainerDep) -> list[dict[str, Any]]:
+    async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
+                                  user_id=ctx.user_id) as conn:
+        view = OfficeView(SqlWorkspaceStore(conn, ctx.tenant_id),
+                          limit=container.settings.agent_parallel_limit)
+        return await view.my_tasks(ctx.user_id)
 
 
 @router.get("/tasks/{task_id}")

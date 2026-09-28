@@ -26,7 +26,7 @@ from business.platform.db import bind_request_context
 from business.platform.outbox import BoundOutbox
 from business.platform.storage import ChecksumMismatch
 
-from .wiring import DocumentServices, document_services
+from .wiring import DocumentServices, document_services, task_dispatcher
 
 ANALYTICS_QUEUE = "business.analytics"
 DOCUMENTS_QUEUE = "business.documents"
@@ -68,7 +68,8 @@ class Consumers:
         await self._agents(conn, env.tenant_id).completed(env.payload)
 
     def _agents(self, conn: AsyncConnection, tenant_id: UUID) -> AgentEventHandler:
-        return AgentEventHandler(SqlWorkspaceStore(conn, tenant_id), _QueryRefs(conn, tenant_id))
+        return AgentEventHandler(SqlWorkspaceStore(conn, tenant_id), _QueryRefs(conn, tenant_id),
+                                 task_dispatcher(self._c, conn, tenant_id))
 
     def _integrations(self, conn: AsyncConnection, tenant_id: UUID) -> IntegrationEvents:
         return IntegrationEvents(SqlIntegrationsStore(conn, tenant_id))
