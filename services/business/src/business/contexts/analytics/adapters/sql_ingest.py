@@ -29,6 +29,18 @@ SNAPSHOT_SELECT = (
 )
 
 
+def _db_row(entity: Entity, r: dict[str, Any], timezone: str) -> dict[str, Any]:
+    if entity is Entity.FINANCE_RECEIVABLE:
+        return to_db_row(entity, r, None)
+    if entity is Entity.CRM_DEAL:
+        row = to_db_row(entity, r, None)
+        row["created_date"] = local_date(r["created_at"], timezone)
+        row["closed_date"] = (local_date(r["closed_at"], timezone)
+                              if r["closed_at"] is not None else None)
+        return row
+    return to_db_row(entity, r, local_date(r["occurred_at"], timezone))
+
+
 class SqlIngestion:
     def __init__(self, conn: AsyncConnection, tenant_id: UUID) -> None:
         self._c = conn
@@ -60,8 +72,7 @@ class SqlIngestion:
                                   quarantined: list[Quarantined], meta: BatchMeta,
                                   timezone: str) -> SnapshotRef:
         entity, table, cols = dataset.entity, TABLES[dataset.entity], COLUMNS[dataset.entity]
-        rows = [to_db_row(entity, r, None if entity is Entity.FINANCE_RECEIVABLE
-                          else local_date(r["occurred_at"], timezone)) for r in records]
+        rows = [_db_row(entity, r, timezone) for r in records]
         seq = dataset.latest_seq + 1
         params = {"ds": dataset.id, "seq": seq}
         # Bir tranzaksiyada bir nechta batch bo‘lishi mumkin — har chaqiriqqa alohida nom.

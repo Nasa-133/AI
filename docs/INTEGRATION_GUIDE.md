@@ -108,6 +108,13 @@ To‘liq sxemalar: `contracts/canonical/*.v1.json`. Pul va miqdor **satr** ko‘
 **Qaytarish** (`sales.return`): source_id, original_order_source_id (bo‘lsa), occurred_at,
 branch_code, product_code, customer_code, quantity, amount, vat_amount, currency, status, cost_amount.
 
+**CRM bitimi** (`crm.deal`) — savdo voronkasi: source_id, deal_number, customer_code,
+customer_name, branch_code, stage (voronka bosqichi, erkin matn), status (`open` / `won` / `lost`
+— mapping’da xaritalanadi), amount, currency, created_at, closed_at (yopilgan bitimda majburiy,
+ochiqda bo‘sh), channel (lid manbasi: Instagram, tavsiya…). Ko‘rsatkichlar: yangi bitimlar,
+yutilgan bitimlar soni va summasi, konversiya (yutilgan / yopilgan), o‘rtacha bitim, davr
+oxiridagi ochiq voronka (bosqich va kanal kesimida).
+
 **Ombor harakati** (`inventory.movement`): source_id, occurred_at, warehouse_code, branch_code,
 product_code, quantity_delta (kirim +, chiqim −), movement_type (`receipt`, `sale`, `return`,
 `transfer_in`, `transfer_out`, `adjustment`), unit_cost, currency.
@@ -134,6 +141,7 @@ Soxta ERP aynan shu shartnomani bajaradi, shuning uchun uni namuna sifatida ishl
 | `/api/v1/sales-returns` | qaytarishlar |
 | `/api/v1/stock-movements` | ombor harakatlari |
 | `/api/v1/receivables` | debitorlik |
+| `/api/v1/deals` (CRM tizimida) | CRM bitimlari |
 | `/api/v1/health` | holat (kalitsiz) |
 
 **Parametrlar:**
@@ -197,6 +205,8 @@ shart emas: mapping oynasida ustunlar qo‘lda ulanadi. Faqat endpoint yo‘llar
 INTEGRATION_ERP_API_URL=https://erp.korxona.uz        # lokal: http://localhost:8070 (soxta ERP)
 INTEGRATION_ERP_API_KEY=<read-only kalit>              # secret manager’da; kodga/logga yozilmaydi
 INTEGRATION_ERP_API_PAGE_SIZE=500                      # ixtiyoriy
+INTEGRATION_CRM_API_URL=https://crm.korxona.uz        # CRM (bo‘lsa); lokal: http://localhost:8071
+INTEGRATION_CRM_API_KEY=<read-only kalit>
 ```
 
 `INTEGRATION_ERP_API_URL` bo‘sh bo‘lsa, `erp_api` connector yoqilmaydi. Sozlamadan keyin Integration
@@ -269,7 +279,10 @@ Core, AI va Web kodi o‘zgarmaydi (qabul mezoni I01). Bunga faqat 5-qadamdagi b
 
 ## 7. Soxta ERP (lokal va demo)
 
-`tools/fake_erp` — 4.2-shartnomani bajaradigan REST API (FastAPI). Ma’lumot sintetik, haqiqiy
+`tools/fake_erp` (ERP, :8070) va `tools/fake_crm` (CRM, :8071, kalit `fake-crm-dev-key`) —
+4.2-shartnomani bajaradigan REST API’lar (FastAPI). Soxta CRM ERP mijozlaridan ~2 200 bitim
+yaratadi: har kuni yangi lidlar, bitimlar bosqichma-bosqich o‘tib yopiladi (sust lidlar 2–5
+oyda yutqaziladi); tahlil ssenariysi — 2026-06 da Samarqandda konversiya keskin pasayadi. Ma’lumot sintetik, haqiqiy
 korxona ma’lumoti emas.
 
 - **Tarix**: 2025-09-01 — 2026-08-31 (demo to‘plam: ~19 ming savdo satri, 750 qaytarish, 18,6 ming
@@ -284,7 +297,7 @@ korxona ma’lumoti emas.
 **Ishga tushirish:**
 
 ```bash
-make stack        # API + worker’lar + web + soxta ERP (http://localhost:8070) birga
+make stack        # API + worker’lar + web + soxta ERP (:8070) va soxta CRM (:8071) birga
 # yoki alohida:
 make fake-erp
 ```

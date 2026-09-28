@@ -57,7 +57,8 @@
               "sales.order_line",
               "sales.return",
               "inventory.movement",
-              "finance.receivable"
+              "finance.receivable",
+              "crm.deal"
             ]
           },
           "count": {

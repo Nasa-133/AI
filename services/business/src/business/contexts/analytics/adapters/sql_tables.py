@@ -7,6 +7,7 @@ TABLES: dict[Entity, str] = {
     Entity.SALES_RETURN: "analytics.returns",
     Entity.FINANCE_RECEIVABLE: "analytics.receivables",
     Entity.INVENTORY_MOVEMENT: "analytics.inventory_movements",
+    Entity.CRM_DEAL: "analytics.deals",
 }
 
 _COMMON = ["source_id", "source_revision", "row_hash"]
@@ -28,6 +29,9 @@ COLUMNS: dict[Entity, list[str]] = {
     Entity.INVENTORY_MOVEMENT: ["source_id", "source_revision", "row_hash", "occurred_at",
                                 "local_date", "warehouse_code", "branch_code", "product_code",
                                 "quantity_delta", "movement_type", "unit_cost", "currency"],
+    Entity.CRM_DEAL: [*_COMMON, "deal_number", "customer_code", "customer_name", "branch_code",
+                      "stage", "status", "amount", "currency", "created_at", "created_date",
+                      "closed_at", "closed_date", "channel"],
 }
 
 VISIBLE = ("{a}dataset_id = :{p}ds AND {a}valid_from_seq <= :{p}seq"

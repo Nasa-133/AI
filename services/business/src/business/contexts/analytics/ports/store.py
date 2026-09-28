@@ -109,6 +109,11 @@ class AnalyticsStore(Protocol):
         dimensions: tuple[Dimension, ...],
     ) -> list[ComponentRow]: ...
 
+    async def crm_components(
+        self, spec: QuerySpec, period: Period, snapshot: SnapshotSet,
+        dimensions: tuple[Dimension, ...],
+    ) -> list[ComponentRow]: ...
+
     async def dimension_names(
         self, dimension: Dimension, codes: list[str], snapshots: Snapshots
     ) -> dict[str, str]: ...

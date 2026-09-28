@@ -13,7 +13,8 @@ from ..domain.query import Filters, Period, QuerySpec
 from ..ports.store import AnalyticsStore, ComponentRow, Snapshots, StoredQuery, snapshot_list
 from . import results as R
 
-_ENTITY_LABEL = {Entity.SALES_ORDER_LINE: "Savdo", Entity.FINANCE_RECEIVABLE: "Debitorlik"}
+_ENTITY_LABEL = {Entity.SALES_ORDER_LINE: "Savdo", Entity.FINANCE_RECEIVABLE: "Debitorlik",
+                 Entity.CRM_DEAL: "CRM (bitimlar)"}
 
 
 class NoData(BusinessError):
@@ -120,12 +121,14 @@ class QueryService:
                 "moliyaviy raqam chiqarilmaydi. Korxona egasi yoki administrator: Sozlamalar → "
                 "Hisob qoidalari → “Tasdiqlash”.")
         snaps = snapshots if snapshots is not None else await self._s.active_snapshots()
-        needed = (Entity.FINANCE_RECEIVABLE if spec.is_receivable else Entity.SALES_ORDER_LINE)
+        needed = {"receivable": Entity.FINANCE_RECEIVABLE, "crm": Entity.CRM_DEAL}.get(
+            spec.kind, Entity.SALES_ORDER_LINE)
         if not snaps.get(needed):
             raise NoData(f"{_ENTITY_LABEL.get(needed, needed.value)} ma’lumoti hali yuklanmagan. "
-                         "Integratsiyalar sahifasida ERP’ni ulang yoki CSV fayl yuklang.")
-        keep = ({Entity.FINANCE_RECEIVABLE} if spec.is_receivable
-                else {Entity.SALES_ORDER_LINE, Entity.SALES_RETURN})
+                         f"Integratsiyalar sahifasida {'CRM' if spec.is_crm else 'ERP'}’ni "
+                         "ulang yoki CSV fayl yuklang.")
+        keep = {needed} if spec.kind != "sales" else {Entity.SALES_ORDER_LINE,
+                                                       Entity.SALES_RETURN}
         return {e: s for e, s in snaps.items() if e in keep}
 
     async def components(self, spec: QuerySpec, period: Period,
@@ -134,6 +137,8 @@ class QueryService:
         if spec.is_receivable:
             return await self._s.receivable_components(
                 spec, period.end, snaps[Entity.FINANCE_RECEIVABLE], dims)
+        if spec.is_crm:
+            return await self._s.crm_components(spec, period, snaps[Entity.CRM_DEAL], dims)
         return await self._s.sales_components(spec, period, snaps, dims)
 
     async def names(self, rows: list[ComponentRow], dims: tuple[Dimension, ...],
@@ -165,7 +170,7 @@ class QueryService:
             notes.append("Bir nechta valyuta: natija valyuta bo‘yicha ajratilgan, qo‘shilmagan.")
         if spec.period.is_incomplete(ctx.today):
             notes.append("Davr hali tugamagan — to‘liq davr bilan izohsiz solishtirmang.")
-        if not spec.is_receivable and not snaps.get(Entity.SALES_RETURN):
+        if spec.kind == "sales" and not snaps.get(Entity.SALES_RETURN):
             notes.append("Qaytarishlar ma’lumoti yuklanmagan — sof savdoga ta’sir qilishi mumkin.")
         if scope_note:
             notes.append(scope_note)

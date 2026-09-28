@@ -1061,7 +1061,7 @@ export interface components {
              * Entity
              * @enum {string}
              */
-            entity: "sales.order_line" | "sales.return" | "inventory.movement" | "finance.receivable";
+            entity: "sales.order_line" | "sales.return" | "inventory.movement" | "finance.receivable" | "crm.deal";
             /** Mapping */
             mapping: components["schemas"]["MappingItem"][];
             /** Status Map */
@@ -1334,9 +1334,9 @@ export interface components {
              * Connector Id
              * @enum {string}
              */
-            connector_id: "file_import" | "demo_erp" | "erp_api";
+            connector_id: "file_import" | "demo_erp" | "erp_api" | "crm_api";
             /** Entity */
-            entity?: ("sales.order_line" | "sales.return" | "inventory.movement" | "finance.receivable") | null;
+            entity?: ("sales.order_line" | "sales.return" | "inventory.movement" | "finance.receivable" | "crm.deal") | null;
             /**
              * Name
              * @default

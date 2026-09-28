@@ -97,11 +97,28 @@ class Movement(_Strict):
     currency: Currency | None
 
 
+class Deal(_Strict):
+    source_id: Code
+    source_revision: Annotated[str, StringConstraints(max_length=200)] | None
+    deal_number: Code
+    customer_code: Code
+    customer_name: Name | None
+    branch_code: Code
+    stage: Code
+    status: Literal["open", "won", "lost"]
+    amount: DecimalStr
+    currency: Currency
+    created_at: AwareDatetime
+    closed_at: AwareDatetime | None
+    channel: Code | None
+
+
 MODELS: dict[Entity, type[_Strict]] = {
     Entity.SALES_ORDER_LINE: OrderLine,
     Entity.SALES_RETURN: Return,
     Entity.FINANCE_RECEIVABLE: Receivable,
     Entity.INVENTORY_MOVEMENT: Movement,
+    Entity.CRM_DEAL: Deal,
 }
 
 
@@ -133,7 +150,7 @@ def to_db_row(entity: Entity, r: dict[str, Any], tz_local_date: date | None) -> 
     rest = {k: v for k, v in r.items()
             if k not in money and k not in common and not k.startswith("_")}
     row = {**common, **rest, **money}
-    if entity is not Entity.FINANCE_RECEIVABLE:
+    if entity not in (Entity.FINANCE_RECEIVABLE, Entity.CRM_DEAL):
         assert tz_local_date is not None
         row["local_date"] = tz_local_date
     return row

@@ -43,7 +43,9 @@
         "branch",
         "product",
         "customer",
-        "currency"
+        "currency",
+        "stage",
+        "channel"
       ]
     },
     "metric_id": {

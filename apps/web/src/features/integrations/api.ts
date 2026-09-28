@@ -23,12 +23,14 @@ export type Source = {
 };
 
 const BUSY = new Set(["discovering", "configuring", "syncing"]);
+/** Jarayonda: band holat yoki sinxron tugab, analitika hali qabul qilmagan. */
+const pending = (s: Source) => BUSY.has(s.status) || (s.status === "synced" && s.usage === null);
 
 export function useSources() {
   return useQuery({
     queryKey: ["sources"],
     queryFn: async () => (await unwrap(api.GET("/api/v1/integrations"))) as unknown as Source[],
-    refetchInterval: (q) => ((q.state.data ?? []).some((s) => BUSY.has(s.status)) ? 1500 : false),
+    refetchInterval: (q) => ((q.state.data ?? []).some(pending) ? 1500 : false),
   });
 }
 
@@ -39,7 +41,7 @@ export function useSource(id: string | null) {
     queryFn: async () => (await unwrap(api.GET("/api/v1/integrations/{source_id}", {
       params: { path: { source_id: id! } },
     }))) as unknown as Source,
-    refetchInterval: (q) => (q.state.data && BUSY.has(q.state.data.status) ? 1500 : false),
+    refetchInterval: (q) => (q.state.data && pending(q.state.data) ? 1500 : false),
   });
 }
 
@@ -65,20 +67,34 @@ export const ERP_OBJECTS = [
   { entity: "finance.receivable", name: "ERP: Debitorlik" },
 ] as const;
 
+export const CRM_OBJECTS = [{ entity: "crm.deal", name: "CRM: Bitimlar (voronka)" }] as const;
+
+type SystemObject = { entity: (typeof ERP_OBJECTS)[number]["entity"] | "crm.deal"; name: string };
+
 export function useConnectErp(existing: Source[] = []) {
+  return useConnectSystem("erp_api", "ERP", ERP_OBJECTS, existing);
+}
+
+export function useConnectCrm(existing: Source[] = []) {
+  return useConnectSystem("crm_api", "CRM", CRM_OBJECTS, existing);
+}
+
+/** Tashqi tizim (ERP, CRM): har obyekt alohida manba. */
+function useConnectSystem(connector: "erp_api" | "crm_api", label: string,
+                          objects: readonly SystemObject[], existing: Source[]) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
       // Bitta tizimni ikki marta ulash mumkin emas: allaqachon ulangan obyektlar o‘tkazib yuboriladi.
-      const missing = ERP_OBJECTS.filter((o) => !existing.some(
-        (s) => s.connector_id === "erp_api" && s.entity === o.entity));
+      const missing = objects.filter((o) => !existing.some(
+        (s) => s.connector_id === connector && s.entity === o.entity));
       if (!missing.length) {
-        throw new ApiError(409, "ALREADY_CONNECTED", "ERP’ning barcha obyektlari allaqachon ulangan.", false, null);
+        throw new ApiError(409, "ALREADY_CONNECTED", `${label}’ning barcha obyektlari allaqachon ulangan.`, false, null);
       }
       const created: { id: string }[] = [];
       for (const o of missing) {
         created.push(await (unwrap(api.POST("/api/v1/integrations", {
-          body: { connector_id: "erp_api", name: o.name, entity: o.entity },
+          body: { connector_id: connector, name: o.name, entity: o.entity },
         })) as Promise<{ id: string }>));
       }
       return created;

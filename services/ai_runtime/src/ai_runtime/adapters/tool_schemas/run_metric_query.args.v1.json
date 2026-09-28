@@ -53,7 +53,9 @@
           "branch",
           "product",
           "customer",
-          "currency"
+          "currency",
+          "stage",
+          "channel"
         ]
       },
       "maxItems": 2

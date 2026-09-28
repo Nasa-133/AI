@@ -6,7 +6,13 @@ from datetime import date, timedelta
 
 from business.kernel.errors import ValidationFailed
 
-from .metrics import CATALOG, RECEIVABLE_COMPONENTS, Dimension, MetricDefinition
+from .metrics import (
+    CATALOG,
+    CRM_COMPONENTS,
+    RECEIVABLE_COMPONENTS,
+    Dimension,
+    MetricDefinition,
+)
 
 MAX_METRICS = 6
 MAX_DIMENSIONS = 2
@@ -80,10 +86,10 @@ class QuerySpec:
         if not 1 <= self.limit <= MAX_LIMIT:
             raise InvalidQuery(f"limit 1–{MAX_LIMIT} oralig‘ida.")
         definitions = [self._definition(m) for m in self.metric_ids]
-        kinds = {self._is_receivable(d) for d in definitions}
+        kinds = {self._kind(d) for d in definitions}
         if len(kinds) > 1:
             raise InvalidQuery(
-                "Savdo va debitorlik metrikalarini bitta so‘rovda aralashtirib bo‘lmaydi."
+                "Savdo, debitorlik va CRM metrikalarini bitta so‘rovda aralashtirib bo‘lmaydi."
             )
         for d in definitions:
             for dim in self.dimensions:
@@ -93,8 +99,17 @@ class QuerySpec:
                     )
 
     @property
+    def kind(self) -> str:
+        """Manba turi: `sales` (savdo/qaytarish), `receivable` (debitorlik), `crm` (bitimlar)."""
+        return self._kind(CATALOG[self.metric_ids[0]])
+
+    @property
     def is_receivable(self) -> bool:
-        return self._is_receivable(CATALOG[self.metric_ids[0]])
+        return self.kind == "receivable"
+
+    @property
+    def is_crm(self) -> bool:
+        return self.kind == "crm"
 
     @property
     def definitions(self) -> list[MetricDefinition]:
@@ -108,8 +123,12 @@ class QuerySpec:
             raise UnknownMetric(f"Noma’lum metrika: {metric_id}") from None
 
     @staticmethod
-    def _is_receivable(d: MetricDefinition) -> bool:
-        return bool(set(d.components) & RECEIVABLE_COMPONENTS)
+    def _kind(d: MetricDefinition) -> str:
+        if set(d.components) & RECEIVABLE_COMPONENTS:
+            return "receivable"
+        if set(d.components) & CRM_COMPONENTS:
+            return "crm"
+        return "sales"
 
 
 def previous_period(period: Period) -> Period:

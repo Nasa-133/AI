@@ -1,9 +1,9 @@
 "use client";
 
-import { CheckCheck, Database, FileSpreadsheet, RefreshCw, Server, Upload } from "lucide-react";
+import { CheckCheck, Database, FileSpreadsheet, Handshake, RefreshCw, Server, Upload } from "lucide-react";
 import { useState } from "react";
 
-import { useConnectErp, useCreateSource, useSource, useSources, useSync, useUseSource, type Source } from "@/features/integrations/api";
+import { useConnectCrm, useConnectErp, useCreateSource, useSource, useSources, useSync, useUseSource, type Source } from "@/features/integrations/api";
 import { useFreshness } from "@/features/dashboards/freshness";
 import { MappingEditor } from "@/features/integrations/MappingEditor";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
@@ -21,8 +21,12 @@ const STATUS: Record<string, [string, string]> = {
   failed: ["Xato", "badge badge-danger"],
 };
 
-function Status({ status, id }: { status: string; id?: string }) {
+function Status({ status, id, usage }: { status: string; id?: string; usage?: Source["usage"] }) {
   const fresh = useFreshness();
+  // Sinxron tugadi, lekin analitika yozuvlarni hali qabul qilmagan — raqamlar biroz keyin.
+  if (status === "synced" && usage === null) {
+    return <span className="badge badge-accent" title="Analitikaga yuklanmoqda">Tayyorlanmoqda</span>;
+  }
   // I03: xizmat javob bermasa jarayon “kutilmoqda” deb aniq ko‘rsatiladi (abadiy “o‘qilmoqda” emas).
   if (id && fresh.data?.waiting.some((w) => w.id === id && w.stale)) {
     return <span className="badge badge-warning" title="Integratsiya xizmati javob bermayapti">Kutilmoqda</span>;
@@ -73,7 +77,8 @@ function SourceDetail({ id }: { id: string }) {
         <h2>{s.name}</h2>
         {s.connector_id === "demo_erp" && <span className="badge badge-warning">DEMO — haqiqiy ERP emas</span>}
         {s.connector_id === "erp_api" && <span className="badge" title="Integration Runtime sozlamasidagi ERP API">ERP API</span>}
-        <Status status={s.status} id={s.id} />
+        {s.connector_id === "crm_api" && <span className="badge" title="Integration Runtime sozlamasidagi CRM API">CRM API</span>}
+        <Status status={s.status} id={s.id} usage={s.usage} />
       </div>
       <DuplicateNotice s={s} />
       {s.error_message && (
@@ -100,7 +105,9 @@ function SourceDetail({ id }: { id: string }) {
             <RefreshCw aria-hidden /> {s.status === "ready" ? "Sinxronlash" : "Qayta sinxronlash"}
           </button>
           <span className="muted">Mapping v{s.mapping_version} · <span className="mono">{s.entity}</span></span>
-          {s.connector_id === "erp_api" && <span className="hint">· ERP har 15 daqiqada avtomatik qayta o‘qiladi</span>}
+          {(s.connector_id === "erp_api" || s.connector_id === "crm_api") && (
+            <span className="hint">· tizim avtomatik qayta o‘qiladi (standart: har 15 daqiqada)</span>
+          )}
         </div>
       )}
       <ErrorNotice error={sync.error} />
@@ -112,6 +119,7 @@ export default function IntegrationsPage() {
   const sources = useSources();
   const create = useCreateSource();
   const connectErp = useConnectErp(sources.data ?? []);
+  const connectCrm = useConnectCrm(sources.data ?? []);
   const [selected, setSelected] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const current = selected ?? sources.data?.[0]?.id ?? null;
@@ -141,6 +149,16 @@ export default function IntegrationsPage() {
           </div>
         </section>
         <section className="panel panel-pad stack">
+          <div className="icon-text"><Handshake aria-hidden /><h2>CRM tizimi (API)</h2></div>
+          <p className="muted">Bitimlar va savdo voronkasi: yangi lidlar, yutilgan bitimlar, konversiya, ochiq voronka.</p>
+          <div className="row">
+            <button className="btn btn-primary" disabled={connectCrm.isPending}
+                    onClick={() => connectCrm.mutate(undefined, { onSuccess: (list) => setSelected(list[0]?.id ?? null) })}>
+              <Handshake aria-hidden /> CRM ulash (API)
+            </button>
+          </div>
+        </section>
+        <section className="panel panel-pad stack">
           <div className="icon-text"><FileSpreadsheet aria-hidden /><h2>CSV fayl</h2></div>
           <div className="field">
             <label htmlFor="csv">CSV fayl (UTF-8, sarlavhali)</label>
@@ -156,7 +174,7 @@ export default function IntegrationsPage() {
           </div>
         </section>
       </div>
-      <ErrorNotice error={create.error ?? connectErp.error} />
+      <ErrorNotice error={create.error ?? connectErp.error ?? connectCrm.error} />
       <ErrorNotice error={sources.error} />
       <div className={styles.sources}>
         <nav aria-label="Manbalar" className={`panel ${styles.list}`}>
@@ -167,7 +185,7 @@ export default function IntegrationsPage() {
                     onClick={() => setSelected(s.id)}>
               <span className={styles.itemName}>{s.name}</span>
               <span className="row" style={{ gap: 4 }}>
-                <Status status={s.status} id={s.id} />
+                <Status status={s.status} id={s.id} usage={s.usage} />
                 {s.usage && !s.usage.counted && <span className="badge badge-warning" title="Boshqa manba bilan bir xil ma’lumot">Takroriy</span>}
               </span>
             </button>

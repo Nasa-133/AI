@@ -32,7 +32,9 @@
         "branch",
         "product",
         "customer",
-        "currency"
+        "currency",
+        "stage",
+        "channel"
       ]
     },
     "current_period": {

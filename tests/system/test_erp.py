@@ -15,9 +15,18 @@ ERP_OBJECTS = {"sales.order_line": "ERP: Sotuvlar", "sales.return": "ERP: Qaytar
                "finance.receivable": "ERP: Debitorlik"}
 
 
-async def connect(c: httpx.AsyncClient, entity: str, name: str) -> str:
+STATUS_MAPS = {
+    "crm.deal": {"open": "open", "won": "won", "lost": "lost"},
+    "inventory.movement": {k: k for k in ("receipt", "sale", "return", "transfer_in",
+                                          "transfer_out", "adjustment")},
+}
+SALES_STATUS = {"posted": "confirmed", "draft": "draft", "cancelled": "cancelled"}
+
+
+async def connect(c: httpx.AsyncClient, entity: str, name: str,
+                  connector: str = "erp_api") -> str:
     r = await c.post(f"{BASE}/api/v1/integrations", headers=csrf(c),
-                     json={"connector_id": "erp_api", "name": name, "entity": entity})
+                     json={"connector_id": connector, "name": name, "entity": entity})
     assert r.status_code == 202, r.text
     source = r.json()["id"]
 
@@ -33,9 +42,7 @@ async def connect(c: httpx.AsyncClient, entity: str, name: str) -> str:
                    key=lambda e: e["match_score"])
     assert proposal["match_score"] == 1.0 and not proposal["unmapped_required_fields"]
     status_map = [{"source_value": k, "canonical_value": v}
-                  for k, v in proposal["status_map"].items()] if proposal.get("status_map") else [
-        {"source_value": k, "canonical_value": v} for k, v in
-        {"posted": "confirmed", "draft": "draft", "cancelled": "cancelled"}.items()]
+                  for k, v in STATUS_MAPS.get(entity, SALES_STATUS).items()]
     r = await c.post(f"{BASE}/api/v1/integrations/{source}/mapping", headers=csrf(c),
                      json={"entity": entity, "mapping": proposal["suggested_mapping"],
                            "status_map": status_map})
@@ -44,6 +51,13 @@ async def connect(c: httpx.AsyncClient, entity: str, name: str) -> str:
     assert (await c.post(f"{BASE}/api/v1/integrations/{source}/sync",
                          headers=csrf(c))).status_code == 202
     await until(lambda: source_in("synced"), f"{name}: sync", timeout=180)
+
+    async def counted() -> bool:
+        # “Yuklandi” — sinxron tugadi; analitika yozuvlarni bir oz keyin qabul qiladi.
+        s = (await c.get(f"{BASE}/api/v1/integrations/{source}")).json()
+        return bool(s.get("usage") and s["usage"]["counted"])
+
+    await until(counted, f"{name}: analitikaga tayyor", timeout=120)
     return source
 
 
@@ -66,3 +80,10 @@ async def test_erp_api_to_agent_answers() -> None:
         debt = await ask(c, conv, "Madina, 2026 avgust oxiridagi debitorlik qoldig‘i qancha?")
         assert debt["task"]["status"] == "succeeded", debt
         assert re.search(r"\d", debt["answer"]["content"]), debt["answer"]["content"]
+
+        # CRM: bitimlar (voronka) — alohida tizim, o‘z connector’i.
+        await connect(c, "crm.deal", "CRM: Bitimlar", connector="crm_api")
+        funnel = await ask(c, conv, "Ali, 2026 iyun konversiya filiallar bo‘yicha")
+        assert funnel["task"]["status"] == "succeeded", funnel
+        assert "Konversiya" in funnel["answer"]["content"], funnel["answer"]["content"]
+        assert "SAM" in funnel["answer"]["content"]

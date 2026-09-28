@@ -20,7 +20,7 @@ import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 
 from integration_runtime.adapters.connectors import DemoErpConnector, FileImportConnector
-from integration_runtime.adapters.erp_api import ErpApiConnector
+from integration_runtime.adapters.erp_api import CrmApiConnector, ErpApiConnector
 from integration_runtime.application.sync_engine import SyncEngine
 from integration_runtime.domain.mapping import SourceConfig, SourceMapping
 from integration_runtime.domain.templates import suggest
@@ -36,6 +36,8 @@ from integration_runtime.ports.connector import (
 ROOT = Path(__file__).resolve().parents[4]
 DEMO = ROOT / "fixtures/synthetic/demo"
 sys.path.insert(0, str(ROOT / "tools"))
+from fake_crm.app import create_app as create_crm_app  # noqa: E402
+from fake_crm.crm import CrmData  # noqa: E402
 from fake_erp.app import create_app  # noqa: E402
 from fake_erp.erp import ErpData  # noqa: E402
 
@@ -55,6 +57,7 @@ SCHEMAS = {
     "sales.return": ROOT / "contracts/canonical/sales/return.v1.json",
     "inventory.movement": ROOT / "contracts/canonical/inventory/movement.v1.json",
     "finance.receivable": ROOT / "contracts/canonical/finance/receivable.v1.json",
+    "crm.deal": ROOT / "contracts/canonical/crm/deal.v1.json",
 }
 FILES = {"sales.order_line": "sotuvlar.csv", "sales.return": "qaytarishlar.csv",
          "inventory.movement": "ombor_harakatlari.csv", "finance.receivable": "debitorlik.csv"}
@@ -96,6 +99,18 @@ class SyntheticApiConnector:
             yield i, dict(row)
 
 
+FAKE_CRM_KEY = "test-crm-key"
+_CRM_DATA: list[CrmData] = []
+
+
+def fake_crm_connector(**app_kwargs: object) -> CrmApiConnector:
+    if not _CRM_DATA:
+        _CRM_DATA.append(CrmData.load(DEMO))
+    app = create_crm_app(data=_CRM_DATA[0], api_key=FAKE_CRM_KEY, **app_kwargs)  # type: ignore[arg-type]
+    return CrmApiConnector("http://crm.test", FAKE_CRM_KEY,
+                           transport=httpx.ASGITransport(app=app))
+
+
 def demo_rows(name: str, limit: int = 400) -> list[RawRow]:
     with (DEMO / name).open(encoding="utf-8") as f:
         return [dict(r) for _, r in zip(range(limit), csv.DictReader(f), strict=False)]
@@ -120,10 +135,11 @@ def connectors(tmp: Path) -> list[tuple[Connector, SourceHandle, str]]:
         (DemoErpConnector(DEMO), handle(), "sales.return"),
         (SyntheticApiConnector(rows), handle(), "sales.order_line"),
         (fake_erp_connector(), handle(), "sales.order_line"),
+        (fake_crm_connector(), handle(), "crm.deal"),
     ]
 
 
-@pytest.fixture(params=["file_import", "demo_erp", "synthetic_api", "erp_api"])
+@pytest.fixture(params=["file_import", "demo_erp", "synthetic_api", "erp_api", "crm_api"])
 def subject(request: pytest.FixtureRequest, tmp_path: Path) -> tuple[Connector, SourceHandle, str]:
     return next(c for c in connectors(tmp_path) if c[0].manifest.connector_id == request.param)
 

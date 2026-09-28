@@ -25,6 +25,19 @@ MONTHS = {
 }
 # (kalit so‘z, metrika id). Tartib muhim: aniqroq ibora oldin.
 METRIC_KEYWORDS: list[tuple[str, str]] = [
+    # CRM (voronka) — “savdo” so‘zidan oldin: “bitimlar summasi” savdo tushumi emas.
+    ("konversiya", "crm_win_rate"),
+    ("yutilgan bitimlar summasi", "crm_won_amount"),
+    ("bitimlar summasi", "crm_won_amount"),
+    ("o'rtacha bitim", "crm_avg_deal"),
+    ("yutilgan bitim", "crm_deals_won"),
+    ("ochiq voronka", "crm_pipeline_open"),
+    ("voronka", "crm_pipeline_open"),
+    ("yangi bitim", "crm_deals_created"),
+    ("yangi lid", "crm_deals_created"),
+    ("lidlar", "crm_deals_created"),
+    ("bitimlar", "crm_deals_created"),
+    ("sdelka", "crm_deals_created"),
     ("hujjatlar soni", "order_count"),
     ("hujjat soni", "order_count"),
     ("sotilgan miqdor", "quantity_sold"),
@@ -43,6 +56,8 @@ METRIC_KEYWORDS: list[tuple[str, str]] = [
     ("sotuv", "net_sales"),
 ]
 DIMENSION_KEYWORDS: list[tuple[str, str]] = [
+    ("bosqich", "stage"),
+    ("kanal", "channel"),
     ("filial", "branch"),
     ("mahsulot", "product"),
     ("tovar", "product"),
@@ -60,6 +75,13 @@ _CLARIFICATION_RE = re.compile(r"qaysi (ko'rsatkich|biri) kerak")
 _ALL_RE = re.compile(r"^(barchasi|hammasi|hamma|barcha|hammasini|barchasini)\W*$")
 # “Barchasi” — katalogdagi savdo ko‘rsatkichlari (build_plan katalog bo‘yicha ochadi).
 _ALL_MARKER = "barcha ko'rsatkichlar"
+
+
+def metric_kind(metric_id: str) -> str:
+    """Manba turi (Core QuerySpec.kind bilan mos): savdo, debitorlik yoki CRM."""
+    if metric_id.startswith("receivables_"):
+        return "receivable"
+    return "crm" if metric_id.startswith("crm_") else "sales"
 
 
 def conversation_turns(items: list[dict[str, Any]]) -> list[tuple[str, str]]:
@@ -199,9 +221,9 @@ def build_plan(text: str, catalog: dict[str, Any]) -> Plan:
             found.append((pos, metric_id))
             consumed = consumed.replace(keyword, " " * len(keyword))
     requested = list(dict.fromkeys(mid for _, mid in sorted(found)))
-    if _ALL_MARKER in t:  # “barchasi”: katalogdagi savdo ko‘rsatkichlari (debitorliksiz)
+    if _ALL_MARKER in t:  # “barchasi”: katalogdagi savdo ko‘rsatkichlari
         requested = list(dict.fromkeys(
-            [*requested, *(m for m in metrics if not m.startswith("receivables_"))]))
+            [*requested, *(m for m in metrics if metric_kind(m) == "sales")]))
     if not requested:
         names = ", ".join(m["name"] for m in metrics.values()) or "—"
         plan.clarification = f"Qaysi ko‘rsatkich kerak? Mavjud metrikalar: {names}."
@@ -216,9 +238,9 @@ def build_plan(text: str, catalog: dict[str, Any]) -> Plan:
         plan.clarification = (f"So‘ralgan ko‘rsatkich hozir mavjud emas. Mavjud metrikalar: "
                               f"{names}. Qaysi biri kerak?")
         return plan
-    # Savdo va debitorlik metrikalari bitta so‘rovda aralashtirilmaydi (Core qoidasi).
-    receivable = requested[0].startswith("receivables_")
-    same = [m for m in requested if m.startswith("receivables_") == receivable]
+    # Savdo, debitorlik va CRM metrikalari bitta so‘rovda aralashtirilmaydi (Core qoidasi).
+    kind = metric_kind(requested[0])
+    same = [m for m in requested if metric_kind(m) == kind]
     other = [metrics[m]["name"] for m in requested if m not in same]
     if other:
         plan.notes.append("Boshqa manbadagi ko‘rsatkichlar alohida so‘rov bilan: "

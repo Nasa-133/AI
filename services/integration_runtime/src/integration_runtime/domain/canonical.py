@@ -11,6 +11,7 @@ CANONICAL_SCHEMA_VERSION = 1
 
 STATUS_VALUES = ("confirmed", "draft", "cancelled")
 MOVEMENT_TYPES = ("receipt", "sale", "return", "transfer_in", "transfer_out", "adjustment")
+DEAL_STATUSES = ("open", "won", "lost")
 
 
 class FieldKind(StrEnum):
@@ -102,6 +103,21 @@ ENTITY_FIELDS: dict[str, tuple[FieldSpec, ...]] = {
         _d("paid_amount"),
         FieldSpec("currency", FieldKind.CURRENCY),
         _t("branch_code"),
+    ),
+    "crm.deal": (
+        _t("source_id"),
+        _t("source_revision", nullable=True),
+        _t("deal_number"),
+        _t("customer_code"),
+        _t("customer_name", nullable=True, max_length=500),
+        _t("branch_code"),
+        _t("stage"),
+        FieldSpec("status", FieldKind.ENUM, enum_values=DEAL_STATUSES),
+        _d("amount"),
+        FieldSpec("currency", FieldKind.CURRENCY),
+        FieldSpec("created_at", FieldKind.DATETIME),
+        FieldSpec("closed_at", FieldKind.DATETIME, nullable=True),
+        _t("channel", nullable=True),
     ),
 }
 

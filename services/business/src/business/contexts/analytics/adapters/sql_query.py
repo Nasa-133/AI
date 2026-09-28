@@ -24,6 +24,8 @@ _DIM_SQL = {
     D.BRANCH: "branch_code",
     D.PRODUCT: "product_code",
     D.CUSTOMER: "customer_code",
+    D.STAGE: "stage",
+    D.CHANNEL: "coalesce(channel, '—')",
 }
 _NAME_SQL = {
     D.BRANCH: ("branch_code", "branch_name", "analytics.order_lines"),
@@ -146,6 +148,54 @@ class SqlAggregates:
             for key, values in await self._sums(table, snap, sums, spec, period, dimensions):
                 merged[key].update(values)
         return [ComponentRow(k, v) for k, v in sorted(merged.items())]
+
+    async def crm_components(self, spec: QuerySpec, period: Period, snapshot: SnapshotSet,
+                             dimensions: tuple[D, ...]) -> list[ComponentRow]:
+        """CRM voronkasi: yaratilgan (yaratilish sanasi), yopilgan (yopilish sanasi) va davr
+        oxiridagi ochiq bitimlar — kerakli komponentlar bo‘yicha alohida so‘rovlar."""
+        wanted = {c for d in spec.definitions for c in d.components}
+        merged: dict[tuple[str, ...], dict[C, Decimal]] = defaultdict(dict)
+        parts: list[tuple[str, str, dict[C, str]]] = []
+        if C.DEALS_CREATED in wanted:
+            parts.append(("created_date", "true", {C.DEALS_CREATED: "count(*)"}))
+        closed = wanted & {C.DEALS_WON, C.DEALS_LOST, C.WON_AMOUNT}
+        if closed:
+            parts.append(("closed_date", "status IN ('won', 'lost')", {
+                C.DEALS_WON: "count(*) FILTER (WHERE status = 'won')",
+                C.DEALS_LOST: "count(*) FILTER (WHERE status = 'lost')",
+                C.WON_AMOUNT: "coalesce(sum(amount) FILTER (WHERE status = 'won'), 0)"}))
+        for date_col, condition, sums in parts:
+            params: dict[str, Any] = {"start": period.start, "end": period.end}
+            where = (f"{visible_any(snapshot, params)} AND {condition}"
+                     " AND local_date BETWEEN :start AND :end"
+                     + _filters(spec, spec.filters, params, products=False))
+            for key, values in await self._grouped(
+                    f"(SELECT d.*, d.{date_col} AS local_date FROM analytics.deals d) t",
+                    where, params, dimensions, sums):
+                merged[key].update(values)
+        if C.PIPELINE_OPEN in wanted:
+            params = {"end": period.end}
+            where = (f"{visible_any(snapshot, params)} AND created_date <= :end"
+                     " AND (closed_date IS NULL OR closed_date > :end)"
+                     + _filters(spec, spec.filters, params, products=False))
+            for key, values in await self._grouped(
+                    "analytics.deals", where, params, dimensions,
+                    {C.PIPELINE_OPEN: "coalesce(sum(amount), 0)"}):
+                merged[key].update(values)
+        return [ComponentRow(k, v) for k, v in sorted(merged.items())]
+
+    async def _grouped(self, source: str, where: str, params: dict[str, Any],
+                       dims: tuple[D, ...], sums: dict[C, str],
+                       ) -> list[tuple[tuple[str, ...], dict[C, Decimal]]]:
+        groups = _group_exprs(dims)
+        select = ", ".join([*(f"{g} AS g{i}" for i, g in enumerate(groups)),
+                            *(f"{expr} AS {c.value}" for c, expr in sums.items())])
+        group_by = ", ".join(str(i + 1) for i in range(len(groups)))
+        rows = (await self._c.execute(text(
+            f"SELECT {select} FROM {source} WHERE {where} GROUP BY {group_by}"),
+            params)).all()
+        return [(tuple(str(r._mapping[f"g{i}"]) for i in range(len(groups))),
+                 {c: Decimal(r._mapping[c.value] or 0) for c in sums}) for r in rows]
 
     async def receivable_components(self, spec: QuerySpec, as_of: date, snapshot: SnapshotSet,
                                     dimensions: tuple[D, ...]) -> list[ComponentRow]:

@@ -4,7 +4,7 @@ PACKAGES := abo_messaging
 BUSINESS_MIGRATIONS_DATABASE_URL ?= postgresql+asyncpg://business_owner:business_owner_dev@localhost:55432/business
 export BUSINESS_MIGRATIONS_DATABASE_URL
 
-.PHONY: fake-erp load eval eval-openai degradation migration-check test-db up down reset sync migrate dev worker ai-worker integration-worker check e2e e2e-ui stack web-lint web-test test test-unit test-integration test-repo lint openapi synthetic
+.PHONY: fake-erp fake-crm load eval eval-openai degradation migration-check test-db up down reset sync migrate dev worker ai-worker integration-worker check e2e e2e-ui stack web-lint web-test test test-unit test-integration test-repo lint openapi synthetic
 
 up:            ## Platformani ko‘tarish (Postgres, RabbitMQ, Redis, S3 ombori)
 	$(COMPOSE) up -d --wait postgres rabbitmq redis objectstore
@@ -85,6 +85,9 @@ test-repo:     ## Servislararo chegaralar va kontrakt schema’lari
 
 fake-erp:      ## Soxta ERP REST API (http://localhost:8070, kalit: fake-erp-dev-key) — make stack o‘zi ham ishga tushiradi
 	cd services/integration_runtime && uv run python ../../tools/fake_erp/app.py --port 8070
+
+fake-crm:      ## Soxta CRM REST API (http://localhost:8071, kalit: fake-crm-dev-key) — make stack o‘zi ham ishga tushiradi
+	cd services/integration_runtime && uv run python ../../tools/fake_crm/app.py --port 8071
 
 openapi:       ## Review’dan keyin OpenAPI baseline’ni yangilash
 	cd services/business && uv run python ../../tools/contracts/export_openapi.py business > ../../contracts/http/business.openapi.json

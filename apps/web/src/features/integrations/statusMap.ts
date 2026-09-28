@@ -2,6 +2,7 @@ import type { DiscoveredEntity } from "./api";
 
 export const CANONICAL_STATUSES = ["confirmed", "draft", "cancelled"] as const;
 export const MOVEMENT_TYPES = ["receipt", "sale", "return", "transfer_in", "transfer_out", "adjustment"] as const;
+export const DEAL_STATUSES = ["open", "won", "lost"] as const;
 
 /** Tanish manba qiymatlari oilalari (o‘zbekcha eksport, ruscha 1C, inglizcha ERP API). */
 const FAMILIES: Record<string, string>[] = [
@@ -12,11 +13,14 @@ const FAMILIES: Record<string, string>[] = [
     "ko‘chirish_chiqim": "transfer_out", tuzatish: "adjustment" },
   { receipt: "receipt", sale: "sale", return: "return", transfer_in: "transfer_in",
     transfer_out: "transfer_out", adjustment: "adjustment" },
+  { open: "open", won: "won", lost: "lost" },
+  { ochiq: "open", yutildi: "won", yutqazildi: "lost" },
 ];
 
 /** Obyekt uchun ruxsat etilgan kanonik qiymatlar (ombor harakati — tur, qolganlari — holat). */
 export function canonicalOptions(entity: string): readonly string[] {
-  return entity === "inventory.movement" ? MOVEMENT_TYPES : CANONICAL_STATUSES;
+  if (entity === "inventory.movement") return MOVEMENT_TYPES;
+  return entity === "crm.deal" ? DEAL_STATUSES : CANONICAL_STATUSES;
 }
 
 /**

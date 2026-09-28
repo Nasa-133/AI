@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     erp_api_url: str = ""
     erp_api_key: SecretStr = SecretStr("")
     erp_api_page_size: int = 500
+    # CRM REST API connector (`crm_api`). Lokal/demo: tools/fake_crm — http://localhost:8071.
+    crm_api_url: str = ""
+    crm_api_key: SecretStr = SecretStr("")
     worker_id: str = "integration-worker"
 
 

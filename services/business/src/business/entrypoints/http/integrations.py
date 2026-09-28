@@ -50,12 +50,12 @@ def _json(row: dict[str, Any]) -> dict[str, Any]:
 
 
 class SourceIn(BaseModel):
-    connector_id: Literal["file_import", "demo_erp", "erp_api"]
+    connector_id: Literal["file_import", "demo_erp", "erp_api", "crm_api"]
     name: str = Field(default="", max_length=200)
     upload_id: UUID | None = None
     # Ko‘p obyektli manba (ERP): shu manba qaysi obyekt uchun (mapping oynasida oldindan tanlanadi).
     entity: Literal["sales.order_line", "sales.return", "inventory.movement",
-                    "finance.receivable"] | None = None
+                    "finance.receivable", "crm.deal"] | None = None
 
 
 class MappingItem(BaseModel):
@@ -73,7 +73,7 @@ class StatusMapItem(BaseModel):
 
 class MappingIn(BaseModel):
     entity: Literal["sales.order_line", "sales.return", "inventory.movement",
-                    "finance.receivable"]
+                    "finance.receivable", "crm.deal"]
     mapping: list[MappingItem] = Field(min_length=1, max_length=100)
     status_map: list[StatusMapItem] = Field(default_factory=list, max_length=100)
 

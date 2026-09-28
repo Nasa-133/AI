@@ -333,7 +333,8 @@
               "sales.order_line",
               "sales.return",
               "inventory.movement",
-              "finance.receivable"
+              "finance.receivable",
+              "crm.deal"
             ],
             "title": "Entity",
             "type": "string"
@@ -1012,7 +1013,8 @@
             "enum": [
               "file_import",
               "demo_erp",
-              "erp_api"
+              "erp_api",
+              "crm_api"
             ],
             "title": "Connector Id",
             "type": "string"
@@ -1024,7 +1026,8 @@
                   "sales.order_line",
                   "sales.return",
                   "inventory.movement",
-                  "finance.receivable"
+                  "finance.receivable",
+                  "crm.deal"
                 ],
                 "type": "string"
               },

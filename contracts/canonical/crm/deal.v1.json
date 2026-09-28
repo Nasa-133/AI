@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/canonical/crm/deal.v1.json",
+  "title": "crm.deal v1",
+  "description": "CRM bitimi (sdelka) — savdo voronkasi. Yopilgan (won/lost) bitimda closed_at bo‘ladi; ochiq bitimda null. Summalar Decimal string.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "source_revision",
+    "deal_number",
+    "customer_code",
+    "customer_name",
+    "branch_code",
+    "stage",
+    "status",
+    "amount",
+    "currency",
+    "created_at",
+    "closed_at",
+    "channel"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "source_revision": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "deal_number": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "customer_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "customer_name": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "branch_code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "stage": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "status": {
+      "enum": [
+        "open",
+        "won",
+        "lost"
+      ],
+      "description": "Voronka natijasi: ochiq, yutildi, yutqazildi"
+    },
+    "amount": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?$",
+      "description": "Bitim summasi (Decimal string)"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "ISO 4217"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "closed_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "channel": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

@@ -51,7 +51,8 @@ _KEYWORDS = (
     ("finance_analyst", ("foyda", "marja", "tannarx", "qarz", "debitor", "xarajat")),
     ("inventory_analyst", ("ombor", "qoldiq", "zaxira")),
     ("sales_analyst", ("savdo", "tushum", "sotuv", "filial", "mijoz", "mahsulot", "chegirma",
-                       "qaytarish", "hujjatlar soni", "sotilgan miqdor")),
+                       "qaytarish", "hujjatlar soni", "sotilgan miqdor", "bitim", "sdelka",
+                       "voronka", "konversiya", "lid", "crm")),
 )
 
 

@@ -8,9 +8,9 @@ from business.kernel.errors import BusinessError, ValidationFailed
 MAX_DATASET_IMPORT_BYTES = 500 * 1024 * 1024
 MAX_DOCUMENT_BYTES = 25 * 1024 * 1024
 # connector_id → fayl talab qiladimi
-CONNECTORS = {"file_import": True, "demo_erp": False, "erp_api": False}
+CONNECTORS = {"file_import": True, "demo_erp": False, "erp_api": False, "crm_api": False}
 # Tashqi tizimdan o‘zi o‘qiladigan connector’lar: davriy avtomatik sinxron (fon ishi).
-AUTO_SYNC_CONNECTORS = ("erp_api",)
+AUTO_SYNC_CONNECTORS = ("erp_api", "crm_api")
 
 
 class SourceStatus(StrEnum):

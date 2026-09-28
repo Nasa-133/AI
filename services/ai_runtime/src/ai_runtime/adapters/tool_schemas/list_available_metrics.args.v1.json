@@ -14,7 +14,8 @@
         "sales",
         "finance",
         "inventory",
-        "all"
+        "all",
+        "crm"
       ]
     }
   }

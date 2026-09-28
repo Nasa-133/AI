@@ -24,6 +24,7 @@ class Subject(StrEnum):
     SALES = "sales"
     FINANCE = "finance"
     INVENTORY = "inventory"
+    CRM = "crm"
 
 
 class Dimension(StrEnum):
@@ -34,6 +35,8 @@ class Dimension(StrEnum):
     PRODUCT = "product"
     CUSTOMER = "customer"
     CURRENCY = "currency"
+    STAGE = "stage"  # CRM voronka bosqichi
+    CHANNEL = "channel"  # CRM lid manbasi
 
     @property
     def is_time(self) -> bool:
@@ -48,9 +51,17 @@ DIMENSION_NAMES = {
     Dimension.PRODUCT: "Mahsulot",
     Dimension.CUSTOMER: "Mijoz",
     Dimension.CURRENCY: "Valyuta",
+    Dimension.STAGE: "Bosqich",
+    Dimension.CHANNEL: "Kanal",
 }
 
-SALES_DIMENSIONS = tuple(Dimension)
+SALES_DIMENSIONS = (Dimension.MONTH, Dimension.WEEK, Dimension.DAY, Dimension.BRANCH,
+                    Dimension.PRODUCT, Dimension.CUSTOMER, Dimension.CURRENCY)
+# Oqim (davrda yaratilgan/yopilgan) va holat (davr oxiridagi ochiq voronka) kesimlari.
+CRM_FLOW_DIMENSIONS = (Dimension.MONTH, Dimension.WEEK, Dimension.DAY, Dimension.BRANCH,
+                       Dimension.CUSTOMER, Dimension.CHANNEL, Dimension.CURRENCY)
+CRM_PIPELINE_DIMENSIONS = (Dimension.BRANCH, Dimension.CUSTOMER, Dimension.STAGE,
+                           Dimension.CHANNEL, Dimension.CURRENCY)
 RECEIVABLE_DIMENSIONS = (Dimension.BRANCH, Dimension.CUSTOMER, Dimension.CURRENCY)
 
 
@@ -67,6 +78,11 @@ class Component(StrEnum):
     QUANTITY = "quantity"
     RECEIVABLE_OPEN = "receivable_open"
     RECEIVABLE_OVERDUE = "receivable_overdue"
+    DEALS_CREATED = "deals_created"  # davrda yaratilgan bitimlar
+    DEALS_WON = "deals_won"  # davrda yutilgan (yopilgan sana bo‘yicha)
+    DEALS_LOST = "deals_lost"
+    WON_AMOUNT = "won_amount"
+    PIPELINE_OPEN = "pipeline_open"  # davr oxirida ochiq bitimlar summasi
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,10 +151,45 @@ CATALOG: dict[str, MetricDefinition] = {
             Unit.MONEY, Subject.FINANCE, 1, RECEIVABLE_DIMENSIONS,
             (Component.RECEIVABLE_OVERDUE,),
         ),
+        MetricDefinition(
+            "crm_deals_created", "Yangi bitimlar",
+            "Davrda CRM’da yaratilgan bitimlar (lidlar) soni.",
+            Unit.COUNT, Subject.CRM, 1, CRM_FLOW_DIMENSIONS, (Component.DEALS_CREATED,),
+        ),
+        MetricDefinition(
+            "crm_deals_won", "Yutilgan bitimlar",
+            "Davrda yutilgan deb yopilgan bitimlar soni (yopilish sanasi bo‘yicha).",
+            Unit.COUNT, Subject.CRM, 1, CRM_FLOW_DIMENSIONS, (Component.DEALS_WON,),
+        ),
+        MetricDefinition(
+            "crm_won_amount", "Yutilgan bitimlar summasi",
+            "Davrda yutilgan bitimlar summasi. Bu CRM summasi — ERP’dagi haqiqiy savdo emas.",
+            Unit.MONEY, Subject.CRM, 1, CRM_FLOW_DIMENSIONS, (Component.WON_AMOUNT,),
+        ),
+        MetricDefinition(
+            "crm_win_rate", "Konversiya (yutilgan ulushi)",
+            "Davrda yopilgan bitimlardan yutilganlari ulushi: yutilgan / (yutilgan + "
+            "yutqazilgan) × 100.",
+            Unit.PERCENT, Subject.CRM, 1, CRM_FLOW_DIMENSIONS,
+            (Component.DEALS_WON, Component.DEALS_LOST),
+        ),
+        MetricDefinition(
+            "crm_avg_deal", "O‘rtacha yutilgan bitim",
+            "Yutilgan bitimlar summasi / soni.",
+            Unit.MONEY, Subject.CRM, 1, CRM_FLOW_DIMENSIONS,
+            (Component.WON_AMOUNT, Component.DEALS_WON),
+        ),
+        MetricDefinition(
+            "crm_pipeline_open", "Ochiq voronka summasi",
+            "Davr oxirida hali ochiq bitimlar summasi (bosqichlar kesimida ko‘rish mumkin).",
+            Unit.MONEY, Subject.CRM, 1, CRM_PIPELINE_DIMENSIONS, (Component.PIPELINE_OPEN,),
+        ),
     ]
 }
 
 RECEIVABLE_COMPONENTS = frozenset({Component.RECEIVABLE_OPEN, Component.RECEIVABLE_OVERDUE})
+CRM_COMPONENTS = frozenset({Component.DEALS_CREATED, Component.DEALS_WON, Component.DEALS_LOST,
+                            Component.WON_AMOUNT, Component.PIPELINE_OPEN})
 
 
 @dataclass(frozen=True, slots=True)
@@ -183,6 +234,23 @@ def compute(metric_id: str, c: Mapping[Component, Decimal]) -> MetricValue:
             return MetricValue(get(Component.RECEIVABLE_OPEN))
         case "receivables_overdue":
             return MetricValue(get(Component.RECEIVABLE_OVERDUE))
+        case "crm_deals_created":
+            return MetricValue(get(Component.DEALS_CREATED))
+        case "crm_deals_won":
+            return MetricValue(get(Component.DEALS_WON))
+        case "crm_won_amount":
+            return MetricValue(get(Component.WON_AMOUNT))
+        case "crm_win_rate":
+            closed = get(Component.DEALS_WON) + get(Component.DEALS_LOST)
+            if closed == ZERO:
+                return MetricValue(None, "Davrda yopilgan bitim yo‘q — konversiya aniqlanmagan")
+            return MetricValue(percent(get(Component.DEALS_WON) / closed * HUNDRED))
+        case "crm_avg_deal":
+            if get(Component.DEALS_WON) == ZERO:
+                return MetricValue(None, "Yutilgan bitim yo‘q — o‘rtacha aniqlanmagan")
+            return MetricValue(get(Component.WON_AMOUNT) / get(Component.DEALS_WON))
+        case "crm_pipeline_open":
+            return MetricValue(get(Component.PIPELINE_OPEN))
     raise KeyError(metric_id)
 
 

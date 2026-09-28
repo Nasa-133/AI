@@ -10,7 +10,7 @@ from abo_messaging.rabbit import RabbitConsumer, RabbitPublisher, connect
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ..adapters.connectors import DemoErpConnector, FileImportConnector
-from ..adapters.erp_api import ErpApiConnector
+from ..adapters.erp_api import CrmApiConnector, ErpApiConnector
 from ..adapters.s3_storage import S3Storage
 from ..adapters.sql_uow import SqlUnitOfWorkFactory
 from ..application.handlers import CommandHandlers
@@ -34,6 +34,10 @@ async def main_async(settings: Settings) -> None:
     if settings.erp_api_url:
         connectors["erp_api"] = ErpApiConnector(
             settings.erp_api_url, settings.erp_api_key.get_secret_value(),
+            page_size=settings.erp_api_page_size)
+    if settings.crm_api_url:
+        connectors["crm_api"] = CrmApiConnector(
+            settings.crm_api_url, settings.crm_api_key.get_secret_value(),
             page_size=settings.erp_api_page_size)
 
     connection = await connect(settings.amqp_url)

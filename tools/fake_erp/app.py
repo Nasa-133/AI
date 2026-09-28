@@ -33,9 +33,9 @@ from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 try:  # modul sifatida (testlar) ham, skript sifatida ham ishlaydi
-    from .erp import RESOURCES, ErpData, filter_since, page, stats
+    from .erp import RESOURCES, ErpData, filter_since, page
 except ImportError:  # pragma: no cover
-    from erp import RESOURCES, ErpData, filter_since, page, stats  # type: ignore[no-redef]
+    from erp import RESOURCES, ErpData, filter_since, page  # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[2]
 DEMO_DIR = ROOT / "fixtures/synthetic/demo"
@@ -55,14 +55,28 @@ def _decode(cursor: str) -> tuple[int, datetime, str | None]:
         raise HTTPException(400, {"code": "BAD_CURSOR", "message": "Kursor noto‘g‘ri"}) from exc
 
 
+Records = Callable[[str, datetime], list[dict[str, str | None]]]
+
+
 def create_app(*, data: ErpData | None = None, api_key: str | None = None,
                clock: Callable[[], datetime] | None = None, fail_rate: float = 0.0) -> FastAPI:
     erp = data or ErpData.load(DEMO_DIR)
-    key = api_key or os.environ.get("FAKE_ERP_API_KEY", "fake-erp-dev-key")
+    return create_rest_app(
+        title="Soxta Savdo ERP (demo)", system="ERP", resources=RESOURCES,
+        records=erp.records, api_key=api_key or os.environ.get("FAKE_ERP_API_KEY",
+                                                              "fake-erp-dev-key"),
+        clock=clock, fail_rate=fail_rate)
+
+
+def create_rest_app(*, title: str, system: str, resources: tuple[str, ...], records: Records,
+                    api_key: str, clock: Callable[[], datetime] | None = None,
+                    fail_rate: float = 0.0) -> FastAPI:
+    """Namunaviy tashqi tizim API’si (ERP, CRM): Bearer kalit, izchil kursor, nosozliklar."""
+    key = api_key
     now = clock or (lambda: datetime.now(UTC))
     state: dict[str, Any] = {"outage_until": None}
     rng = random.Random(7)  # noqa: S311 — nosozlik simulyatsiyasi, kriptografiya emas
-    app = FastAPI(title="Soxta Savdo ERP (demo)", version="1.0.0")
+    app = FastAPI(title=title, version="1.0.0")
 
     def authorize(authorization: str | None) -> None:
         token = (authorization or "").removeprefix("Bearer ").strip()
@@ -72,7 +86,8 @@ def create_app(*, data: ErpData | None = None, api_key: str | None = None,
     def available() -> None:
         until = state["outage_until"]
         if until is not None and now() < until:
-            raise HTTPException(503, {"code": "MAINTENANCE", "message": "ERP texnik ishlarda"},
+            raise HTTPException(503, {"code": "MAINTENANCE",
+                                      "message": f"{system} texnik ishlarda"},
                                 headers={"Retry-After": "5"})
         if fail_rate and rng.random() < fail_rate:
             raise HTTPException(429, {"code": "RATE_LIMITED", "message": "Juda ko‘p so‘rov"},
@@ -80,7 +95,7 @@ def create_app(*, data: ErpData | None = None, api_key: str | None = None,
 
     @app.get("/api/v1/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok", "erp": "Soxta Savdo ERP", "version": "1.0.0"}
+        return {"status": "ok", "system": title, "version": "1.0.0"}
 
     @app.get("/api/v1/{resource}")
     async def listing(resource: str,
@@ -89,7 +104,7 @@ def create_app(*, data: ErpData | None = None, api_key: str | None = None,
                       cursor: str | None = None,
                       updated_since: str | None = None) -> dict[str, Any]:
         authorize(authorization)
-        if resource not in RESOURCES:
+        if resource not in resources:
             raise HTTPException(404, {"code": "NOT_FOUND", "message": f"Resurs yo‘q: {resource}"})
         available()
         if cursor:
@@ -102,7 +117,7 @@ def create_app(*, data: ErpData | None = None, api_key: str | None = None,
                 except ValueError as exc:
                     raise HTTPException(400, {"code": "BAD_REQUEST",
                                               "message": "updated_since ISO 8601 bo‘lsin"}) from exc
-        rows = filter_since(erp.records(resource, as_of), since)
+        rows = filter_since(records(resource, as_of), since)
         chunk, nxt = page(rows, offset, limit)
         return {"data": chunk, "next_cursor": _encode(nxt, as_of, since) if nxt else None,
                 "as_of": as_of.isoformat(), "total": len(rows)}
@@ -117,7 +132,8 @@ def create_app(*, data: ErpData | None = None, api_key: str | None = None,
     @app.get("/admin/stats")
     async def admin_stats(authorization: Annotated[str | None, Header()] = None) -> dict[str, Any]:
         authorize(authorization)
-        return {"as_of": now().isoformat(), "records": stats(erp, now())}
+        return {"as_of": now().isoformat(),
+                "records": {r: len(records(r, now())) for r in resources}}
 
     @app.exception_handler(HTTPException)
     async def error(_: Any, exc: HTTPException) -> JSONResponse:

@@ -209,8 +209,32 @@ ERP_TEMPLATES: tuple[Template, ...] = (
         status_map={},
     ),
 )
+# CRM REST API (crm_api connector, tools/fake_crm shartnomasi).
+CRM_TEMPLATES: tuple[Template, ...] = (
+    Template(
+        entity="crm.deal",
+        source_name="crm://deals",
+        fields={
+            "source_id": ("deal_id", T.TEXT, None),
+            "source_revision": ("updated_at", T.TEXT, None),
+            "deal_number": ("deal_no", T.TEXT, None),
+            "customer_code": ("client_code", T.TEXT, None),
+            "customer_name": ("client_name", T.TEXT, None),
+            "branch_code": ("branch", T.TEXT, None),
+            "stage": ("stage", T.TEXT, None),
+            "status": ("state", T.STATUS_MAP, None),
+            "amount": ("amount", T.DECIMAL, None),
+            "currency": ("currency", T.TEXT, None),
+            "created_at": ("created_at", T.DATETIME_TZ, None),
+            "closed_at": ("closed_at", T.DATETIME_TZ, None),
+            "channel": ("lead_source", T.TEXT, None),
+        },
+        status_map={"open": "open", "won": "won", "lost": "lost"},
+    ),
+)
+
 TEMPLATES_BY_ENTITY = {t.entity: t for t in TEMPLATES}  # CSV shablonlari (fayl importi)
-TEMPLATES = TEMPLATES + ERP_TEMPLATES
+TEMPLATES = TEMPLATES + ERP_TEMPLATES + CRM_TEMPLATES
 
 
 @dataclass(frozen=True, slots=True)

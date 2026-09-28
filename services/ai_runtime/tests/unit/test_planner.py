@@ -133,3 +133,33 @@ def test_conversation_reaches_the_model_as_developer_context() -> None:
     assert items[-1]["content"] == "barchasi"
     assert conversation_turns(items) == [("user", "dashboard qur"),
                                          ("agent", "Qaysi ko‘rsatkich kerak?\nMavjud: ...")]
+
+
+CRM_CATALOG = {**CATALOG, "metrics": [*CATALOG["metrics"], *(
+    {"id": i, "name": n, "unit": u, "subject": "crm", "dimensions": d}
+    for i, n, u, d in (
+        ("crm_deals_created", "Yangi bitimlar", "count", ["month", "branch", "channel"]),
+        ("crm_deals_won", "Yutilgan bitimlar", "count", ["month", "branch", "channel"]),
+        ("crm_won_amount", "Yutilgan bitimlar summasi", "money", ["month", "branch", "channel"]),
+        ("crm_win_rate", "Konversiya", "percent", ["month", "branch", "channel"]),
+        ("crm_pipeline_open", "Ochiq voronka summasi", "money", ["branch", "stage", "channel"]),
+    ))]}
+
+
+@pytest.mark.parametrize(("text", "metrics", "dims"), [
+    ("Ali, o‘tgan oy konversiya filiallar bo‘yicha", ["crm_win_rate"], ["branch"]),
+    ("voronka bosqichlar bo‘yicha", ["crm_pipeline_open"], ["stage"]),
+    ("yutilgan bitimlar summasi kanal bo‘yicha", ["crm_won_amount"], ["channel"]),
+    ("oylar bo‘yicha yangi lidlar va konversiya", ["crm_deals_created", "crm_win_rate"],
+     ["month"]),
+])
+def test_crm_questions(text: str, metrics: list[str], dims: list[str]) -> None:
+    plan = build_plan(text, CRM_CATALOG)
+    assert plan.clarification is None
+    assert plan.metric_ids == metrics and plan.dimensions == dims
+
+
+def test_crm_and_sales_are_not_mixed() -> None:
+    plan = build_plan("savdo va konversiya", CRM_CATALOG)
+    assert plan.metric_ids == ["net_sales"]
+    assert any("alohida so‘rov" in n for n in plan.notes)

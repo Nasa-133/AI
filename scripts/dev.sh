@@ -24,6 +24,9 @@ export INTEGRATION_AMQP_URL=amqp://abo:abo_dev@localhost:5672/ INTEGRATION_S3_AC
 ERP_PORT="${FAKE_ERP_PORT:-8070}"
 export FAKE_ERP_API_KEY="${FAKE_ERP_API_KEY:-fake-erp-dev-key}"
 export INTEGRATION_ERP_API_URL="http://localhost:$ERP_PORT" INTEGRATION_ERP_API_KEY="$FAKE_ERP_API_KEY"
+CRM_PORT="${FAKE_CRM_PORT:-8071}"
+export FAKE_CRM_API_KEY="${FAKE_CRM_API_KEY:-fake-crm-dev-key}"
+export INTEGRATION_CRM_API_URL="http://localhost:$CRM_PORT" INTEGRATION_CRM_API_KEY="$FAKE_CRM_API_KEY"
 # Lokalda testlar ko‘plab sinov korxonalarini yaratadi — ularning ERP manbalari worker’ni band
 # qilmasligi uchun avtomatik sinxron soatiga bir marta (production standarti: 15 daqiqa).
 export BUSINESS_ERP_AUTO_SYNC_SECONDS="${BUSINESS_ERP_AUTO_SYNC_SECONDS:-3600}"
@@ -36,9 +39,10 @@ make -C "$ROOT" migrate >/dev/null
 (cd "$ROOT/services/business" && exec uv run uvicorn business.bootstrap.app:create_app --factory --port "$PORT" >"$LOGS/api.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/business" && exec uv run python -m business.entrypoints.worker >"$LOGS/business-worker.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/integration_runtime" && exec uv run python ../../tools/fake_erp/app.py --port "$ERP_PORT" >"$LOGS/fake-erp.log" 2>&1) & PIDS+=($!)
+(cd "$ROOT/services/integration_runtime" && exec uv run python ../../tools/fake_crm/app.py --port "$CRM_PORT" >"$LOGS/fake-crm.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/integration_runtime" && exec uv run python -m integration_runtime.bootstrap.worker >"$LOGS/integration-worker.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/ai_runtime" && exec uv run python -m ai_runtime.bootstrap.worker >"$LOGS/ai-worker.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/ai_runtime" && exec uv run uvicorn ai_runtime.bootstrap.app:create_app --factory --port "$AI_PORT" >"$LOGS/ai-api.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/apps/web" && BUSINESS_API_URL="http://localhost:$PORT" exec npx next dev --port "$WEB_PORT" >"$LOGS/web.log" 2>&1) & PIDS+=($!)
-echo "API: http://localhost:$PORT  ·  Web: http://localhost:$WEB_PORT  ·  Soxta ERP: http://localhost:$ERP_PORT  ·  loglar: $LOGS"
+echo "API: http://localhost:$PORT  ·  Web: http://localhost:$WEB_PORT  ·  Soxta ERP: http://localhost:$ERP_PORT  ·  Soxta CRM: http://localhost:$CRM_PORT  ·  loglar: $LOGS"
 wait

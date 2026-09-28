@@ -19,6 +19,7 @@ class Entity(StrEnum):
     SALES_RETURN = "sales.return"
     INVENTORY_MOVEMENT = "inventory.movement"
     FINANCE_RECEIVABLE = "finance.receivable"
+    CRM_DEAL = "crm.deal"
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +51,13 @@ def _record_problem(entity: Entity, r: dict[str, Any]) -> str | None:
                 return "To‘lov muddati hujjat sanasidan oldin"
         case Entity.INVENTORY_MOVEMENT:
             pass
+        case Entity.CRM_DEAL:
+            if Decimal(r["amount"]) < ZERO:
+                return "Bitim summasi manfiy"
+            if r["status"] in ("won", "lost") and r["closed_at"] is None:
+                return "Yopilgan bitimda yopilish sanasi yo‘q"
+            if r["closed_at"] is not None and r["closed_at"] < r["created_at"]:
+                return "Bitim yaratilishidan oldin yopilgan"
     return None
 
 

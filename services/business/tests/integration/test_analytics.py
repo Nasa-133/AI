@@ -19,6 +19,7 @@ from business.contexts.analytics.application.queries import (
     SettingsNotApproved,
 )
 from business.contexts.analytics.domain.ingestion import Entity
+from business.contexts.analytics.domain.query import InvalidQuery, UnsupportedDimension
 from business.contexts.analytics.ports.store import MetricSettings
 from business.platform.db import bind_request_context
 
@@ -301,3 +302,53 @@ async def test_several_sources_are_summed_and_duplicate_base_is_not(
     active = (await store.active_snapshots())[Entity.SALES_ORDER_LINE]
     chosen_dataset = (await store.dataset_for(copy, Entity.SALES_ORDER_LINE)).id
     assert [snap.dataset_id for snap in active] == [chosen_dataset]
+
+
+def deal(source_id: str, created: str, status: str, amount: str, branch: str = "TOS",
+         closed: str | None = None, stage: str = "Muzokara",
+         channel: str | None = "Instagram") -> dict[str, Any]:
+    return {"source_id": source_id, "source_revision": None, "deal_number": f"BT-{source_id}",
+            "customer_code": "M0001", "customer_name": "Baraka Savdo MChJ", "branch_code": branch,
+            "stage": stage, "status": status, "amount": amount, "currency": "UZS",
+            "created_at": f"{created}T10:00:00+05:00",
+            "closed_at": f"{closed}T12:00:00+05:00" if closed else None, "channel": channel}
+
+
+async def test_crm_funnel_metrics(tenant_conn: tuple[AsyncConnection, UUID]) -> None:
+    conn, tenant = tenant_conn
+    store = SqlAnalyticsStore(conn, tenant)
+    deals = [
+        deal("D1", "2026-01-05", "won", "1000", closed="2026-01-20", stage="Yutildi"),
+        deal("D2", "2026-01-10", "lost", "500", closed="2026-02-03", stage="Yutqazildi"),
+        deal("D3", "2026-01-15", "open", "2000", branch="SAM"),
+        deal("D4", "2026-02-01", "won", "3000", branch="SAM", closed="2026-02-10",
+             stage="Yutildi", channel="Tavsiya"),
+        deal("D5", "2025-12-20", "won", "400", closed="2026-01-02", stage="Yutildi",
+             channel=None),
+        deal("D6", "2026-01-07", "won", "999"),  # yopilish sanasisiz “yutildi” — karantin
+    ]
+    snap = await ingest_batch(store, MemoryReader({"d": jsonl(deals)}), Outbox(),
+                              batch(Entity.CRM_DEAL, "d", uuid4()), timezone="Asia/Tashkent")
+    assert (snap.row_count, snap.quarantined_count) == (5, 1)
+    await store.save_metric_settings(MetricSettings(1, {}, uuid4(), datetime.now(UTC)))
+    q = QueryService(store)
+    jan = ["crm_deals_created", "crm_deals_won", "crm_won_amount", "crm_win_rate"]
+
+    data, _ = await q.run(ctx(), args(jan, "2026-01-01", "2026-01-31"))
+    # Yaratilgan — yaratilish sanasi bo‘yicha (D1–D3); yutilgan — yopilish sanasi (D1, D5).
+    assert data["rows"] == [["3", "2", "1400.00", "100.00"]]
+    feb, _ = await q.run(ctx(), args([*jan, "crm_avg_deal"], "2026-02-01", "2026-02-28"))
+    assert feb["rows"] == [["1", "1", "3000.00", "50.00", "3000.00"]]  # D4 yutildi, D2 yutqazildi
+
+    # Yanvar oxiridagi ochiq voronka: D2 (fevralda yopilgan) va D3 (hali ochiq).
+    pipe, _ = await q.run(ctx(), args(["crm_pipeline_open"], "2026-01-01", "2026-01-31",
+                                      ["branch"]))
+    assert {r[0]: r[-1] for r in pipe["rows"]} == {"SAM": "2000.00", "TOS": "500.00"}
+    by_channel, _ = await q.run(ctx(), args(["crm_deals_created"], "2025-12-01", "2026-02-28",
+                                            ["channel"]))
+    assert {r[0]: r[-1] for r in by_channel["rows"]} == {"Instagram": "3", "Tavsiya": "1",
+                                                         "—": "1"}
+    with pytest.raises(InvalidQuery, match="aralashtirib"):
+        await q.run(ctx(), args(["net_sales", "crm_deals_won"], "2026-01-01", "2026-01-31"))
+    with pytest.raises(UnsupportedDimension):  # ochiq voronka — davr oxiridagi holat, oylar yo‘q
+        await q.run(ctx(), args(["crm_pipeline_open"], "2026-01-01", "2026-03-31", ["month"]))
