@@ -175,3 +175,24 @@ def test_crm_and_sales_are_not_mixed() -> None:
 def test_top_n(text: str, order: dict[str, str] | None, limit: int | None) -> None:
     plan = build_plan(text, CATALOG)
     assert plan.order_by == order and plan.limit == limit
+
+
+REPORT = ("**Qisqa javob**\n2026-08: TOS eng yuqori.\n\n**Manbalar va cheklovlar**\n"
+          "- Dataset snapshot: `11111111-1111-1111-1111-111111111111`\n"
+          "- Query: `22222222-2222-2222-2222-222222222222`; davr: 2026-08-01 — 2026-08-31\n"
+          "- Taqqoslash query: `33333333-3333-3333-3333-333333333333`")
+
+
+def test_dashboard_from_previous_report() -> None:
+    from ai_runtime.adapters.fake_provider import referenced_report, report_title
+
+    turns = [("user", "Ali, o‘tgan oy filiallar savdosini solishtir"), ("agent", REPORT)]
+    found = referenced_report("shu hisbotlar boyicha dashboard qurib ber", turns)
+    assert found == ("Ali, o‘tgan oy filiallar savdosini solishtir", [
+        ("Query", "22222222-2222-2222-2222-222222222222"),
+        ("Taqqoslash query", "33333333-3333-3333-3333-333333333333")])
+    assert report_title(found[0]) == "O‘tgan oy filiallar savdosini solishtir"
+    # Ko‘rsatkich aniq aytilsa yoki ishora bo‘lmasa — oddiy yo‘l (yangi so‘rov).
+    assert referenced_report("shu bo‘yicha sof savdo dashboard qil", turns) is None
+    assert referenced_report("dashboard qur", turns) is None
+    assert referenced_report("shu hisobot bo‘yicha dashboard", [("user", "salom")]) is None

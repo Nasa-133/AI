@@ -86,6 +86,37 @@ def metric_kind(metric_id: str) -> str:
     return "crm" if metric_id.startswith("crm_") else "sales"
 
 
+_REFERENCE_RE = re.compile(r"\b(shu|bu|ushbu|yuqoridagi|tepadagi|oldingi)\b")
+_QUERY_REF_RE = re.compile(r"- (Query|Taqqoslash query): `([0-9a-f-]{36})`")
+_ADDRESS_RE = re.compile(r"^\s*@?[\w']+\s*,\s*")
+
+
+def referenced_report(text: str, turns: list[tuple[str, str]],
+                      ) -> tuple[str, list[tuple[str, str]]] | None:
+    """“Shu hisobot bo‘yicha dashboard” — metrika aytilmagan, oldingi javobga ishora.
+
+    Oldingi agent javobining manbalaridagi query ID’lari qaytariladi: dashboard qayta hisoblamasdan
+    aynan o‘sha natijaga bog‘lanadi (raqamlar chatdagi bilan bir xil)."""
+    t = normalize(text)
+    if not _DASHBOARD_RE.search(t) or not _REFERENCE_RE.search(t):
+        return None
+    if any(keyword in t for keyword, _ in METRIC_KEYWORDS):
+        return None  # ko‘rsatkich aniq aytilgan — oddiy yo‘l
+    for i in range(len(turns) - 1, -1, -1):
+        role, body = turns[i]
+        refs = _QUERY_REF_RE.findall(body) if role == "agent" else []
+        if refs:
+            question = next((turns[j][1] for j in range(i - 1, -1, -1) if turns[j][0] == "user"),
+                            "Hisobot")
+            return question, refs
+    return None
+
+
+def report_title(question: str) -> str:
+    title = _ADDRESS_RE.sub("", question, count=1).strip().rstrip("?.!") or "Hisobot"
+    return (title[0].upper() + title[1:])[:200]
+
+
 def conversation_turns(items: list[dict[str, Any]]) -> list[tuple[str, str]]:
     """Developer “Oldingi suhbat” xabaridan (rol, matn) juftlari; ko‘p qatorli matn birlashadi."""
     content = next((str(i["content"]) for i in items
@@ -439,6 +470,7 @@ class FakeProvider:
     async def respond(self, request: ModelRequest) -> ModelResponse:
         text = next((str(i["content"]) for i in request.items
                      if i.get("type") == "message" and i.get("role") == "user"), "")
+        original = text
         text = resolve_followup(text, conversation_turns(request.items))
         calls = {i["call_id"]: i for i in request.items if i.get("type") == "function_call"}
         outputs: dict[str, dict[str, Any]] = {}
@@ -446,6 +478,9 @@ class FakeProvider:
             if item.get("type") == "function_call_output" and item["call_id"] in calls:
                 outputs[calls[item["call_id"]]["name"]] = json.loads(item["output"])
         available = {t.name for t in request.tools}
+        report = referenced_report(original, conversation_turns(request.items))
+        if report is not None and "create_dashboard" in available:
+            return self._report_dashboard(request, report, outputs, available)
         context_ids = docs.context_document_ids(request.items)
         if docs.is_document_request(text, available, bool(context_ids)):
             return self._documents(request, text, context_ids, available)
@@ -509,6 +544,34 @@ class FakeProvider:
             answer += ("\n- Dashboard yaratilmadi: "
                        f"{failed.get('error_message') or failed.get('error_code')}.")
         return self._final(request, answer, partial=bool(limitations), limitations=limitations)
+
+    def _report_dashboard(self, request: ModelRequest,
+                          report: tuple[str, list[tuple[str, str]]],
+                          outputs: dict[str, dict[str, Any]], available: set[str]) -> ModelResponse:
+        question, refs = report
+        title = report_title(question)
+        if "create_dashboard" not in outputs:
+            widgets = [{"title": "Oldingi davr bilan taqqoslash" if kind.startswith("Taqqoslash")
+                        else "Hisobot natijasi", "type": "table", "query_spec_id": qid,
+                        "text": None} for kind, qid in refs]
+            return self._call(request, "create_dashboard", {
+                "title": title, "description": f"Chatdagi hisobot asosida: “{question}”.",
+                "widgets": widgets}, available)
+        result = outputs["create_dashboard"]
+        if result["status"] != "ok":
+            return self._final(request, self._tool_error_text(result), partial=True)
+        d = result["data"]
+        return self._final(request, "\n".join([
+            "**Qisqa javob**",
+            f"Dashboard yaratildi: **{d['title']}** ({d['widget_count']} ta widget) — oldingi "
+            "hisobot natijalari asosida, raqamlar chatdagi javob bilan bir xil.",
+            "", "**Harakat variantlari**",
+            "- Dashboardni ochib turini (jadval, grafik) o‘zgartirish — “Tahrirlash”.",
+            "- Oxirgi ma’lumot bilan qayta hisoblash — “Yangilash”.",
+            "", "**Manbalar va cheklovlar**",
+            *(f"- {kind}: `{qid}`" for kind, qid in refs),
+            f"- Dashboard: `{d['dashboard_id']}`, versiya {d['version']}.",
+        ]))
 
     # --- javob elementlari -------------------------------------------------------------
     def _documents(self, request: ModelRequest, text: str, context_ids: list[str],

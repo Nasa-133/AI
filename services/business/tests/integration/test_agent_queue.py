@@ -236,3 +236,30 @@ async def test_follow_up_carries_masked_conversation(client: httpx.AsyncClient,
         assert turns[1]["text"] == "Qaysi ko‘rsatkich kerak?"
         # AI’ga ketadigan tarix ham psevdonimlanadi (TZ 13.12).
         assert "+998901234567" not in turns[0]["text"] and "[TEL-" in turns[0]["text"]
+
+
+async def test_long_answers_keep_their_sources_for_the_agent(client: httpx.AsyncClient,
+                                                            app_engine: AsyncEngine) -> None:
+    async with owner(client, "Manba MChJ") as (c, tenant):
+        conv = (await c.post("/api/v1/conversations", headers=csrf(c), json={})).json()["id"]
+        url = f"/api/v1/conversations/{conv}/messages"
+        first = (await c.post(url, headers=csrf(c), json={"content": "Ali, savdo"})).json()
+        step = (await c.get(f"/api/v1/tasks/{first['task_id']}")).json()["steps"][0]["id"]
+        long_answer = ("**Qisqa javob**\n" + "| TOS | 1 |\n" * 400
+                       + "**Manbalar**\n- Query: `22222222-2222-2222-2222-222222222222`")
+        await agent_event(client, app_engine, tenant, "completed", {
+            "task_id": first["task_id"], "task_step_id": step, "agent_run_id": str(uuid4()),
+            "status": "succeeded", "source_refs": [], "limitations": [], "error_code": None,
+            "result_candidate": {"kind": "answer", "answer_markdown": long_answer,
+                                 "structured": None},
+            "usage": {"input_tokens": 0, "output_tokens": 0, "cost_estimate": "0",
+                      "currency": "USD"}})
+        second = (await c.post(url, headers=csrf(c),
+                               json={"content": "shu hisobot bo‘yicha dashboard qur"})).json()
+        async with tenant_transaction(app_engine, tenant_id=tenant, user_id=None) as conn:
+            payload = (await conn.execute(text(
+                "SELECT envelope->'payload' FROM messaging.outbox WHERE event_type = 'RunAgent.v1'"
+                " AND envelope->'payload'->>'task_id' = :t"), {"t": second["task_id"]})).scalar()
+        agent_turn = payload["conversation"][-1]["text"]
+        assert len(agent_turn) <= 2000 and agent_turn.startswith("**Qisqa javob**")
+        assert "22222222-2222-2222-2222-222222222222" in agent_turn  # manba saqlandi

@@ -103,7 +103,10 @@ class Dispatcher:
         for m in await self._s.conversation_before(task_id, CONVERSATION_TURNS):
             text = str(m["content"] or "").strip()
             if len(text) > CONVERSATION_CHARS:
-                text = text[:CONVERSATION_CHARS - 1] + "…"
+                # Bosh (xulosa) va oxir (manbalar: snapshot/query ID’lari) saqlanadi — “shu hisobot
+                # bo‘yicha dashboard” kabi so‘rovlar aynan o‘sha natijaga bog‘lanadi.
+                tail = CONVERSATION_CHARS * 2 // 5
+                text = text[:CONVERSATION_CHARS - tail - 5] + "\n[…]\n" + text[-tail:]
             out.append({"role": m["author_kind"], "agent_role_key": m["agent_role_key"],
                         "text": await self._privacy.mask_instruction(task_id, text)})
         return out
