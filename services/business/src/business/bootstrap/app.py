@@ -17,6 +17,8 @@ from business.entrypoints.http import (
     members,
     workspace,
 )
+from business.entrypoints.http.audit import AuditMiddleware
+from business.entrypoints.http.audit import router as audit_router
 from business.entrypoints.http.errors import install_error_handlers
 from business.entrypoints.http.security import install_middlewares
 from business.entrypoints.internal import tools
@@ -49,6 +51,7 @@ def create_app(
     app.state.container = container
     install_error_handlers(app)
     install_middlewares(app)
+    app.add_middleware(AuditMiddleware)
     app.include_router(health.router)
     app.include_router(identity.router)
     app.include_router(members.router)
@@ -58,5 +61,6 @@ def create_app(
     app.include_router(documents.router)
     app.include_router(integrations.router)
     app.include_router(governance.router)
+    app.include_router(audit_router)
     app.include_router(tools.router)
     return app

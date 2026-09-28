@@ -5,6 +5,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import httpx
+from sqlalchemy import text
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -108,6 +109,13 @@ async def test_create_dashboard_is_idempotent(client: httpx.AsyncClient,
     assert wrong["status"] == "error" and wrong["error_code"] == "INVALID_DASHBOARD"
     fake = {**args, "widgets": [{**widgets[0], "query_spec_id": str(uuid4())}]}
     assert (await call(client, "create_dashboard", fake, cap, "d4")).json()["status"] == "error"
+    # Audit: agent yaratgan ikki dashboard (takroriy chaqiruv va xatolar yozilmaydi).
+    async with tenant_transaction(app_engine, tenant_id=tenant, user_id=None) as conn:
+        rows = (await conn.execute(text(
+            "SELECT actor_kind, actor_id, target_id FROM governance.audit_events"
+            " WHERE action = 'agent.dashboard_created'"))).all()
+    assert [(r.actor_kind, r.actor_id, r.target_id) for r in rows] == [
+        ("agent", user, str(task))] * 2
 
 
 async def test_settings_not_approved_is_reported(client: httpx.AsyncClient,

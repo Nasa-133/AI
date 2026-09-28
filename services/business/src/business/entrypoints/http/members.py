@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel, Field
 
 from business.contexts.identity.application.members import InvitationView, MemberView
@@ -74,11 +74,13 @@ async def list_invitations(ctx: AuthCtx, members: Members) -> list[InvitationRes
     dependencies=[Depends(rate_limit("invite_accept", limit=10, window_seconds=300))],
 )
 async def accept_invitation(
-    body: AcceptInvitationRequest, response: Response, members: Members, container: ContainerDep
+    body: AcceptInvitationRequest, request: Request, response: Response, members: Members,
+    container: ContainerDep,
 ) -> SessionResponse:
     issued = await members.accept(body.token, body.password)
     set_session_cookies(response, issued, secure=container.settings.cookie_secure)
     ctx = issued.context
+    request.state.audit_actor = (ctx.tenant_id, ctx.user_id)
     return SessionResponse(user_id=ctx.user_id, tenant_id=ctx.tenant_id, role=ctx.role,
                            mfa_satisfied=ctx.mfa_satisfied)
 

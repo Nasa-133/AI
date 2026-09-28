@@ -80,11 +80,13 @@ class SwitchTenantRequest(BaseModel):
 @router.post("/tenants", status_code=status.HTTP_201_CREATED,
              dependencies=[Depends(rate_limit("onboard", limit=10, window_seconds=3600))])
 async def onboard(
-    body: OnboardRequest, response: Response, identity: Identity, container: ContainerDep
+    body: OnboardRequest, request: Request, response: Response, identity: Identity,
+    container: ContainerDep,
 ) -> SessionResponse:
     issued = await identity.onboard_tenant(OnboardTenant(**body.model_dump()))
     set_session_cookies(response, issued, secure=container.settings.cookie_secure)
     ctx = issued.context
+    request.state.audit_actor = (ctx.tenant_id, ctx.user_id)
     return SessionResponse(user_id=ctx.user_id, tenant_id=ctx.tenant_id, role=ctx.role,
                            mfa_satisfied=ctx.mfa_satisfied)
 
@@ -92,11 +94,13 @@ async def onboard(
 @router.post("/auth/login",
              dependencies=[Depends(rate_limit("login", limit=20, window_seconds=300))])
 async def login(
-    body: LoginRequest, response: Response, identity: Identity, container: ContainerDep
+    body: LoginRequest, request: Request, response: Response, identity: Identity,
+    container: ContainerDep,
 ) -> SessionResponse:
     issued = await identity.login(Login(**body.model_dump()))
     set_session_cookies(response, issued, secure=container.settings.cookie_secure)
     ctx = issued.context
+    request.state.audit_actor = (ctx.tenant_id, ctx.user_id)
     return SessionResponse(user_id=ctx.user_id, tenant_id=ctx.tenant_id, role=ctx.role,
                            mfa_satisfied=ctx.mfa_satisfied)
 

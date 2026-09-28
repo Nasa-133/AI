@@ -25,7 +25,7 @@ from business.contexts.dashboards.adapters.sql import AnalyticsQueryResults, Sql
 from business.contexts.dashboards.application.service import DashboardService
 from business.contexts.documents.application.common import Viewer as DocViewer
 from business.contexts.documents.domain.patch import ReplaceText
-from business.contexts.governance.public import is_allowed
+from business.contexts.governance.public import SqlAuditLog, is_allowed
 from business.contexts.workspace.adapters.tool_calls import SqlToolCallLog
 from business.kernel.errors import BusinessError
 from business.platform.capability import Capability, InvalidCapability
@@ -79,6 +79,10 @@ def _doc_refs(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Hujjat manbalari: aniq versiya va manzil (TZ 9.3, D01)."""
     return [{"kind": "document_version", "id": r["document_id"], "version_id": r["version_id"],
              "locator": r["locator"]} for r in results]
+
+
+AUDITED_TOOLS = {"create_dashboard": "agent.dashboard_created",
+                 "create_document_draft": "agent.document_draft_created"}
 
 
 async def _execute_documents(conn: Any, container: Container, cap: Capability, role: str,
@@ -181,6 +185,16 @@ async def call_tool(name: str, body: ToolRequest, request: Request, container: C
         except BusinessError as exc:
             result = _result(trace_id, error=exc)
         await log.save(cap.task_id, body.tool_call_id, name, result)
+        if name in AUDITED_TOOLS and result["status"] == "ok":
+            # Agent yaratgan artifact — audit’da (foydalanuvchi nomidan, agent orqali).
+            data = result["data"] or {}
+            await SqlAuditLog(conn, cap.tenant_id).record(
+                actor_id=cap.user_id, actor_kind="agent", action=AUDITED_TOOLS[name],
+                target_type="task", target_id=str(cap.task_id),
+                details={"role": cap.role_key, "tool_call_id": body.tool_call_id,
+                         **{k: str(data[k]) for k in ("dashboard_id", "document_id",
+                                                      "draft_version_id") if k in data}},
+                ip=None)
     return result
 
 

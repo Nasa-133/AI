@@ -15,6 +15,7 @@ from business.bootstrap.container import Container
 from business.contexts.documents.adapters.files import S3FileStore
 from business.contexts.documents.adapters.sql_store import SqlDocumentStore
 from business.contexts.documents.application.maintenance import DocumentMaintenance
+from business.contexts.governance.public import SqlAuditLog
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
 from business.contexts.workspace.application.maintenance import WorkspaceMaintenance
 from business.platform.db import tenant_transaction
@@ -32,6 +33,7 @@ class MaintenanceStats:
     cleanups_retried: int = 0
     drafts_purged: int = 0
     conversations_purged: int = 0
+    audit_purged: int = 0
     errors: list[str] = field(default_factory=list)
 
 
@@ -54,6 +56,7 @@ async def run_for_tenant(container: Container, tenant_id: UUID, stats: Maintenan
                                    BoundOutbox(conn, tenant_id))
         stats.cleanups_retried += await docs.retry_cleanups()
         stats.drafts_purged += await docs.purge_stale_drafts(s.retention_draft_days)
+        stats.audit_purged += await SqlAuditLog(conn, tenant_id).purge(s.retention_audit_days)
 
 
 async def run_maintenance(container: Container) -> MaintenanceStats:

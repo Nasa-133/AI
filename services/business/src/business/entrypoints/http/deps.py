@@ -30,7 +30,9 @@ async def session_context(
     token = request.cookies.get(SESSION_COOKIE)
     if not token:
         raise Unauthenticated("Tizimga kiring.")
-    return await identity.authenticate(token)
+    ctx = await identity.authenticate(token)
+    request.state.audit_actor = (ctx.tenant_id, ctx.user_id)  # audit middleware uchun
+    return ctx
 
 
 async def auth_context(ctx: Annotated[AuthContext, Depends(session_context)]) -> AuthContext:
