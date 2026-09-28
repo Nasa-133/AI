@@ -78,5 +78,14 @@
   --accent: #5b9dff;
   --accent-contrast: #0b1220;
   --accent-soft: #1b2b44;
+  --success: #4ccb8a;
+  --success-soft: #16301f;
+  --warning: #f0b44c;
+  --warning-soft: #33280f;
+  --danger: #ff7b72;
+  --danger-soft: #3a1a18;
+  --focus: #5b9dff;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 50%);
   color-scheme: dark;
 }

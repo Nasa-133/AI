@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api, unwrap } from "@/api/client";
+import { MembersSection } from "@/features/members/MembersSection";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 type Settings = { settings: { version: number; settings: Record<string, unknown>; approved_at: string } | null };
@@ -41,6 +42,7 @@ export default function SettingsPage() {
           {current ? "Qayta tasdiqlash (yangi versiya)" : "Tasdiqlash"}
         </button>
       </section>
+      <MembersSection />
     </div>
   );
 }

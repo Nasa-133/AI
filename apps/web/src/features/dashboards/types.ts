@@ -33,7 +33,12 @@ export type Widget = {
 export type DashboardDetail = {
   id: string; title: string; description: string | null; version: number; updated_at: string;
   widgets: Widget[];
+  visibility: "private" | "tenant";
+  shared_with: string[];
+  can_edit: boolean;
 };
+export type DashboardVersion = { version: number; title: string; created_by: string; created_at: string };
+export type WidgetEdit = { id: string; title?: string; type?: Widget["type"] };
 export type DashboardCard = {
   id: string; title: string; version: number; updated_at: string;
   period: { from: string; to: string } | null;

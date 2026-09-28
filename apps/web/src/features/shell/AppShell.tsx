@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 
 import { useLogout, useSwitchTenant, type Me } from "@/features/auth/api";
 import { ChatPanel } from "@/features/chat/ChatPanel";
+import { ThemeSelect } from "@/shared/theme/ThemeSelect";
 
 import styles from "./shell.module.css";
 
@@ -74,6 +75,7 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
         )}
         <span className="badge">{me.role}</span>
         <div className={styles.topSpacer} />
+        <span className={styles.desktopOnly}><ThemeSelect /></span>
         <span className={`muted ${styles.desktopOnly}`}>{me.email}</span>
         <button className={`btn btn-ghost btn-sm ${styles.desktopOnly}`} onClick={() => setChatCollapsed(!chatCollapsed)}
                 aria-pressed={!chatCollapsed}>

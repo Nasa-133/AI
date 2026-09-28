@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
-import { useDashboard, useMetricNames, useRunQuery } from "./api";
+import { useDashboard, useMetricNames, useRefreshDashboard, useRunQuery } from "./api";
+import { EditPanel, SharePanel, VersionsPanel } from "./DashboardPanels";
 import { DIMENSION_LABEL, drillQuery, loadView, saveView, type DrillStep } from "./drill";
 import styles from "./dashboards.module.css";
 import { ResultTable } from "./ResultTable";
@@ -27,6 +28,8 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
   const [steps, setSteps] = useState<DrillStep[]>(() => loadView(id).steps);
   const [results, setResults] = useState<Record<number, QueryResult>>({});
   const heading = useRef<HTMLHeadingElement>(null);
+  const [panel, setPanel] = useState<"edit" | "share" | "versions" | null>(null);
+  const refresh = useRefreshDashboard(id);
 
   useEffect(() => { heading.current?.focus(); }, [id]);
   useEffect(() => { saveView(id, { steps }); }, [id, steps]);
@@ -68,11 +71,34 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
         {steps.length > 0 && (
           <button className="btn btn-sm" onClick={() => { setSteps([]); setResults({}); }}>Filtrlarni tiklash</button>
         )}
+        {d?.can_edit && (
+          <>
+            <button className="btn btn-sm" aria-pressed={panel === "edit"} onClick={() => setPanel(panel === "edit" ? null : "edit")}>Tahrirlash</button>
+            <button className="btn btn-sm" aria-pressed={panel === "share"} onClick={() => setPanel(panel === "share" ? null : "share")}>
+              Ulashish{d.visibility === "private" ? " 🔒" : ""}
+            </button>
+            <button className="btn btn-sm" disabled={refresh.isPending}
+                    title="Oxirgi yuklangan ma’lumot bilan qayta hisoblash (yangi versiya)"
+                    onClick={() => { setSteps([]); setResults({}); refresh.mutate(); }}>
+              {refresh.isPending ? "Yangilanmoqda…" : "Yangilash"}
+            </button>
+          </>
+        )}
+        {d && <button className="btn btn-sm" aria-pressed={panel === "versions"} onClick={() => setPanel(panel === "versions" ? null : "versions")}>v{d.version}</button>}
         <button className="btn btn-sm" onClick={onShowAll}>Barcha dashboardlar</button>
         <button className="btn btn-sm btn-primary" onClick={onClose}>Ofisga qaytish</button>
       </div>
       <div className={styles.windowBody}>
-        <ErrorNotice error={dashboard.error ?? run.error} />
+        <ErrorNotice error={dashboard.error ?? run.error ?? refresh.error} />
+        {refresh.data && (
+          <div className="notice" role="status">
+            {refresh.data.version}-versiya yaratildi.
+            {refresh.data.not_refreshed.length > 0 && ` Yangilanmagan: ${refresh.data.not_refreshed.join(", ")}.`}
+          </div>
+        )}
+        {d && panel === "edit" && <EditPanel key={d.version} dashboard={d} onDone={() => setPanel(null)} />}
+        {d && panel === "share" && <SharePanel dashboard={d} onDone={() => setPanel(null)} />}
+        {d && panel === "versions" && <VersionsPanel dashboard={d} onDone={() => setPanel(null)} />}
         {dashboard.isLoading && <div className="skeleton" style={{ height: 240 }} />}
         {steps.length > 0 && (
           <nav className={styles.crumbs} aria-label="Drill-down yo‘li">
@@ -99,7 +125,7 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
         ) : (
           <div className={styles.grid}>
             {d?.widgets.map((w) => (
-              <WidgetView key={w.id} widget={w} metricNames={metricNames} allowDrill={allowDrill}
+              <WidgetView key={w.id} widget={w} dashboardId={id} metricNames={metricNames} allowDrill={allowDrill}
                           onDrill={(widget, member) => drill(widget.query, member, 0)} />
             ))}
           </div>

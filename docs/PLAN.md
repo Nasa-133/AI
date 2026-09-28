@@ -166,7 +166,7 @@ Qolgan ishlar va ma’lum cheklovlar:
 - Ingestion batch’ni xotirada ushlaydi (~200 ming satrgacha mos); katta batch — SQL staging, P1.
 - Web ilova (Bosqich 2) boshlanmagan; Node.js o‘rnatilmagan.
 
-### Bosqich 2 — Web ilova: ✅ asosiy ekranlar tayyor
+### Bosqich 2 — Web ilova: ✅ yakunlandi
 
 `make stack` — API + 3 worker + web (http://localhost:3010). `make e2e-ui` — Playwright.
 
@@ -185,9 +185,18 @@ doskada ko‘rinmasligi; bir fayl uchun 4 ta mapping muharriri; mapping jadvalid
 tanlovlar; mobil ekranda gorizontal toshish va Sozlamalarga yo‘l yo‘qligi; FakeProvider’da oylar
 oralig‘i, dashboard nomi, jadval sarlavhalari va debitorlik metrika ID’si.
 
-Qolgan ishlar:
-- Chat’dagi faol hujjat/dataset “chip”i — hujjatlar bilan (Bosqich 3).
-- A’zolarni boshqarish ekrani (API tayyor, UI yo‘q), parolni tiklash sahifalari.
-- Dashboard tahriri, ulashish, CSV eksport (backend ham hali yo‘q).
+Bosqich 2 yakunida qo‘shildi:
+- A’zolar: ro‘yxat, taklif (Owner/Admin qoidalari), rolni o‘zgartirish, chiqarish; taklifni qabul
+  qilish sahifasi; parolni tiklash (so‘rov va yangi parol) sahifalari.
+- Dashboard: tahrir (nom, widget nomi/turi/tartibi, o‘chirish) → yangi versiya; versiyalar ro‘yxati;
+  ulashish (butun korxona yoki tanlangan a’zolar, ACL backend’da); yangilash (oxirgi snapshot);
+  widget bo‘yicha CSV eksport (UTF-8 BOM, formula injection neytrallangan).
+- Mavzu: tizim / yorug‘ / qorong‘i, birinchi chizishdan oldin qo‘llanadi (miltillash yo‘q).
+- Brauzer testlari: 4 ta ssenariy (asosiy oqim, drill-down, a’zolar va parol, dashboard amallari),
+  2 marta ketma-ket barqaror.
+
+Keyingi bosqichlarga o‘tgan ishlar:
+- Chat’dagi faol hujjat/dataset “chip”i — Bosqich 3 (hujjatlar bilan).
 - Ofis sahnasi va jonli agent holatlari — Bosqich 4.
-- Tungi rejim ranglari brauzer sozlamasi bo‘yicha; qo‘lda almashtirgich yo‘q.
+- Email orqali haqiqiy yuborish (hozir `notifier=log` faqat lokal) — provayder tanlovi kerak.
+- Katta eksport uchun fon vazifasi (hozir widget natijasi ≤5000 satr, sinxron).

@@ -36,6 +36,9 @@ export default function LoginPage() {
         </button>
       </form>
       <p className={`muted ${styles.footer}`}>
+        <Link href="/forgot-password">Parolni unutdingizmi?</Link>
+      </p>
+      <p className={`muted ${styles.footer}`}>
         Korxonangiz hali yo‘qmi? <Link href="/register">Ro‘yxatdan o‘tish</Link>
       </p>
     </>

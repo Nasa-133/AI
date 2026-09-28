@@ -3,14 +3,16 @@
 import { formatValue } from "@/shared/format/number";
 import { Markdown } from "@/shared/markdown/Markdown";
 
+import { exportUrl } from "./api";
 import { Chart } from "./Chart";
 import { canDrill } from "./drill";
 import styles from "./dashboards.module.css";
 import { ResultTable } from "./ResultTable";
 import type { Widget } from "./types";
 
-export function WidgetView({ widget, metricNames, onDrill, allowDrill }: {
+export function WidgetView({ widget, dashboardId, metricNames, onDrill, allowDrill }: {
   widget: Widget;
+  dashboardId: string;
   metricNames: Record<string, string>;
   onDrill: (widget: Widget, member: string) => void;
   allowDrill: boolean;
@@ -21,7 +23,13 @@ export function WidgetView({ widget, metricNames, onDrill, allowDrill }: {
 
   return (
     <section className={`panel ${styles.widget}`} aria-label={widget.title}>
-      <h3>{widget.title}</h3>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <h3 style={{ marginRight: "auto" }}>{widget.title}</h3>
+        {data && (
+          <a className="btn btn-sm" href={exportUrl(dashboardId, widget.id)} download
+             title="Jadvalni CSV sifatida yuklab olish">CSV</a>
+        )}
+      </div>
       {widget.type === "text" && widget.text && <Markdown source={widget.text} />}
       {widget.type !== "text" && !data && (
         <div className="notice notice-warning">Natija topilmadi — manba o‘chirilgan bo‘lishi mumkin.</div>

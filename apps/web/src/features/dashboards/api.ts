@@ -1,10 +1,12 @@
 "use client";
 
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api, unwrap } from "@/api/client";
 
-import type { DashboardCard, DashboardDetail, QueryResult, QuerySpec } from "./types";
+import type {
+  DashboardCard, DashboardDetail, DashboardVersion, QueryResult, QuerySpec, WidgetEdit,
+} from "./types";
 
 export function useDashboardCards(q: string) {
   return useQuery({
@@ -45,3 +47,49 @@ export function useRunQuery() {
       }))) as unknown as { data: QueryResult }).data,
   });
 }
+
+function useDashboardMutation<TInput, TOutput>(id: string, fn: (input: TInput) => Promise<TOutput>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["dashboard", id] });
+      void qc.invalidateQueries({ queryKey: ["dashboards"] });
+      void qc.invalidateQueries({ queryKey: ["dashboard-versions", id] });
+    },
+  });
+}
+
+export function useEditDashboard(id: string) {
+  return useDashboardMutation(id, (body: { title?: string; widgets?: WidgetEdit[] }) =>
+    unwrap(api.PATCH("/api/v1/dashboards/{dashboard_id}", {
+      params: { path: { dashboard_id: id } }, body: body as never,
+    })));
+}
+
+export function useShareDashboard(id: string) {
+  return useDashboardMutation(id, (body: { visibility: "private" | "tenant"; user_ids: string[] }) =>
+    unwrap(api.PUT("/api/v1/dashboards/{dashboard_id}/access", {
+      params: { path: { dashboard_id: id } }, body,
+    })));
+}
+
+export function useRefreshDashboard(id: string) {
+  return useDashboardMutation<void, { version: number; not_refreshed: string[] }>(id, () =>
+    unwrap(api.POST("/api/v1/dashboards/{dashboard_id}/refresh", {
+      params: { path: { dashboard_id: id } },
+    })) as Promise<{ version: number; not_refreshed: string[] }>);
+}
+
+export function useDashboardVersions(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["dashboard-versions", id],
+    enabled,
+    queryFn: async () => (await unwrap(api.GET("/api/v1/dashboards/{dashboard_id}/versions", {
+      params: { path: { dashboard_id: id } },
+    }))) as unknown as DashboardVersion[],
+  });
+}
+
+export const exportUrl = (id: string, widgetId: string) =>
+  `/api/v1/dashboards/${id}/widgets/${widgetId}/export.csv`;
