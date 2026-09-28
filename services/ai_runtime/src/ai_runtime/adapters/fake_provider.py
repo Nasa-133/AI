@@ -71,6 +71,8 @@ _COMPARE_WORDS = ("solishtir", "taqqosla", "nega", "kamay", "oshdi", "o'sdi", "o
 _EXPLAIN_WORDS = ("nega", "sabab", "nima uchun")
 _DASHBOARD_RE = re.compile(r"(dashboard|dashbord|doska)")
 MAX_QUERY_METRICS = 6  # run_metric_query chegarasi
+_TOP_RE = re.compile(r"(?:\btop\s*(?P<n>\d{1,3})?|eng (?:ko'p|yuqori|katta|yaxshi)|"
+                     r"(?P<low>eng (?:kam|past|yomon|kichik))|(?P<n2>\d{1,3}) ta eng)")
 _CLARIFICATION_RE = re.compile(r"qaysi (ko'rsatkich|biri) kerak")
 _ALL_RE = re.compile(r"^(barchasi|hammasi|hamma|barcha|hammasini|barchasini)\W*$")
 # “Barchasi” — katalogdagi savdo ko‘rsatkichlari (build_plan katalog bo‘yicha ochadi).
@@ -204,6 +206,8 @@ class Plan:
     compare: bool = False
     explain: bool = False
     dashboard: bool = False
+    order_by: dict[str, str] | None = None
+    limit: int | None = None
     notes: list[str] = field(default_factory=list)
     clarification: str | None = None
 
@@ -283,6 +287,12 @@ def build_plan(text: str, catalog: dict[str, Any]) -> Plan:
     plan.explain = any(w in t for w in _EXPLAIN_WORDS)
     plan.compare = plan.explain or any(w in t for w in _COMPARE_WORDS)
     plan.dashboard = bool(_DASHBOARD_RE.search(t))
+    # “Top 10 mahsulot”, “eng ko‘p sotilgan”, “eng past marja” — birinchi metrika bo‘yicha saralash.
+    if plan.dimensions and (m := _TOP_RE.search(t)):
+        plan.order_by = {"metric_id": plan.metric_ids[0],
+                         "direction": "asc" if m.group("low") else "desc"}
+        count = m.group("n") or m.group("n2")
+        plan.limit = max(1, min(int(count), 100)) if count else 10
     return plan
 
 
@@ -456,7 +466,8 @@ class FakeProvider:
                 "metric_ids": plan.metric_ids, "date_range": plan.period.as_args(),
                 "dimensions": plan.dimensions,
                 "filters": {"branch_codes": None, "product_codes": None, "customer_codes": None},
-                "currency": plan.currency, "limit": None}, available)
+                "currency": plan.currency, "limit": plan.limit,
+                "order_by": plan.order_by}, available)
         query = outputs["run_metric_query"]
         if query["status"] != "ok":
             return self._final(request, self._tool_error_text(query), partial=True)

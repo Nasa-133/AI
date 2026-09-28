@@ -889,6 +889,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/additional": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Tenant
+         * @description Joriy foydalanuvchi uchun yana bir korxona (Owner). Unga /session/tenant bilan o‘tiladi.
+         */
+        post: operations["add_tenant_api_v1_tenants_additional_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/uploads": {
         parameters: {
             query?: never;
@@ -950,6 +970,21 @@ export interface components {
             password: string;
             /** Token */
             token: string;
+        };
+        /** AddTenantRequest */
+        AddTenantRequest: {
+            /**
+             * Base Currency
+             * @default UZS
+             */
+            base_currency?: string;
+            /** Tenant Name */
+            tenant_name: string;
+            /**
+             * Timezone
+             * @default Asia/Tashkent
+             */
+            timezone?: string;
         };
         /** Body_upload_api_v1_documents_post */
         Body_upload_api_v1_documents_post: {
@@ -1226,6 +1261,17 @@ export interface components {
             /** Section Id */
             section_id: string;
         };
+        /** OrderByIn */
+        OrderByIn: {
+            /**
+             * Direction
+             * @default desc
+             * @enum {string}
+             */
+            direction?: "desc" | "asc";
+            /** Metric Id */
+            metric_id: string;
+        };
         /** PasswordResetConfirm */
         PasswordResetConfirm: {
             /** New Password */
@@ -1289,6 +1335,7 @@ export interface components {
             limit?: number | null;
             /** Metric Ids */
             metric_ids: string[];
+            order_by?: components["schemas"]["OrderByIn"] | null;
         };
         /**
          * Role
@@ -3205,6 +3252,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_tenant_api_v1_tenants_additional_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddTenantRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Validation Error */

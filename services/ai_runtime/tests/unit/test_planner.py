@@ -163,3 +163,15 @@ def test_crm_and_sales_are_not_mixed() -> None:
     plan = build_plan("savdo va konversiya", CRM_CATALOG)
     assert plan.metric_ids == ["net_sales"]
     assert any("alohida so‘rov" in n for n in plan.notes)
+
+
+@pytest.mark.parametrize(("text", "order", "limit"), [
+    ("top 5 filial savdo bo‘yicha", {"metric_id": "net_sales", "direction": "desc"}, 5),
+    ("eng ko‘p savdo qilgan filiallar", {"metric_id": "net_sales", "direction": "desc"}, 10),
+    ("eng past yalpi foyda filiallar bo‘yicha", {"metric_id": "gross_profit",
+                                                 "direction": "asc"}, 10),
+    ("savdo filiallar bo‘yicha", None, None),
+])
+def test_top_n(text: str, order: dict[str, str] | None, limit: int | None) -> None:
+    plan = build_plan(text, CATALOG)
+    assert plan.order_by == order and plan.limit == limit

@@ -30,7 +30,8 @@ def by_branch(filters: dict[str, Any] | None = None) -> dict[str, Any]:
 def tool_query(branches: list[str] | None = None) -> dict[str, Any]:
     """Tool API sxemasi barcha kalitlarni talab qiladi (strict)."""
     return {**by_branch({"branch_codes": branches, "product_codes": None,
-                         "customer_codes": None}), "currency": None, "limit": None}
+                         "customer_codes": None}), "currency": None, "limit": None,
+            "order_by": None}
 
 
 async def create_dashboard(engine: AsyncEngine, tenant: UUID, user: UUID, query_id: str) -> str:

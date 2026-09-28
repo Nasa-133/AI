@@ -7,6 +7,7 @@ import { AuditSection } from "@/features/audit/AuditSection";
 import { BudgetSection } from "@/features/budget/BudgetSection";
 import { PrivacySection } from "@/features/budget/PrivacySection";
 import { MembersSection } from "@/features/members/MembersSection";
+import { TenantsSection } from "@/features/tenants/TenantsSection";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 type Settings = { settings: { version: number; settings: Record<string, unknown>; approved_at: string } | null };
@@ -53,6 +54,7 @@ export default function SettingsPage() {
       <BudgetSection />
       <PrivacySection />
       <MembersSection />
+      <TenantsSection />
       <AuditSection />
     </div>
   );

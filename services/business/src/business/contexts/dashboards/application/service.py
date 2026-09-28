@@ -57,6 +57,17 @@ class DashboardService:
         await self._validate(spec)
         return await self._store.create(uuid4(), spec, user_id=user_id, task_id=task_id)
 
+    async def replace(self, viewer: Viewer, dashboard_id: UUID, *, title: str,
+                      description: str | None, widgets: list[dict[str, Any]]) -> DashboardRecord:
+        """Tarkibni yangilash (tahlil qayta hisoblanganda) — yangi versiya, tarix qoladi."""
+        await self._editable(viewer, dashboard_id)
+        spec = DashboardSpec(title.strip(), description, tuple(
+            Widget(f"w{i + 1}", w["title"], WidgetType(w["type"]),
+                   UUID(w["query_spec_id"]) if w.get("query_spec_id") else None, w.get("text"))
+            for i, w in enumerate(widgets)))
+        await self._validate(spec)
+        return await self._store.add_version(dashboard_id, spec, user_id=viewer.user_id)
+
     async def cards(self, viewer: Viewer, *, limit: int = 50,
                     query: str | None = None) -> list[dict[str, Any]]:
         """Doska kartochkalari: saqlangan natijadan preview (qayta hisob va LLM yo‘q)."""

@@ -68,6 +68,11 @@ class QueryFilters(BaseModel):
     customer_codes: list[str] | None = None
 
 
+class OrderByIn(BaseModel):
+    metric_id: str = Field(min_length=1, max_length=100)
+    direction: Literal["desc", "asc"] = "desc"
+
+
 class QueryIn(BaseModel):
     """run_metric_query bilan bir xil semantika (contracts/tools/run_metric_query.args.v1.json)."""
 
@@ -77,6 +82,7 @@ class QueryIn(BaseModel):
     filters: QueryFilters = Field(default_factory=QueryFilters)
     currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
     limit: int | None = Field(default=None, ge=1, le=5000)
+    order_by: OrderByIn | None = None
 
 
 @router.post("/analytics/queries")

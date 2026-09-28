@@ -50,3 +50,12 @@ def test_widget_visible_only_when_limited_to_scope() -> None:
     assert within_branch_scope(("BUX",), ("BUX",))
     assert not within_branch_scope(("BUX",), None)  # barcha filiallar natijasi
     assert not within_branch_scope(("BUX",), ("BUX", "TOS"))
+
+
+def test_counted_notes_are_merged_across_rows() -> None:
+    from business.contexts.analytics.application.queries import merge_notes
+
+    notes = ["33 ta savdo satrida tannarx yo‘q — foyda yuqoriroq", "Davr hali tugamagan",
+             "17 ta savdo satrida tannarx yo‘q — foyda yuqoriroq", "Davr hali tugamagan"]
+    assert merge_notes(notes) == ["50 ta savdo satrida tannarx yo‘q — foyda yuqoriroq",
+                                  "Davr hali tugamagan"]

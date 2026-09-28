@@ -19,6 +19,8 @@ Yuridik/biznes qarorlari (TZ 24) alohida bo‘limda.
 | PDF tahriri DOCX sifatida saqlanadi | Asl PDF maketi saqlanmaydi |
 | XLSX import yo‘q | CSV (UTF-8) — aniq 415 xabari bilan |
 | Haqiqiy ERP’ga ulanish sinalmagan | `erp_api` REST connector va soxta ERP tayyor ([INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)); faqat to‘liq sinxron, inkremental — P1 |
+| CRM ochiq voronka bosqichi — joriy holat | Davr oxiridagi ochiq voronka summasi to‘g‘ri, lekin bosqich kesimi bitimning hozirgi bosqichini ko‘rsatadi (bosqich tarixi saqlanmaydi) |
+| Takroriy baza source_id bo‘yicha aniqlanadi | Ikki tizim bir hujjatga turli ID bersa, takror sezilmaydi |
 | Ombor qoldig‘i metrikalari yo‘q | Harakatlar yuklanadi, katalogda qoldiq/aylanma metrikasi — P1 |
 | Agent profillari (ism sozlash, doimiy UUID) | Standart ismlar |
 | `awaiting_approval` holati | Mapping’da bor, tasdiq talab qiladigan qadam yo‘q |

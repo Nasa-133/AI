@@ -1,15 +1,17 @@
 """run_metric_query va list_available_metrics (TZ 7.2): deterministik hisob, natija saqlanadi."""
 
+import re
 from dataclasses import dataclass, replace
 from datetime import date
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
 from business.kernel.errors import BusinessError
 
 from ..domain.ingestion import Entity
-from ..domain.metrics import CATALOG, DIMENSION_NAMES, Dimension, Subject
-from ..domain.query import Filters, Period, QuerySpec
+from ..domain.metrics import CATALOG, DIMENSION_NAMES, Dimension, Subject, compute
+from ..domain.query import Filters, OrderBy, Period, QuerySpec
 from ..ports.store import AnalyticsStore, ComponentRow, Snapshots, StoredQuery, snapshot_list
 from . import results as R
 
@@ -77,7 +79,37 @@ def spec_from_args(a: dict[str, Any]) -> QuerySpec:
                           for k in ("branch_codes", "product_codes", "customer_codes"))),
         currency=a.get("currency"),
         limit=a.get("limit") or 500,
+        order_by=(OrderBy(a["order_by"]["metric_id"], a["order_by"]["direction"] != "asc")
+                  if a.get("order_by") else None),
     )
+
+
+_COUNTED_NOTE = re.compile(r"^(\d+) (ta .+)$")
+
+
+def merge_notes(notes: list[str]) -> list[str]:
+    """Qatorlar bo‘yicha takrorlangan izohlar bittaga: “33 ta … yo‘q” + “17 ta … yo‘q” → “50 ta …”.
+    Tartib saqlanadi (birinchi uchragan joyida)."""
+    totals: dict[str, int] = {}
+    order: list[str] = []
+    for note in notes:
+        m = _COUNTED_NOTE.match(note)
+        key = m.group(2) if m else note
+        if key not in totals:
+            totals[key] = 0
+            order.append(key)
+        totals[key] += int(m.group(1)) if m else 0
+    return [f"{totals[k]} {k}" if totals[k] else k for k in order]
+
+
+def ordered(rows: list[ComponentRow], order: OrderBy) -> list[ComponentRow]:
+    """Metrika qiymati bo‘yicha (qiymatsizlari oxirida); teng bo‘lsa — kesim kodi tartibida."""
+    def key(r: ComponentRow) -> tuple[bool, Decimal]:
+        value = compute(order.metric_id, r.values).value
+        if value is None:
+            return (True, Decimal(0))
+        return (False, -value if order.descending else value)
+    return sorted(rows, key=key)
 
 
 def source_refs(snapshots: Snapshots, query_id: UUID) -> list[dict[str, Any]]:
@@ -155,6 +187,8 @@ class QueryService:
         spec, scope_note = apply_branch_scope(spec_from_args(args), ctx.branch_scope)
         snaps = await self.require_ready(spec)
         rows = await self.components(spec, spec.period, snaps, spec.dimensions)
+        if spec.order_by is not None:
+            rows = ordered(rows, spec.order_by)
         currencies = sorted({r.key[-1] for r in rows})
         with_currency = spec.currency is None and (len(currencies) > 1
                                                    or Dimension.CURRENCY in spec.dimensions)
@@ -186,7 +220,7 @@ class QueryService:
                           for d in defs)],
             "rows": out_rows, "row_count": len(out_rows), "truncated": len(rows) > spec.limit,
             "as_of": max(s.as_of for s in snapshot_list(snaps)).isoformat(),
-            "notes": list(dict.fromkeys(notes)),
+            "notes": merge_notes(notes),
         }
         # Saqlangan spec’da amaldagi filial filtri — dashboard/yangilash doirani saqlaydi.
         stored_args = (args if scope_note is None else

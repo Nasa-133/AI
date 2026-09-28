@@ -25,6 +25,7 @@ AUDITED: dict[tuple[str, str], tuple[str, str | None, str | None]] = {
     ("POST", "/api/v1/auth/logout"): ("auth.logout", None, None),
     ("POST", "/api/v1/auth/mfa/verify"): ("auth.mfa_verified", None, None),
     ("POST", "/api/v1/session/tenant"): ("auth.tenant_switched", None, None),
+    ("POST", "/api/v1/tenants/additional"): ("tenant.created", None, None),
     ("POST", "/api/v1/invitations"): ("member.invited", None, None),
     ("POST", "/api/v1/invitations/accept"): ("member.joined", None, None),
     ("PATCH", "/api/v1/members/{user_id}"): ("member.role_changed", "user", "user_id"),

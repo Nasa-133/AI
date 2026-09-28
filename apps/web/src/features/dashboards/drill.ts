@@ -7,7 +7,7 @@ const FILTER_KEY: Record<string, keyof QuerySpec["filters"]> = {
 };
 export const DIMENSION_LABEL: Record<string, string> = {
   month: "Oy", week: "Hafta", day: "Kun", branch: "Filial", product: "Mahsulot",
-  customer: "Mijoz", currency: "Valyuta",
+  customer: "Mijoz", currency: "Valyuta", stage: "Bosqich", channel: "Kanal",
 };
 
 export type DrillStep = { dimension: string; member: string; label: string; spec: QuerySpec };

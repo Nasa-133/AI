@@ -62,6 +62,14 @@ class Filters:
 
 
 @dataclass(frozen=True, slots=True)
+class OrderBy:
+    """Natija metrika qiymati bo‘yicha saralanadi (“top 10”); aks holda kesim kodi tartibida."""
+
+    metric_id: str
+    descending: bool = True
+
+
+@dataclass(frozen=True, slots=True)
 class QuerySpec:
     metric_ids: tuple[str, ...]
     period: Period
@@ -69,8 +77,11 @@ class QuerySpec:
     filters: Filters = field(default_factory=Filters)
     currency: str | None = None
     limit: int = DEFAULT_LIMIT
+    order_by: OrderBy | None = None
 
     def __post_init__(self) -> None:
+        if self.order_by is not None and self.order_by.metric_id not in self.metric_ids:
+            raise InvalidQuery("Saralash metrikasi so‘rovdagi metrikalardan biri bo‘lsin.")
         if not 1 <= len(self.metric_ids) <= MAX_METRICS:
             raise InvalidQuery(f"1–{MAX_METRICS} ta metrika tanlang.")
         if len(set(self.metric_ids)) != len(self.metric_ids):

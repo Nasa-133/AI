@@ -27,6 +27,20 @@ Loglar: `.dev-logs/`. Taklif va parol tiklash havolalari lokalda API logiga yozi
 tasdiqlab sinxronlang) yoki `fixtures/synthetic/demo/*.csv` ni yuklang. ERP ulash va haqiqiy
 tizimga o‘tish: [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md).
 
+**Test korxona (ERP + CRM + dashboardlar) bir buyruqda.** `make stack` ishlab turganda:
+
+```bash
+cd services/business && uv run python ../../tools/demo/setup_test_company.py \
+    --email <sizning email> --dashboards
+```
+
+Akkauntingizga alohida “Test korxona” qo‘shiladi (asosiy korxona o‘zgarmaydi; tepadagi menyudan
+almashtiriladi). Hisob qoidalari tasdiqlanadi, soxta ERP (4 obyekt) va soxta CRM (bitimlar)
+ulanib sinxronlanadi. `--dashboards` bilan 4 ta tahlil dashboardi (Rahbar paneli, Savdo va foyda,
+CRM voronkasi, Debitorlik) “Asosiy xulosalar” matni bilan yaratiladi. Qayta ishga tushirilsa
+dashboardlar oxirgi ma’lumot bilan yangi versiya bo‘ladi. Har qadam auditda “demo-sozlash” belgisi
+bilan.
+
 Sintetik ma’lumot: `make synthetic` (19 000 satr); golden to‘plam `fixtures/synthetic/golden`.
 
 ## OpenAI bilan

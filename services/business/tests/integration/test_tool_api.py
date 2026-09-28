@@ -48,7 +48,7 @@ async def call(client: httpx.AsyncClient, tool: str, args: dict[str, Any], cap: 
 QUERY = {"metric_ids": ["net_sales", "gross_profit", "gross_margin"],
          "date_range": {"from": "2026-01-01", "to": "2026-01-31"}, "dimensions": [],
          "filters": {"branch_codes": None, "product_codes": None, "customer_codes": None},
-         "currency": None, "limit": None}
+         "currency": None, "limit": None, "order_by": None}
 
 
 async def test_auth_and_policy(client: httpx.AsyncClient, app_engine: AsyncEngine) -> None:

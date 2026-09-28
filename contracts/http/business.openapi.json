@@ -22,6 +22,33 @@
         "title": "AcceptInvitationRequest",
         "type": "object"
       },
+      "AddTenantRequest": {
+        "properties": {
+          "base_currency": {
+            "default": "UZS",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Base Currency",
+            "type": "string"
+          },
+          "tenant_name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Tenant Name",
+            "type": "string"
+          },
+          "timezone": {
+            "default": "Asia/Tashkent",
+            "maxLength": 64,
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_name"
+        ],
+        "title": "AddTenantRequest",
+        "type": "object"
+      },
       "Body_upload_api_v1_documents_post": {
         "properties": {
           "file": {
@@ -711,6 +738,30 @@
         "title": "Operation",
         "type": "object"
       },
+      "OrderByIn": {
+        "properties": {
+          "direction": {
+            "default": "desc",
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "metric_id": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Metric Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric_id"
+        ],
+        "title": "OrderByIn",
+        "type": "object"
+      },
       "PasswordResetConfirm": {
         "properties": {
           "new_password": {
@@ -902,6 +953,16 @@
             "minItems": 1,
             "title": "Metric Ids",
             "type": "array"
+          },
+          "order_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrderByIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3678,6 +3739,52 @@
           }
         },
         "summary": "Onboard",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/v1/tenants/additional": {
+      "post": {
+        "description": "Joriy foydalanuvchi uchun yana bir korxona (Owner). Unga /session/tenant bilan o‘tiladi.",
+        "operationId": "add_tenant_api_v1_tenants_additional_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTenantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Add Tenant Api V1 Tenants Additional Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Tenant",
         "tags": [
           "identity"
         ]

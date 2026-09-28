@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from business.kernel.clock import Clock
 
+from ..domain.errors import Forbidden
 from ..domain.model import (
     AuthSession,
     Email,
@@ -35,6 +36,8 @@ from .errors import (
     Unauthenticated,
 )
 from .sessions import SessionIssuer
+
+MAX_OWNED_TENANTS = 10
 
 
 class IdentityService:
@@ -84,6 +87,29 @@ class IdentityService:
             issued = await self._sessions.issue(uow, user, membership)
             await uow.commit()
         return issued
+
+    async def add_tenant(self, user_id: UUID, tenant_name: str, *,
+                         timezone: str = "Asia/Tashkent", base_currency: str = "UZS") -> UUID:
+        """Mavjud foydalanuvchi uchun yana bir korxona (u Owner bo‘ladi). Ma’lumotlar alohida —
+        har korxona o‘z tenant chegarasida (RLS); korxonalar orasida sessiya bilan almashiladi."""
+        now = self._clock.now()
+        tenant = Tenant(id=uuid4(), name=tenant_name, timezone=timezone,
+                        base_currency=base_currency, created_at=now)
+        async with self._uow() as uow:
+            await uow.bind(tenant_id=None, user_id=user_id)
+            await self._require_user(uow, user_id)
+            owned = [m for m in await uow.memberships.list_for_user(user_id)
+                     if m.role is Role.OWNER]
+            if len(owned) >= MAX_OWNED_TENANTS:
+                raise Forbidden(f"Bitta foydalanuvchi ko‘pi bilan {MAX_OWNED_TENANTS} ta "
+                                "korxonaga ega bo‘la oladi.")
+            await uow.bind(tenant_id=tenant.id, user_id=user_id)
+            await uow.tenants.add(tenant)
+            await uow.memberships.add(Membership(id=uuid4(), tenant_id=tenant.id,
+                                                 user_id=user_id, role=Role.OWNER,
+                                                 created_at=now))
+            await uow.commit()
+        return tenant.id
 
     async def login(self, cmd: Login) -> IssuedSession:
         email = Email(cmd.email)

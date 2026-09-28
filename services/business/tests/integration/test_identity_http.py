@@ -117,3 +117,21 @@ async def test_logout_revokes_session(client: httpx.AsyncClient) -> None:
         assert r.status_code == 204
     async with new_client(client) as c:
         assert (await c.get("/api/v1/me")).status_code == 401
+
+
+async def test_owner_adds_second_company_and_switches(client: httpx.AsyncClient) -> None:
+    async with new_client(client) as c:
+        _, body = await onboard(c, "Asosiy MChJ")
+        await complete_mfa(c)
+        r = await c.post("/api/v1/tenants/additional", headers=csrf(c),
+                         json={"tenant_name": "Test korxona"})
+        assert r.status_code == 201, r.text
+        second = r.json()["tenant_id"]
+        me = (await c.get("/api/v1/me")).json()
+        assert {m["tenant_name"]: m["role"] for m in me["memberships"]} == {
+            "Asosiy MChJ": "owner", "Test korxona": "owner"}
+        assert me["current_tenant_id"] == body["tenant_id"]  # joriy korxona o‘zgarmaydi
+        switched = await c.post("/api/v1/session/tenant", headers=csrf(c),
+                                json={"tenant_id": second})
+        assert switched.status_code == 200 and switched.json()["tenant_id"] == second
+        assert (await c.get("/api/v1/dashboards")).json() == []  # ma’lumot alohida

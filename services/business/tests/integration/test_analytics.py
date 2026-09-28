@@ -352,3 +352,19 @@ async def test_crm_funnel_metrics(tenant_conn: tuple[AsyncConnection, UUID]) -> 
         await q.run(ctx(), args(["net_sales", "crm_deals_won"], "2026-01-01", "2026-01-31"))
     with pytest.raises(UnsupportedDimension):  # ochiq voronka — davr oxiridagi holat, oylar yo‘q
         await q.run(ctx(), args(["crm_pipeline_open"], "2026-01-01", "2026-03-31", ["month"]))
+
+
+async def test_top_n_is_ordered_by_metric(tenant_conn: tuple[AsyncConnection, UUID]) -> None:
+    conn, tenant = tenant_conn
+    store = SqlAnalyticsStore(conn, tenant)
+    await load_golden(store, uuid4())
+    q = QueryService(store)
+    base = args(["net_sales"], "2026-01-01", "2026-04-30", ["branch"])
+    top, _ = await q.run(ctx(), {**base, "limit": 2,
+                                 "order_by": {"metric_id": "net_sales", "direction": "desc"}})
+    assert [r[0] for r in top["rows"]] == ["BUX", "TOS"] and top["truncated"]  # 850 = 850 → kod
+    low, _ = await q.run(ctx(), {**base, "limit": 1,
+                                 "order_by": {"metric_id": "net_sales", "direction": "asc"}})
+    assert [r[0] for r in low["rows"]] == ["NAM"]  # 100
+    with pytest.raises(InvalidQuery, match="Saralash"):
+        await q.run(ctx(), {**base, "order_by": {"metric_id": "returns", "direction": "desc"}})

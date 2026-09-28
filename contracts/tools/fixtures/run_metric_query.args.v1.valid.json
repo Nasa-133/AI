@@ -15,5 +15,9 @@
     "customer_codes": null
   },
   "currency": "UZS",
-  "limit": null
+  "limit": 10,
+  "order_by": {
+    "metric_id": "net_sales",
+    "direction": "desc"
+  }
 }

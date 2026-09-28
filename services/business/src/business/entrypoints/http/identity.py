@@ -91,6 +91,24 @@ async def onboard(
                            mfa_satisfied=ctx.mfa_satisfied)
 
 
+class AddTenantRequest(BaseModel):
+    tenant_name: str = Field(min_length=1, max_length=200)
+    timezone: str = Field(default="Asia/Tashkent", max_length=64)
+    base_currency: str = Field(default="UZS", pattern=r"^[A-Z]{3}$")
+
+
+@router.post("/tenants/additional", status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(rate_limit("add_tenant", limit=10, window_seconds=3600))])
+async def add_tenant(body: AddTenantRequest, request: Request, ctx: AuthCtx,
+                     identity: Identity) -> dict[str, str]:
+    """Joriy foydalanuvchi uchun yana bir korxona (Owner). Unga /session/tenant bilan o‘tiladi."""
+    tenant_id = await identity.add_tenant(ctx.user_id, body.tenant_name.strip(),
+                                          timezone=body.timezone,
+                                          base_currency=body.base_currency)
+    request.state.audit_actor = (tenant_id, ctx.user_id)
+    return {"tenant_id": str(tenant_id)}
+
+
 @router.post("/auth/login",
              dependencies=[Depends(rate_limit("login", limit=20, window_seconds=300))])
 async def login(

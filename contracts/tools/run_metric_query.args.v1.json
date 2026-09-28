@@ -11,7 +11,8 @@
     "dimensions",
     "filters",
     "currency",
-    "limit"
+    "limit",
+    "order_by"
   ],
   "properties": {
     "metric_ids": {
@@ -136,6 +137,35 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 5000
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "order_by": {
+      "description": "Natijani metrika qiymati bo‘yicha saralash (masalan, “top 10 mahsulot”: desc + limit 10). null — kesim kodi tartibida.",
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "metric_id",
+            "direction"
+          ],
+          "properties": {
+            "metric_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "direction": {
+              "enum": [
+                "desc",
+                "asc"
+              ]
+            }
+          }
         },
         {
           "type": "null"

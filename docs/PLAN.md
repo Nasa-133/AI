@@ -365,3 +365,18 @@ REST API shartnomasi, bosqichma-bosqich ulash va tekshirish, yangi connector yoz
   ham ulanadi — avval faqat savdo holatlari taklif qilinardi).
 - Testlar: conformance (4 connector), ERP xatolari/kursor, avtomatik sinxron, tizim testi
   (`tests/system/test_erp.py`), Playwright (`e2e/erp.spec.ts`).
+
+### Real integratsiyaga yaqin test muhiti: ERP + CRM, ko‘p manba, tahlil dashboardlari: ✅
+
+- **Bir nechta manba:** bir obyekt uchun barcha faol manbalar qo‘shib hisoblanadi (0018). Bitta
+  bazani ikki marta ulash mumkin emas: ulashda bir xil tizim/fayl rad etiladi; yuklashda
+  yozuvlarining ≥50% boshqa manbada bo‘lsa — “takroriy baza”, hisobga olinmaydi; “Shu manbani
+  ishlatish” bilan tanlanadi.
+- **CRM:** `crm.deal` kontrakti, soxta CRM (:8071, jonli voronka), `crm_api` connector, 6 ta
+  metrika (yangi/yutilgan bitimlar, summa, konversiya, o‘rtacha bitim, ochiq voronka), bosqich va
+  kanal kesimlari (0019).
+- **Top-N:** `order_by` (metrika bo‘yicha saralash) — kontrakt, Core, HTTP, planner.
+- **Korxonalar:** mavjud foydalanuvchi yangi korxona qo‘shadi (Sozlamalar → Korxonalar).
+- **Test korxona vositasi** (`tools/demo/setup_test_company.py`) va tahlil dashboardlari
+  (`tools/demo/dashboards.py`) — xulosalar faqat deterministik so‘rovlardan.
+
