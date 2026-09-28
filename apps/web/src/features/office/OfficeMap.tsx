@@ -4,8 +4,8 @@ import { memo, useEffect, useRef, useState, useSyncExternalStore, type KeyboardE
 
 import { stateLabel, type OfficeAgent } from "./api";
 import styles from "./officeMap.module.css";
-import { fit, pan, zoomAt, zoomLevel, type Camera } from "./world/camera";
-import { FURNITURE, ROOMS, TILE, WORLD_H, WORLD_W, wallRuns, type Point } from "./world/map";
+import { centerOn, fit, initialFor, pan, zoomAt, zoomLevel, type Camera } from "./world/camera";
+import { FURNITURE, ROOMS, seatOf, TILE, WORLD_H, WORLD_W, wallRuns, type Point } from "./world/map";
 import { officeSim, WORKING } from "./world/sim";
 
 const COLORS: Record<string, string> = {
@@ -15,6 +15,13 @@ const COLORS: Record<string, string> = {
 
 // Kamera sessiya davomida saqlanadi: dashboard oynasi yoki boshqa sahifadan qaytganda joyida.
 let savedCamera: Camera | null = null;
+
+let pendingFocus: string | null = null;
+/** Kamerani agentga olib borish. So‘rov saqlanadi: xarita hali chizilmagan bo‘lsa ham
+ * (masalan, ro‘yxatdan xaritaga o‘tishda) kadr siklida bajariladi. */
+export const officeFocus = {
+  show(role: string) { pendingFocus = role; },
+};
 
 function subscribeMotion(cb: () => void) {
   const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -77,8 +84,21 @@ export function OfficeMap({ agents, selected, onSelect }: {
     { pointers: new Map(), moved: false, last: null, dist: null });
   const agentsRef = useRef(agents);
 
+  const [full, setFull] = useState(false);
   const setCamera = (update: (c: Camera) => Camera) => {
     setCameraState((c) => { const next = update(c); savedCamera = next; return next; });
+  };
+
+
+  // Tor ekranda (telefon) birinchi ochilishda butun ofis juda mayda — agentlar turgan joyga
+  // yaqinlashtiriladi (agentlar ma’lum bo‘lgach, kadr siklida bir marta).
+  const autoFrame = useRef(false);
+  const measure = (el: HTMLDivElement | null) => {
+    // Ekran kengligi (telefon) bo‘yicha: element o‘lchami birinchi chizishda hali barqaror emas.
+    if (el && !savedCamera && window.innerWidth < 600) {
+      autoFrame.current = true;
+      setCamera(() => initialFor(window.innerWidth));
+    }
   };
 
   // Backend holati → maqsad joy. Holat o‘zgarmasa yo‘l qayta hisoblanmaydi.
@@ -94,6 +114,17 @@ export function OfficeMap({ agents, selected, onSelect }: {
     const tick = (now: number) => {
       officeSim.step((now - last) / 1000);
       last = now;
+      // “Xaritada ko‘rsatish” (agent kartasi/ro‘yxatdan): kamera agentga yaqinlashadi.
+      const focusWalker = pendingFocus ? officeSim.walkers.get(pendingFocus) : undefined;
+      if (focusWalker) {
+        pendingFocus = null;
+        setCamera((c) => centerOn(c, focusWalker.pos, 220));
+      }
+      if (autoFrame.current && agentsRef.current.length) {
+        autoFrame.current = false;
+        const focus = agentsFocus(agentsRef.current);
+        if (focus) setCamera((c) => centerOn(c, focus, 200));
+      }
       const svg = svgRef.current;
       const scale = svg?.getScreenCTM()?.a || 1;
       // Yorliqlar ekranda doimiy o‘lchamda, lekin juda uzoqlashtirilganda biroz kichrayadi;
@@ -112,6 +143,8 @@ export function OfficeMap({ agents, selected, onSelect }: {
         el.dataset.at = at;
         el.dataset.working = String(at === "desk" && WORKING.has(a.state));
         el.querySelector<SVGGElement>("[data-label]")?.setAttribute("transform", `scale(${labelScale})`);
+        // Dam olish joyida qo‘shni yorliqlar ustma-ust tushmasligi uchun ba’zilari pastda.
+        el.dataset.labelBelow = String(at === "rest" && Boolean(seatOf(a.role_key).restLabelBelow));
         el.querySelector<SVGGElement>("[data-body]")?.setAttribute("transform", `scale(${w.facing},1)`);
         svg?.querySelector(`[data-owner="${a.role_key}"]`)?.setAttribute(
           "data-active", String(at === "desk" && WORKING.has(a.state)));
@@ -200,15 +233,19 @@ export function OfficeMap({ agents, selected, onSelect }: {
   };
 
   return (
-    <div className={styles.frame}>
+    <div className={styles.frame} data-full={full}
+         onKeyDown={(e) => { if (full && e.key === "Escape") { e.stopPropagation(); setFull(false); } }}>
       <div className={styles.controls} role="group" aria-label="Xarita boshqaruvi">
         <span className={styles.hint}>G‘ildirak yoki +/− — masshtab, sichqoncha bilan torting — surish.</span>
         <button className="btn btn-sm" aria-label="Yaqinlashtirish" onClick={() => setCamera((c) => zoomAt(c, 0.8))}>+</button>
         <span className={styles.zoom} aria-live="polite">{zoomLevel(camera)}%</span>
         <button className="btn btn-sm" aria-label="Uzoqlashtirish" onClick={() => setCamera((c) => zoomAt(c, 1.25))}>−</button>
         <button className="btn btn-sm" onClick={() => setCamera(() => fit())}>Butun ofis</button>
+        <button className="btn btn-sm" aria-pressed={full} onClick={() => setFull(!full)}>
+          {full ? "Kichraytirish" : "To‘liq ekran"}
+        </button>
       </div>
-      <div className={styles.wrap}>
+      <div className={styles.wrap} ref={measure}>
       <svg ref={svgRef} className={styles.map} viewBox={`${camera.x} ${camera.y} ${camera.w} ${camera.h}`}
            preserveAspectRatio="xMidYMid meet" tabIndex={0} role="application" data-reduced-motion={reduce}
            aria-label="Ofis xaritasi. Plyus/minus — yaqinlashtirish, strelkalar — surish, 0 — butun ofis. Agentlarga Tab bilan o‘ting."
@@ -234,7 +271,7 @@ export function OfficeMap({ agents, selected, onSelect }: {
               <circle cx={8} cy={-11} r={3} className={styles.hand} data-hand="r" />
             </g>
             <g data-label className={styles.label}>
-              <g transform="translate(0,-20)">
+              <g data-label-offset transform="translate(0,-20)">
                 <text className={styles.name} textAnchor="middle" y={-12}>{a.name}</text>
                 {a.state !== "idle" && (
                   <g className={styles.pill} data-state={a.state}>
@@ -250,6 +287,15 @@ export function OfficeMap({ agents, selected, onSelect }: {
       </div>
     </div>
   );
+}
+
+/** Faol agentlar (bo‘lmasa hammasi) markazi — kamerani shu yerga qaratish uchun. */
+function agentsFocus(agents: OfficeAgent[]): Point | null {
+  const active = agents.filter((a) => a.state !== "idle");
+  const pts = (active.length ? active : agents)
+    .map((a) => officeSim.walkers.get(a.role_key)?.pos).filter((p): p is Point => Boolean(p));
+  if (!pts.length) return null;
+  return { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length };
 }
 
 /** Holat yorlig‘i kengligi matn uzunligiga qarab (10.5px shrift, ~6.3px harf). */

@@ -23,7 +23,8 @@ export type FurnitureKind = "desk" | "table" | "sofa" | "plant" | "cabinet" | "c
 export type Furniture = Rect & { kind: FurnitureKind; owner?: string };
 
 /** Agentning ish joyi (stol oldidagi stul) va bo‘sh vaqtdagi joyi (dam olish zonasi). */
-export type Seat = { role: string; room: string; work: Point; rest: Point };
+/** `restLabelBelow` — dam olish joyida yorliq agent ostida (qo‘shnilar bilan ustma-ust tushmasin). */
+export type Seat = { role: string; room: string; work: Point; rest: Point; restLabelBelow?: boolean };
 
 const doorRow = (x: number, y: number, n = 3): Point[] =>
   Array.from({ length: n }, (_, i) => ({ x: x + i, y }));
@@ -74,8 +75,9 @@ export const FURNITURE: Furniture[] = [
   ...deskGroup(24, 25, "document_assistant"), ...deskGroup(31, 25), ...deskGroup(24, 30),
   { kind: "cabinet", x: 38, y: 23, w: 1, h: 5 },
   // Dam olish
-  { kind: "sofa", x: 42, y: 27, w: 13, h: 1 }, { kind: "table", x: 44, y: 29, w: 9, h: 1 },
-  { kind: "sofa", x: 42, y: 33, w: 13, h: 1 },
+  // Divan va stol orasida ikki qator bo‘sh joy: o‘tirgan agentlar yo‘lni to‘sib qo‘ymaydi.
+  { kind: "sofa", x: 42, y: 27, w: 13, h: 1 }, { kind: "table", x: 44, y: 30, w: 9, h: 1 },
+  { kind: "sofa", x: 42, y: 34, w: 13, h: 1 },
   { kind: "coffee", x: 56, y: 23, w: 2, h: 1 },
   { kind: "plant", x: 57, y: 33, w: 1, h: 1 }, { kind: "plant", x: 57, y: 26, w: 1, h: 1 },
 ];
@@ -84,10 +86,12 @@ export const FURNITURE: Furniture[] = [
 export const SEATS: Seat[] = [
   // Dam olish joylari bir-biridan 4 katak uzoqda — ism yorliqlari ustma-ust tushmaydi.
   { role: "coordinator", room: "coordinator", work: { x: 8, y: 6 }, rest: { x: 43, y: 28 } },
-  { role: "sales_analyst", room: "sales", work: { x: 20, y: 6 }, rest: { x: 48, y: 28 } },
+  { role: "sales_analyst", room: "sales", work: { x: 20, y: 6 }, rest: { x: 48, y: 28 },
+    restLabelBelow: true },
   { role: "finance_analyst", room: "finance", work: { x: 38, y: 6 }, rest: { x: 53, y: 28 } },
-  { role: "inventory_analyst", room: "inventory", work: { x: 6, y: 27 }, rest: { x: 45, y: 32 } },
-  { role: "document_assistant", room: "documents", work: { x: 26, y: 27 }, rest: { x: 51, y: 32 } },
+  { role: "inventory_analyst", room: "inventory", work: { x: 6, y: 27 }, rest: { x: 45, y: 33 },
+    restLabelBelow: true },
+  { role: "document_assistant", room: "documents", work: { x: 26, y: 27 }, rest: { x: 51, y: 33 } },
 ];
 
 export function seatOf(role: string): Seat {

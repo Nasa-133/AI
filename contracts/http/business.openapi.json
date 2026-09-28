@@ -729,6 +729,24 @@
         "title": "Period",
         "type": "object"
       },
+      "PrivacyIn": {
+        "properties": {
+          "mask_customer_names": {
+            "title": "Mask Customer Names",
+            "type": "boolean"
+          },
+          "pseudonymize": {
+            "title": "Pseudonymize",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "pseudonymize",
+          "mask_customer_names"
+        ],
+        "title": "PrivacyIn",
+        "type": "object"
+      },
       "PromoteIn": {
         "properties": {
           "expected_current_version_id": {
@@ -3135,6 +3153,95 @@
         "summary": "Office",
         "tags": [
           "workspace"
+        ]
+      }
+    },
+    "/api/v1/office/events": {
+      "get": {
+        "description": "Tenant SSE (TZ 6, 19: backend eventidan UI holatiga P95 ≤ 2 s): ofis holati o‘zgarganda\nyangi snapshot. O‘zgarish belgisi arzon so‘rov bilan tekshiriladi; snapshot faqat kerak\nbo‘lganda hisoblanadi va o‘zgargan bo‘lsagina yuboriladi.",
+        "operationId": "office_events_api_v1_office_events_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Office Events",
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/v1/privacy": {
+      "get": {
+        "description": "TZ 13.12: AI’ga yuboriladigan kontekstda qaysi shaxsiy ma’lumot psevdonimlanadi.",
+        "operationId": "get_privacy_api_v1_privacy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Get Privacy Api V1 Privacy Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Privacy",
+        "tags": [
+          "governance"
+        ]
+      },
+      "put": {
+        "operationId": "put_privacy_api_v1_privacy_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Put Privacy Api V1 Privacy Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Privacy",
+        "tags": [
+          "governance"
         ]
       }
     },

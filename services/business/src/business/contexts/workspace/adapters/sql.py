@@ -208,6 +208,12 @@ class SqlWorkspaceStore:
             " VALUES (:t, :u, :k, CAST(:r AS jsonb), now())"),
             {"t": self._t, "u": user_id, "k": key, "r": _j(response)})
 
+    async def office_signature(self) -> str:
+        r = (await self._c.execute(text(
+            "SELECT (SELECT coalesce(max(id), 0) FROM workspace.task_events) AS e,"
+            " (SELECT max(updated_at) FROM workspace.tasks) AS t"))).one()
+        return f"{r.e}:{r.t}"
+
     async def answers(self, task_ids: list[UUID]) -> dict[UUID, dict[str, Any]]:
         if not task_ids:
             return {}

@@ -24,7 +24,13 @@ export type Walker = {
   place: Place;
   target: Point; // katak
   facing: -1 | 1;
+  tile: Point; // oxirgi to‘liq turgan katak
+  claim: Point | null; // hozir kirayotgan katak (band)
+  waiting: number; // band katak oldida kutilgan vaqt, s
 };
+
+const REROUTE_AFTER = 0.5;
+const same = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
 export class OfficeSim {
   readonly grid = buildGrid();
@@ -38,37 +44,63 @@ export class OfficeSim {
     let w = this.walkers.get(role);
     if (!w) {
       // Birinchi ko‘rinish: agent o‘z joyida (yurib kelayotgandek ko‘rsatilmaydi).
-      w = { role, pos: tileCenter(target), path: [], place, target, facing: 1 };
+      w = { role, pos: tileCenter(target), path: [], place, target, facing: 1, tile: target,
+            claim: null, waiting: 0 };
       this.walkers.set(role, w);
       return w;
     }
-    if (w.place === place && w.target.x === target.x && w.target.y === target.y) return w;
+    if (w.place === place && same(w.target, target)) return w;
     w.place = place;
     w.target = target;
     if (instant) {
       w.pos = tileCenter(target);
+      w.tile = target;
+      w.claim = null;
       w.path = [];
       return w;
     }
-    const from = nearestOpen(this.grid, toTile(w.pos));
-    w.path = findPath(this.grid, from, target) ?? [];
-    if (!w.path.length) w.pos = tileCenter(target); // yo‘l topilmasa (bo‘lmasligi kerak) — joyiga
+    // Yarim yo‘lda bo‘lsa — band qilgan katagidan davom etadi (orqaga “sakramaydi”).
+    const from = nearestOpen(this.grid, w.claim ?? w.tile ?? toTile(w.pos));
+    const path = findPath(this.grid, from, target) ?? [];
+    w.path = w.claim && !same(from, w.tile) ? [from, ...path] : path;
+    w.waiting = 0;
+    if (!w.path.length && !same(w.tile, target)) {
+      w.pos = tileCenter(target); // yo‘l topilmasa (bo‘lmasligi kerak) — joyiga
+      w.tile = target;
+    }
     return w;
   }
 
-  /** Vaqt qadami; biror agent siljigan bo‘lsa true. */
+  /**
+   * Vaqt qadami; biror agent siljigan bo‘lsa true.
+   * To‘qnashuvdan qochish: agent boshqa agent turgan yoki band qilgan katakka kirmaydi (kutadi);
+   * `REROUTE_AFTER` dan uzoq kutsa, boshqa agentlarni to‘siq deb hisoblab yangi yo‘l topadi.
+   */
   step(dt: number): boolean {
     let moved = false;
+    const clamped = Math.min(dt, 0.1);
     for (const w of this.walkers.values()) {
-      let budget = SPEED * Math.min(dt, 0.1);
+      let budget = SPEED * clamped;
       while (budget > 0 && w.path.length) {
-        const next = tileCenter(w.path[0]);
+        const nextTile = w.path[0];
+        if (!w.claim || !same(w.claim, nextTile)) {
+          if (this.occupied(w, nextTile)) {
+            w.waiting += clamped;
+            if (w.waiting >= REROUTE_AFTER) this.reroute(w);
+            break;
+          }
+          w.claim = nextTile;  // katak band qilindi — boshqalar kirmaydi
+          w.waiting = 0;
+        }
+        const next = tileCenter(nextTile);
         const dx = next.x - w.pos.x;
         const dy = next.y - w.pos.y;
         const dist = Math.hypot(dx, dy);
         if (dx !== 0) w.facing = dx > 0 ? 1 : -1;
         if (dist <= budget) {
           w.pos = next;
+          w.tile = nextTile;
+          w.claim = null;
           w.path.shift();
           budget -= dist;
         } else {
@@ -79,6 +111,26 @@ export class OfficeSim {
       }
     }
     return moved;
+  }
+
+  /** Boshqa agent shu katakda turibdi yoki unga kirish uchun band qilgan. */
+  private occupied(self: Walker, tile: Point): boolean {
+    for (const other of this.walkers.values()) {
+      if (other === self) continue;
+      if (same(other.tile, tile) || (other.claim && same(other.claim, tile))) return true;
+    }
+    return false;
+  }
+
+  private reroute(w: Walker): void {
+    w.waiting = 0;
+    const grid = this.grid.map((row) => [...row]);
+    for (const other of this.walkers.values()) {
+      if (other === w) continue;
+      for (const t of [other.tile, other.claim]) if (t && !same(t, w.target)) grid[t.y][t.x] = true;
+    }
+    const alternative = findPath(grid, w.tile, w.target);
+    if (alternative?.length) w.path = alternative;  // aylanib o‘tish; bo‘lmasa kutishda davom
   }
 
   at(role: string): Place | "walking" | null {

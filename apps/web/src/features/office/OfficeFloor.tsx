@@ -7,7 +7,7 @@ import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 import { AgentPanel } from "./AgentPanel";
 import { stateLabel, useOffice, type OfficeAgent } from "./api";
 import styles from "./office.module.css";
-import { OfficeMap } from "./OfficeMap";
+import { OfficeMap, officeFocus } from "./OfficeMap";
 
 const VIEW_KEY = "abo.office.view";
 
@@ -67,7 +67,6 @@ export function OfficeFloor() {
         </div>
       </div>
       <ErrorNotice error={office.error} />
-      {office.isLoading && <div className="skeleton" style={{ height: 180 }} />}
 
       <div className={styles.layout}>
         {view === "scene" ? (
@@ -94,7 +93,12 @@ export function OfficeFloor() {
             </table>
           </div>
         )}
-        {current && <AgentPanel agent={current} onClose={close} />}
+        {current && (
+          <AgentPanel agent={current} onClose={close} onShowOnMap={() => {
+            officeFocus.show(current.role_key);  // xarita chizilgach kadr siklida bajariladi
+            changeView("scene");
+          }} />
+        )}
       </div>
     </section>
   );

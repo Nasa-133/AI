@@ -108,6 +108,55 @@ async def office(ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
         return await view.snapshot(ctx.user_id, datetime.now(UTC))
 
 
+OFFICE_TICK_SECONDS = 0.5
+OFFICE_REFRESH_SECONDS = 5.0  # vaqtga bog‘liq o‘tishlar (30 s dan keyin “bo‘sh”) uchun
+
+
+@router.get("/office/events")
+async def office_events(request: Request, ctx: AuthCtx,
+                        container: ContainerDep) -> StreamingResponse:
+    """Tenant SSE (TZ 6, 19: backend eventidan UI holatiga P95 ≤ 2 s): ofis holati o‘zgarganda
+    yangi snapshot. O‘zgarish belgisi arzon so‘rov bilan tekshiriladi; snapshot faqat kerak
+    bo‘lganda hisoblanadi va o‘zgargan bo‘lsagina yuboriladi."""
+
+    async def snapshot() -> dict[str, Any]:
+        async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
+                                      user_id=ctx.user_id) as conn:
+            view = OfficeView(SqlWorkspaceStore(conn, ctx.tenant_id),
+                              limit=container.settings.agent_parallel_limit)
+            return await view.snapshot(ctx.user_id, datetime.now(UTC))
+
+    async def signature() -> str:
+        async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
+                                      user_id=ctx.user_id) as conn:
+            return await SqlWorkspaceStore(conn, ctx.tenant_id).office_signature()
+
+    async def stream() -> AsyncIterator[bytes]:
+        yield b"retry: 2000\n\n"
+        last_sig, last_body, since_refresh, idle, elapsed = "", "", 0.0, 0.0, 0.0
+        while elapsed < SSE_MAX_SECONDS and not await request.is_disconnected():
+            sig = await signature()
+            if sig != last_sig or since_refresh >= OFFICE_REFRESH_SECONDS:
+                data = await snapshot()
+                body = json.dumps({k: v for k, v in data.items() if k != "generated_at"},
+                                  ensure_ascii=False, default=str)
+                last_sig, since_refresh = sig, 0.0
+                if body != last_body:
+                    last_body, idle = body, 0.0
+                    payload = json.dumps(data, ensure_ascii=False, default=str)
+                    yield f"event: office\ndata: {payload}\n\n".encode()
+            idle += OFFICE_TICK_SECONDS
+            if idle >= SSE_HEARTBEAT_SECONDS:
+                idle = 0.0
+                yield b": heartbeat\n\n"
+            await asyncio.sleep(OFFICE_TICK_SECONDS)
+            since_refresh += OFFICE_TICK_SECONDS
+            elapsed += OFFICE_TICK_SECONDS
+
+    return StreamingResponse(stream(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
 @router.get("/tasks")
 async def list_tasks(ctx: AuthCtx, container: ContainerDep) -> list[dict[str, Any]]:
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,

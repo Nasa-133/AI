@@ -103,3 +103,32 @@ test("dashboard: tahrir, versiya, ulashish, yangilash, CSV, mavzu", async ({ pag
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 });
+
+test("boshqaruv: AI budjeti, maxfiylik va audit jurnali", async ({ page }) => {
+  await registerOwner(page, "Boshqaruv MChJ");
+  const budget = page.getByRole("region", { name: "AI budjeti" });
+  await expect(budget.getByText("Me’yorda")).toBeVisible();
+  await budget.getByLabel("Oylik limit (USD)").fill("0");
+  await budget.getByRole("button", { name: "Saqlash" }).click();
+  await expect(budget.getByText("0.00 / 0.00 USD")).toBeVisible();
+  await expect(budget.getByText(/Limit tugagan/)).toBeVisible();
+
+  // Limit 0: yangi AI vazifasi yuborilmaydi, sababi va keyingi qadam chatda ko‘rinadi.
+  await ask(page, "Ali, savdo qancha?");
+  await expect(page.getByText(/AI budjeti limiti tugagan/).first()).toBeVisible({ timeout: 30_000 });
+  await page.reload();
+  await expect(page.getByRole("link", { name: /AI budjeti \d+%/ })).toBeVisible();  // sarlavhada
+
+  const privacy = page.getByRole("region", { name: /Maxfiylik/ });
+  const toggle = privacy.getByLabel("Shaxsiy ma’lumotlarni psevdonimlash");
+  await expect(toggle).toBeChecked();
+  await toggle.uncheck();
+  await expect(privacy.getByText(/asl holida yuboriladi/)).toBeVisible();
+  await toggle.check();
+
+  const audit = page.getByRole("region", { name: "Audit jurnali" });
+  await page.reload();
+  for (const action of ["AI budjeti o‘zgartirildi", "Korxona yaratildi", "Hisob qoidalari tasdiqlandi"]) {
+    await expect(audit.getByRole("cell", { name: action }).first()).toBeVisible();
+  }
+});

@@ -131,3 +131,68 @@ test("reduced-motion: yurish animatsiyasisiz darhol joyiga o‘tadi", async ({ p
     .evaluate((el) => getComputedStyle(el).animationName);
   expect(animation).toBe("none");
 });
+
+test("ofis SSE: holat kanal orqali keladi; to‘liq ekran; xaritada ko‘rsatish", async ({ page }) => {
+  const sse = page.waitForResponse((r) => r.url().includes("/api/v1/office/events"));
+  await openOffice(page, "Jonli MChJ");
+  expect((await sse).headers()["content-type"]).toContain("text/event-stream");
+
+  // Polling o‘chiq bo‘lsa ham holat yangilanadi: /office so‘rovlarini sanaymiz.
+  let polls = 0;
+  page.on("request", (r) => { if (/\/api\/v1\/office$/.test(r.url())) polls += 1; });
+  await ask(page, "Madina, 2026 yanvar yalpi foydasini ko‘rsat");
+  await expect(agent(page, "finance_analyst")).toHaveAttribute("data-at", /walking|desk/, { timeout: 10_000 });
+  expect(polls).toBeLessThanOrEqual(1);  // holat SSE’dan (ko‘pi bilan bitta invalidatsiya so‘rovi)
+
+  // To‘liq ekran va Escape.
+  await page.getByRole("button", { name: "To‘liq ekran" }).click();
+  const map = page.getByRole("application", { name: /Ofis xaritasi/ });
+  const box = (await map.boundingBox())!;
+  expect(box.width).toBeGreaterThan(1000);
+  await map.focus();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "To‘liq ekran" })).toBeVisible();
+
+  // Ro‘yxatdan agent → “Xaritada ko‘rsatish”: kamera agentga yaqinlashadi.
+  const office = page.getByRole("region", { name: "Ofis" });
+  await office.getByRole("button", { name: "Ro‘yxat" }).click();
+  await page.locator('[data-agent-row="inventory_analyst"]').click();
+  await page.getByRole("button", { name: "Xaritada ko‘rsatish" }).click();
+  await expect(map).toBeVisible();
+  // Kamera keyingi kadrda yangilanadi.
+  await expect.poll(async () => Number((await map.getAttribute("viewBox"))!.split(" ")[2]))
+    .toBeLessThan(700);  // yaqinlashtirildi
+  const [x, y, w] = (await map.getAttribute("viewBox"))!.split(" ").map(Number);
+  const sardor = { x: 6.5 * 16, y: 32.5 * 16 };  // dam olish yoki stol — ikkalasi ham ko‘rinishda
+  const pos = (await agent(page, "inventory_analyst").getAttribute("transform"))!;
+  const [, ax, ay] = /translate\(([\d.]+),([\d.]+)\)/.exec(pos)!.map(Number);
+  expect(ax).toBeGreaterThan(x);
+  expect(ax).toBeLessThan(x + w);
+  expect(ay).toBeGreaterThan(y);
+  expect(sardor.x).toBeGreaterThan(0);
+});
+
+test("mobil: xarita balandroq va boshida yaqinlashtirilgan", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await registerOwner(page, "Mobil MChJ");
+  // Dev rejimida Next.js vositalari tugmasi pastki menyuning “Ofis” havolasini yopadi.
+  await page.goto("/");
+  const map = page.getByRole("application", { name: /Ofis xaritasi/ });
+  await expect(map).toBeVisible();
+  const box = (await map.boundingBox())!;
+  expect(box.height).toBeGreaterThan(box.width);  // 4:5 — telefonda balandroq
+  await expect(page.getByText("200%")).toBeVisible();
+  // Boshlang‘ich kadr agentlarga qaratilgan: hammasi (dam olish zonasida) ko‘rinishda.
+  await expect.poll(async () => {
+    const inside = await Promise.all(["coordinator", "sales_analyst", "finance_analyst",
+      "inventory_analyst", "document_assistant"].map(async (role) => {
+      const b = await page.locator(`[data-agent="${role}"] circle`).first().boundingBox();
+      return Boolean(b && b.x >= box.x && b.x + b.width <= box.x + box.width
+        && b.y >= box.y && b.y + b.height <= box.y + box.height);
+    }));
+    return inside.every(Boolean);
+  }, { timeout: 5000 }).toBe(true);
+  await page.screenshot({ path: "test-results/office-mobile-2x.png" });
+  await context.close();
+});

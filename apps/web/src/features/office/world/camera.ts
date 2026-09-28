@@ -31,6 +31,22 @@ export function pan(c: Camera, dx: number, dy: number): Camera {
   return clamp({ ...c, x: c.x + dx, y: c.y + dy });
 }
 
+/** Nuqtani markazga oladi; `minZoom` (100 = butun ofis) dan uzoq bo‘lsa yaqinlashtiradi. */
+export function centerOn(c: Camera, p: Point, minZoom = 100): Camera {
+  const maxW = fit().w / (minZoom / 100);
+  const k = c.w > maxW ? maxW / c.w : 1;
+  const w = c.w * k;
+  const h = c.h * k;
+  return clamp({ x: p.x - w / 2, y: p.y - h / 2, w, h });
+}
+
+/** Tor ekran uchun boshlang‘ich kamera: ofis markazi, yaqinroq (butun ofis juda mayda bo‘ladi). */
+export function initialFor(widthPx: number): Camera {
+  const base = fit();
+  if (widthPx >= 600) return base;
+  return centerOn(base, { x: WORLD_W / 2, y: WORLD_H / 2 }, 200);
+}
+
 export function zoomLevel(c: Camera): number {
   return Math.round((fit().w / c.w) * 100);
 }

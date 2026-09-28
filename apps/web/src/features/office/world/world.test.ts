@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { clamp, fit, MAX_W, MIN_W, pan, zoomAt } from "./camera";
-import { buildGrid, FURNITURE, ROOMS, SEATS, tileCenter, toTile, WORLD_W } from "./map";
+import { buildGrid, FURNITURE, ROOMS, SEATS, TILE, tileCenter, toTile, WORLD_W } from "./map";
 import { findPath } from "./path";
 import { OfficeSim, placeFor, SPEED } from "./sim";
 
@@ -41,6 +41,20 @@ describe("xarita", () => {
         expect(grid[p.y][p.x]).toBe(false);
         expect(Math.abs(p.x - prev.x) + Math.abs(p.y - prev.y)).toBe(1);
         prev = p;
+      }
+    }
+  });
+
+  it("boshqalar o‘z joyida o‘tirganda ham har agent stoliga va dam olish joyiga yeta oladi", () => {
+    // Tiqilib qolish (deadlock) bo‘lmasligi: o‘tirgan agentlar yagona o‘tish yo‘lini to‘smasin.
+    for (const me of SEATS) {
+      for (const layout of ["rest", "work"] as const) {
+        const blocked = grid.map((row) => [...row]);
+        for (const other of SEATS) {
+          if (other.role !== me.role) blocked[other[layout].y][other[layout].x] = true;
+        }
+        expect(findPath(blocked, me.rest, me.work), `${me.role} (${layout})`).not.toBeNull();
+        expect(findPath(blocked, me.work, me.rest), `${me.role} (${layout})`).not.toBeNull();
       }
     }
   });
@@ -90,6 +104,58 @@ describe("harakat backend holatiga bog‘liq", () => {
     expect(sim.at("document_assistant")).toBe("walking");
     sim.step(0.05);
     expect(SPEED).toBeGreaterThan(0);
+  });
+});
+
+describe("to‘qnashuvdan qochish", () => {
+  function minDistance(sim: OfficeSim): number {
+    const ws = [...sim.walkers.values()];
+    let min = Infinity;
+    for (let i = 0; i < ws.length; i++) {
+      for (let j = i + 1; j < ws.length; j++) {
+        min = Math.min(min, Math.hypot(ws[i].pos.x - ws[j].pos.x, ws[i].pos.y - ws[j].pos.y));
+      }
+    }
+    return min;
+  }
+
+  it("5 agent bir vaqtda qarama-qarshi yo‘nalishda — hech qachon ustma-ust emas, hammasi yetadi", () => {
+    const roles = SEATS.map((s) => s.role);
+    for (const variant of [0, 1]) {
+      const sim = new OfficeSim();
+      // Yarmi stolda, yarmi dam olishda; keyin hammasi joy almashtiradi (koridorda uchrashadi).
+      roles.forEach((r, i) => sim.sync(r, (i + variant) % 2 ? "analyzing" : "idle"));
+      roles.forEach((r, i) => sim.sync(r, (i + variant) % 2 ? "idle" : "analyzing"));
+      let steps = 0;
+      while (roles.some((r) => sim.at(r) === "walking") && steps < 4000) {
+        sim.step(1 / 60);
+        steps++;
+        expect(minDistance(sim)).toBeGreaterThanOrEqual(TILE - 0.01);
+        for (const w of sim.walkers.values()) {
+          const t = toTile(w.pos);
+          expect(grid[t.y][t.x]).toBe(false);
+        }
+      }
+      expect(roles.every((r) => sim.at(r) !== "walking")).toBe(true);
+      roles.forEach((r, i) => {
+        const seat = SEATS.find((s) => s.role === r)!;
+        expect(sim.walkers.get(r)!.pos).toEqual(tileCenter((i + variant) % 2 ? seat.rest : seat.work));
+      });
+    }
+  });
+
+  it("yo‘lni to‘sib turgan agentni aylanib o‘tadi", () => {
+    const sim = new OfficeSim();
+    sim.sync("sales_analyst", "idle");
+    const walker = sim.sync("finance_analyst", "idle");
+    sim.sync("finance_analyst", "analyzing");
+    // Sotuvchi agent Madinaning yo‘lidagi katakda “turib qoladi”.
+    const blocker = walker.path[Math.floor(walker.path.length / 2)];
+    const ali = sim.walkers.get("sales_analyst")!;
+    ali.pos = tileCenter(blocker);
+    ali.tile = blocker;
+    for (let i = 0; i < 3000 && sim.at("finance_analyst") === "walking"; i++) sim.step(1 / 60);
+    expect(sim.at("finance_analyst")).toBe("desk");
   });
 });
 

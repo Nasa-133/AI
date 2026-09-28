@@ -56,6 +56,13 @@
 @keyframes nudge { 0%, 85%, 100% { opacity: 1; } 92% { opacity: 0.55; } }
 
 .frame { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+/* To‘liq ekran: xarita butun oynani egallaydi (Escape yoki “Kichraytirish” — qaytish). */
+.frame[data-full="true"] { position: fixed; inset: 0; z-index: 60; background: var(--bg); padding: 12px; }
+.frame[data-full="true"] .wrap { flex: 1; aspect-ratio: auto; max-height: none; }
+@media (max-width: 600px) {
+  .wrap { aspect-ratio: 4 / 5; }
+  .hint { display: none; }
+}
 .controls { display: flex; gap: 4px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
 .hint { font-size: 12px; color: var(--text-muted); margin-right: auto; }
 .zoom { min-width: 44px; text-align: center; font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
@@ -63,3 +70,5 @@
 /* Ixcham (uzoqlashtirilgan) rejim: bo‘sh agent ismi faqat tanlanganda yoki fokusda. */
 .map[data-compact="true"] .agent[data-state="idle"]:not([data-selected="true"]):not(:focus-visible):not(:hover) .label { display: none; }
 .map[data-tiny="true"] .roomLabel { display: none; }
+/* Yorliq agent ostida (dam olish joyi): nom 40px pastga. */
+.agent[data-label-below="true"] [data-label-offset] { transform: translate(0px, 42px); }

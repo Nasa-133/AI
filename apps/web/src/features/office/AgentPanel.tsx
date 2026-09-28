@@ -78,7 +78,9 @@ function LastResult({ result }: { result: AgentResult }) {
 
 /** Agent yon kartasi (TZ 6): holat, joriy ishlar, navbat, to‘xtatish va chatga yozish.
  * Non-modal: ofis va chat ishlashda davom etadi; Escape yopadi, fokus stolga qaytadi. */
-export function AgentPanel({ agent, onClose }: { agent: OfficeAgent; onClose: () => void }) {
+export function AgentPanel({ agent, onClose, onShowOnMap }: {
+  agent: OfficeAgent; onClose: () => void; onShowOnMap?: () => void;
+}) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => { ref.current?.focus(); }, [agent.role_key]);
   return (
@@ -111,6 +113,9 @@ export function AgentPanel({ agent, onClose }: { agent: OfficeAgent; onClose: ()
         <button className="btn btn-primary btn-sm" onClick={() => chatTarget.open({ agent: agent.role_key })}>
           Chatga yozish
         </button>
+        {onShowOnMap && (
+          <button className="btn btn-sm" onClick={onShowOnMap}>Xaritada ko‘rsatish</button>
+        )}
         <Link className="btn btn-sm" href="/tasks">Barcha vazifalar</Link>
       </div>
     </aside>

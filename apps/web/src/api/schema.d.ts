@@ -683,6 +683,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/office/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Office Events
+         * @description Tenant SSE (TZ 6, 19: backend eventidan UI holatiga P95 ≤ 2 s): ofis holati o‘zgarganda
+         *     yangi snapshot. O‘zgarish belgisi arzon so‘rov bilan tekshiriladi; snapshot faqat kerak
+         *     bo‘lganda hisoblanadi va o‘zgargan bo‘lsagina yuboriladi.
+         */
+        get: operations["office_events_api_v1_office_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Privacy
+         * @description TZ 13.12: AI’ga yuboriladigan kontekstda qaysi shaxsiy ma’lumot psevdonimlanadi.
+         */
+        get: operations["get_privacy_api_v1_privacy_get"];
+        /** Put Privacy */
+        put: operations["put_privacy_api_v1_privacy_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/session/tenant": {
         parameters: {
             query?: never;
@@ -1133,6 +1176,13 @@ export interface components {
             from: string;
             /** To */
             to: string;
+        };
+        /** PrivacyIn */
+        PrivacyIn: {
+            /** Mask Customer Names */
+            mask_customer_names: boolean;
+            /** Pseudonymize */
+            pseudonymize: boolean;
         };
         /** PromoteIn */
         PromoteIn: {
@@ -2740,6 +2790,83 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    office_events_api_v1_office_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_privacy_api_v1_privacy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+        };
+    };
+    put_privacy_api_v1_privacy_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrivacyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

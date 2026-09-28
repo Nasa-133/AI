@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import { api, unwrap } from "@/api/client";
 
@@ -26,19 +27,33 @@ export type AgentResult = OfficeTask & {
 };
 export type Office = { agents: OfficeAgent[]; idle_after_seconds: number; generated_at: string };
 
-/** Holat backend’dan (task/step’dan hosil qilingan) — UI o‘zidan holat o‘ylab topmaydi (TZ 6). */
+/**
+ * Holat backend’dan (task/step’dan hosil qilingan) — UI o‘zidan holat o‘ylab topmaydi (TZ 6).
+ * Asosiy kanal — tenant SSE (`/office/events`): o‘zgarish bo‘lishi bilan yangi snapshot.
+ * SSE uzilsa (proksi, tarmoq) — so‘rov bilan zaxira yangilash; EventSource o‘zi qayta ulanadi.
+ */
 export function useOffice() {
+  const qc = useQueryClient();
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const source = new EventSource("/api/v1/office/events");
+    source.addEventListener("office", (message) => {
+      qc.setQueryData(["office"], JSON.parse((message as MessageEvent<string>).data) as Office);
+      setLive(true);
+    });
+    source.onerror = () => setLive(false);
+    return () => source.close();
+  }, [qc]);
   return useQuery({
     queryKey: ["office"],
     queryFn: async () => (await unwrap(api.GET("/api/v1/office"))) as unknown as Office,
     refetchInterval: (q) => {
+      if (live) return false;
       const agents = q.state.data?.agents ?? [];
-      // Faol ish bo‘lsa tez-tez; yakuniy holat 30 s dan so‘ng “bo‘sh”ga qaytishi uchun ham.
       return agents.some((a) => a.state !== "idle") ? 2000 : 10_000;
     },
   });
 }
-
 export function useMyTasks() {
   return useQuery({
     queryKey: ["tasks"],

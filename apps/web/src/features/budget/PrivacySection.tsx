@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 
 import { api, unwrap } from "@/api/client";
 import { useMe } from "@/features/auth/api";
@@ -19,11 +20,20 @@ export function PrivacySection() {
   const update = useMutation({
     mutationFn: (body: Privacy) => unwrap(api.PUT("/api/v1/privacy", { body })) as Promise<Privacy>,
     onSuccess: (data) => qc.setQueryData(["privacy"], data),
+    // Server javobidan keyin (yoki xatoda) qoralama olib tashlanadi — kesh manba bo‘ladi.
+    onSettled: () => setDraft(null),
   });
-  const p = privacy.data;
+  // Optimistik qoralama React holatida: belgi bosilgan zahoti o‘zgaradi (kesh xabarnomasi
+  // asinxron — nazorat qilinadigan checkbox orqaga “sakramasin”).
+  const [draft, setDraft] = useState<Privacy | null>(null);
+  const p = draft ?? privacy.data;
   if (!p) return <ErrorNotice error={privacy.error} />;
   const owner = me.data?.role === "owner";
-  const change = (patch: Partial<Privacy>) => update.mutate({ ...p, ...patch });
+  const change = (patch: Partial<Privacy>) => {
+    const next = { ...p, ...patch };
+    setDraft(next);
+    update.mutate(next);
+  };
 
   return (
     <section className="panel panel-pad" aria-labelledby="privacy-h" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -34,12 +44,12 @@ export function PrivacySection() {
         faqat shu tizim ichida tiklanadi. Sozlama o‘zgarishi audit jurnaliga yoziladi.
       </p>
       <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <input type="checkbox" checked={p.pseudonymize} disabled={!owner || update.isPending}
+        <input type="checkbox" checked={p.pseudonymize} disabled={!owner}
                onChange={(e) => change({ pseudonymize: e.target.checked })} />
         Shaxsiy ma’lumotlarni psevdonimlash
       </label>
       <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <input type="checkbox" checked={p.mask_customer_names} disabled={!owner || !p.pseudonymize || update.isPending}
+        <input type="checkbox" checked={p.mask_customer_names} disabled={!owner || !p.pseudonymize}
                onChange={(e) => change({ mask_customer_names: e.target.checked })} />
         Mijoz nomlarini ham yashirish (tahlil jadvallarida)
       </label>
