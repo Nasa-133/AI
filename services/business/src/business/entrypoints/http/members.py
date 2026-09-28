@@ -40,14 +40,27 @@ class MemberResponse(BaseModel):
     email: str
     role: Role
     joined_at: datetime
+    branch_scope: list[str] | None = None
 
     @classmethod
     def of(cls, v: MemberView) -> "MemberResponse":
-        return cls(user_id=v.user_id, email=v.email, role=v.role, joined_at=v.joined_at)
+        return cls(
+            user_id=v.user_id,
+            email=v.email,
+            role=v.role,
+            joined_at=v.joined_at,
+            branch_scope=list(v.branch_scope) if v.branch_scope is not None else None,
+        )
 
 
 class ChangeRoleRequest(BaseModel):
     role: Role
+
+
+class BranchScopeRequest(BaseModel):
+    """null — barcha filiallar (S02)."""
+
+    branch_codes: list[str] | None = Field(default=None, max_length=200)
 
 
 class PasswordResetRequest(BaseModel):
@@ -95,6 +108,13 @@ async def change_role(
     user_id: UUID, body: ChangeRoleRequest, ctx: AuthCtx, members: Members
 ) -> MemberResponse:
     return MemberResponse.of(await members.change_role(ctx, user_id, body.role))
+
+
+@router.put("/members/{user_id}/branches")
+async def set_branch_scope(
+    user_id: UUID, body: BranchScopeRequest, ctx: AuthCtx, members: Members
+) -> MemberResponse:
+    return MemberResponse.of(await members.set_branch_scope(ctx, user_id, body.branch_codes))
 
 
 @router.delete("/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

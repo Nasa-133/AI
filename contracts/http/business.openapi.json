@@ -59,6 +59,28 @@
         "title": "Body_upload_api_v1_uploads_post",
         "type": "object"
       },
+      "BranchScopeRequest": {
+        "description": "null — barcha filiallar (S02).",
+        "properties": {
+          "branch_codes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch Codes"
+          }
+        },
+        "title": "BranchScopeRequest",
+        "type": "object"
+      },
       "BudgetIn": {
         "properties": {
           "daily_limit": {
@@ -442,6 +464,20 @@
       },
       "MemberResponse": {
         "properties": {
+          "branch_scope": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch Scope"
+          },
           "email": {
             "title": "Email",
             "type": "string"
@@ -3084,6 +3120,59 @@
           }
         },
         "summary": "Change Role",
+        "tags": [
+          "members"
+        ]
+      }
+    },
+    "/api/v1/members/{user_id}/branches": {
+      "put": {
+        "operationId": "set_branch_scope_api_v1_members__user_id__branches_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BranchScopeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Branch Scope",
         "tags": [
           "members"
         ]

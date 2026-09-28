@@ -18,6 +18,7 @@ from ..domain.model import (
     User,
     ensure_can_assign_role,
     ensure_can_change_member,
+    normalize_branch_scope,
     validate_new_password,
 )
 from ..ports.repositories import IdentityUnitOfWorkFactory
@@ -39,6 +40,7 @@ class MemberView:
     email: str
     role: Role
     joined_at: datetime
+    branch_scope: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,7 +158,7 @@ class MembershipService:
             users = {u.id: u for u in await uow.users.get_many([m.user_id for m in memberships])}
         return [
             MemberView(user_id=m.user_id, email=users[m.user_id].email.value, role=m.role,
-                       joined_at=m.created_at)
+                       joined_at=m.created_at, branch_scope=m.branch_scope)
             for m in memberships
             if m.user_id in users
         ]
@@ -171,14 +173,39 @@ class MembershipService:
                 actor=ctx.role, target=target.role, new_role=role,
                 owners_count=await uow.memberships.count_owners(ctx.tenant_id),
             )
+            # Owner/Admin’ga ko‘tarilsa filial doirasi olib tashlanadi (ular hammasini ko‘radi).
+            scope = None if role in (Role.OWNER, Role.ADMIN) else target.branch_scope
             updated = Membership(id=target.id, tenant_id=target.tenant_id,
-                                 user_id=target.user_id, role=role, created_at=target.created_at)
+                                 user_id=target.user_id, role=role, created_at=target.created_at,
+                                 branch_scope=scope)
             await uow.memberships.save(updated)
             user = await uow.users.get(user_id)
             await uow.commit()
         assert user is not None
         return MemberView(user_id=user_id, email=user.email.value, role=role,
-                          joined_at=updated.created_at)
+                          joined_at=updated.created_at, branch_scope=scope)
+
+    async def set_branch_scope(self, ctx: AuthContext, user_id: UUID,
+                               codes: list[str] | None) -> MemberView:
+        """S02: a’zo faqat shu filiallar ma’lumotini ko‘radi (None — barchasi)."""
+        async with self._uow() as uow:
+            await uow.bind(tenant_id=ctx.tenant_id, user_id=ctx.user_id)
+            target = await uow.memberships.get(ctx.tenant_id, user_id)
+            if target is None:
+                raise NotAMember("A’zo topilmadi.")
+            ensure_can_change_member(
+                actor=ctx.role, target=target.role, new_role=target.role,
+                owners_count=await uow.memberships.count_owners(ctx.tenant_id),
+            )
+            scope = normalize_branch_scope(target.role, codes)
+            await uow.memberships.save(Membership(
+                id=target.id, tenant_id=target.tenant_id, user_id=target.user_id,
+                role=target.role, created_at=target.created_at, branch_scope=scope))
+            user = await uow.users.get(user_id)
+            await uow.commit()
+        assert user is not None
+        return MemberView(user_id=user_id, email=user.email.value, role=target.role,
+                          joined_at=target.created_at, branch_scope=scope)
 
     async def remove(self, ctx: AuthContext, user_id: UUID) -> None:
         """A’zolik o‘chiriladi; uning sessiyalari keyingi so‘rovda avtomatik yaroqsiz bo‘ladi."""

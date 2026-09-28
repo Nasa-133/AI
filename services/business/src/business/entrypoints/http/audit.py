@@ -29,6 +29,11 @@ AUDITED: dict[tuple[str, str], tuple[str, str | None, str | None]] = {
     ("POST", "/api/v1/invitations/accept"): ("member.joined", None, None),
     ("PATCH", "/api/v1/members/{user_id}"): ("member.role_changed", "user", "user_id"),
     ("DELETE", "/api/v1/members/{user_id}"): ("member.removed", "user", "user_id"),
+    ("PUT", "/api/v1/members/{user_id}/branches"): (
+        "member.branch_scope_changed",
+        "user",
+        "user_id",
+    ),
     ("POST", "/api/v1/metric-settings/approve"): ("metrics.settings_approved", None, None),
     ("PUT", "/api/v1/budget"): ("budget.updated", None, None),
     ("PUT", "/api/v1/privacy"): ("privacy.updated", None, None),

@@ -6,12 +6,32 @@ import { useMe } from "@/features/auth/api";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 import {
-  ROLE_LABEL, useChangeRole, useInvitations, useInvite, useMembers, useRemoveMember, type Role,
+  ROLE_LABEL, useChangeRole, useInvitations, useInvite, useMembers, useRemoveMember, useSetBranchScope,
+  type Member, type Role,
 } from "./api";
 
 /** Owner istalgan rolni beradi, Admin faqat Analitik/Kuzatuvchi (backend ham tekshiradi). */
 function assignable(myRole: string): Role[] {
   return myRole === "owner" ? ["owner", "admin", "analyst", "viewer"] : ["analyst", "viewer"];
+}
+
+/** S02: filial doirasi (vergul bilan kodlar; bo‘sh — barcha filiallar). Owner/Admin doim hammasini ko‘radi. */
+function BranchScopeCell({ member, editable }: { member: Member; editable: boolean }) {
+  const setScope = useSetBranchScope();
+  const saved = (member.branch_scope ?? []).join(", ");
+  const [draft, setDraft] = useState(saved);
+  if (member.role === "owner" || member.role === "admin") return <span className="muted">Barchasi</span>;
+  if (!editable) return <span>{saved || "Barchasi"}</span>;
+  const codes = draft.split(",").map((c) => c.trim()).filter(Boolean);
+  return (
+    <form style={{ display: "flex", gap: 6, alignItems: "center" }}
+          onSubmit={(e) => { e.preventDefault(); setScope.mutate({ userId: member.user_id, branches: codes.length ? codes : null }); }}>
+      <input className="input" style={{ width: 140 }} value={draft} placeholder="Barchasi"
+             aria-label={`${member.email} filiallari`} onChange={(e) => setDraft(e.target.value)} />
+      {draft !== saved && <button className="btn btn-sm" disabled={setScope.isPending}>Saqlash</button>}
+      {setScope.error && <span className="badge badge-danger" role="alert">Xato</span>}
+    </form>
+  );
 }
 
 export function MembersSection() {
@@ -42,7 +62,7 @@ export function MembersSection() {
       <ErrorNotice error={members.error ?? changeRole.error ?? remove.error} />
       <div style={{ overflowX: "auto" }}>
         <table className="table">
-          <thead><tr><th>Email</th><th>Rol</th><th>Qo‘shilgan</th><th /></tr></thead>
+          <thead><tr><th>Email</th><th>Rol</th><th title="Bo‘sh — barcha filiallar">Filiallar</th><th>Qo‘shilgan</th><th /></tr></thead>
           <tbody>
             {members.data?.map((m) => {
               const self = m.user_id === me.data?.user_id;
@@ -59,6 +79,7 @@ export function MembersSection() {
                       </select>
                     ) : ROLE_LABEL[m.role]}
                   </td>
+                  <td><BranchScopeCell key={(m.branch_scope ?? []).join(",")} member={m} editable={editable} /></td>
                   <td className="muted">{new Date(m.joined_at).toLocaleDateString("uz")}</td>
                   <td>
                     {editable && (

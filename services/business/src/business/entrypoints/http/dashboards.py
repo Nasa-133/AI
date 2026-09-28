@@ -12,6 +12,7 @@ from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncConnection
 
+from business.bootstrap.container import Container
 from business.contexts.analytics.adapters.sql_store import SqlAnalyticsStore
 from business.contexts.analytics.public import StoredQueryRefresher
 from business.contexts.dashboards.adapters.sql import AnalyticsQueryResults, SqlDashboardStore
@@ -32,8 +33,9 @@ def _service(conn: AsyncConnection, ctx: AuthContext,
                             refresher)
 
 
-def _viewer(ctx: AuthContext) -> Viewer:
-    return Viewer(ctx.user_id, ctx.role.value)
+async def _viewer(ctx: AuthContext, container: Container) -> Viewer:
+    return Viewer(ctx.user_id, ctx.role.value,
+                  await container.identity.branch_scope_of(ctx.tenant_id, ctx.user_id))
 
 
 class WidgetEdit(BaseModel):
@@ -57,38 +59,42 @@ class ShareIn(BaseModel):
 async def cards(ctx: AuthCtx, container: ContainerDep,
                 q: str | None = Query(default=None, max_length=200),
                 limit: int = Query(default=50, ge=1, le=200)) -> list[dict[str, Any]]:
+    viewer = await _viewer(ctx, container)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
-        return await _service(conn, ctx).cards(_viewer(ctx), limit=limit, query=q)
+        return await _service(conn, ctx).cards(viewer, limit=limit, query=q)
 
 
 @router.get("/{dashboard_id}")
 async def detail(dashboard_id: UUID, ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
+    viewer = await _viewer(ctx, container)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
-        return await _service(conn, ctx).detail(_viewer(ctx), dashboard_id)
+        return await _service(conn, ctx).detail(viewer, dashboard_id)
 
 
 @router.patch("/{dashboard_id}")
 async def edit(dashboard_id: UUID, body: DashboardEdit, ctx: AuthCtx,
                container: ContainerDep) -> dict[str, Any]:
     """Nom, tavsif, widget tartibi/turi/o‘chirish — har o‘zgarish yangi versiya."""
+    viewer = await _viewer(ctx, container)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
         service = _service(conn, ctx)
-        await service.edit(_viewer(ctx), dashboard_id, title=body.title,
+        await service.edit(viewer, dashboard_id, title=body.title,
                            description=body.description,
                            widgets=[w.model_dump() for w in body.widgets] if body.widgets
                            else None)
-        return await service.detail(_viewer(ctx), dashboard_id)
+        return await service.detail(viewer, dashboard_id)
 
 
 @router.get("/{dashboard_id}/versions")
 async def versions(dashboard_id: UUID, ctx: AuthCtx,
                    container: ContainerDep) -> list[dict[str, Any]]:
+    viewer = await _viewer(ctx, container)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
-        return await _service(conn, ctx).versions(_viewer(ctx), dashboard_id)
+        return await _service(conn, ctx).versions(viewer, dashboard_id)
 
 
 @router.put("/{dashboard_id}/access")
@@ -98,11 +104,12 @@ async def share(dashboard_id: UUID, body: ShareIn, ctx: AuthCtx,
     for user_id in body.user_ids:
         if await container.identity.role_of(ctx.tenant_id, user_id) is None:
             raise Forbidden("Faqat korxona a’zolariga ulashish mumkin.")
+    viewer = await _viewer(ctx, container)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
         service = _service(conn, ctx)
-        await service.share(_viewer(ctx), dashboard_id, body.visibility, body.user_ids)
-        return await service.detail(_viewer(ctx), dashboard_id)
+        await service.share(viewer, dashboard_id, body.visibility, body.user_ids)
+        return await service.detail(viewer, dashboard_id)
 
 
 @router.post("/{dashboard_id}/refresh")
@@ -110,19 +117,22 @@ async def refresh(dashboard_id: UUID, ctx: AuthCtx, container: ContainerDep) -> 
     """Ruxsat bilan yangilash: oxirgi snapshot bo‘yicha qayta hisob (LLM ishtirokisiz)."""
     profile = await container.identity.tenant_profile(ctx.tenant_id)
     today = datetime.now(UTC).astimezone(ZoneInfo(profile.timezone)).date()
+    viewer = await _viewer(ctx, container)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
         refresher = StoredQueryRefresher(conn, ctx.tenant_id, user_id=ctx.user_id, today=today,
-                                         timezone=profile.timezone)
-        return await _service(conn, ctx, refresher).refresh(_viewer(ctx), dashboard_id)
+                                         timezone=profile.timezone,
+                                         branch_scope=viewer.branch_scope)
+        return await _service(conn, ctx, refresher).refresh(viewer, dashboard_id)
 
 
 @router.get("/{dashboard_id}/widgets/{widget_id}/export.csv")
 async def export_csv(dashboard_id: UUID, widget_id: str, ctx: AuthCtx,
                      container: ContainerDep) -> Response:
+    viewer = await _viewer(ctx, container)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
-        name, rows = await _service(conn, ctx).export_csv(_viewer(ctx), dashboard_id, widget_id)
+        name, rows = await _service(conn, ctx).export_csv(viewer, dashboard_id, widget_id)
     buffer = io.StringIO()
     csv.writer(buffer).writerows(rows)
     # UTF-8 BOM — Excel o‘zbekcha harflarni to‘g‘ri ochishi uchun.

@@ -10,6 +10,7 @@ from uuid import UUID
 
 from .errors import (
     Forbidden,
+    InvalidBranchScope,
     InvalidEmail,
     InvalidTenant,
     InvitationInvalid,
@@ -137,6 +138,8 @@ class Membership:
     user_id: UUID
     role: Role
     created_at: datetime
+    # S02: None — barcha filiallar; Owner/Admin uchun doim None.
+    branch_scope: tuple[str, ...] | None = None
 
 
 @dataclass(slots=True)
@@ -180,6 +183,28 @@ def ensure_can_change_member(
         ensure_can_assign_role(actor, new_role)
     if target is Role.OWNER and new_role is not Role.OWNER and owners_count <= 1:
         raise LastOwner("Korxonada kamida bitta Owner qolishi kerak.")
+
+
+BRANCH_CODE_MAX = 64
+BRANCH_SCOPE_MAX = 200
+
+
+def normalize_branch_scope(role: Role, codes: list[str] | None) -> tuple[str, ...] | None:
+    """S02: filial doirasi faqat Analyst/Viewer uchun; Owner/Admin barcha filiallarni ko‘radi."""
+    if codes is None:
+        return None
+    if role in (Role.OWNER, Role.ADMIN):
+        raise Forbidden(
+            "Owner va Admin barcha filiallarni ko‘radi — doira faqat Analyst/Viewer uchun."
+        )
+    cleaned = tuple(dict.fromkeys(c.strip() for c in codes if c.strip()))
+    if not cleaned:
+        raise InvalidBranchScope(
+            "Kamida bitta filial kodi kerak (barchasi uchun — bo‘sh qoldiring)."
+        )
+    if len(cleaned) > BRANCH_SCOPE_MAX or any(len(c) > BRANCH_CODE_MAX for c in cleaned):
+        raise InvalidBranchScope("Filial kodlari juda ko‘p yoki juda uzun.")
+    return cleaned
 
 
 @dataclass(slots=True)

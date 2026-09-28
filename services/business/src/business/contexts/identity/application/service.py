@@ -219,6 +219,15 @@ class IdentityService:
             membership = await uow.memberships.get(tenant_id, user_id)
         return membership.role if membership else None
 
+    async def branch_scope_of(self, tenant_id: UUID, user_id: UUID) -> tuple[str, ...] | None:
+        """S02: ruxsat etilgan filiallar (None — barchasi). A’zo bo‘lmasa — bo‘sh doira."""
+        async with self._uow() as uow:
+            await uow.bind(tenant_id=tenant_id, user_id=user_id)
+            membership = await uow.memberships.get(tenant_id, user_id)
+        if membership is None:
+            return ()
+        return membership.branch_scope
+
     async def switch_tenant(self, ctx: AuthContext, tenant_id: UUID) -> IssuedSession:
         """Yangi tenant kontekstli sessiya beradi va eskisini yopadi."""
         async with self._uow() as uow:

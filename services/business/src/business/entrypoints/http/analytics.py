@@ -86,9 +86,10 @@ async def run_query(body: QueryIn, ctx: AuthCtx, container: ContainerDep) -> dic
         raise Forbidden("Viewer faqat ulashilgan dashboardlarni ko‘radi; yangi so‘rov yo‘q.")
     profile = await container.identity.tenant_profile(ctx.tenant_id)
     today = datetime.now(UTC).astimezone(ZoneInfo(profile.timezone)).date()
+    scope = await container.identity.branch_scope_of(ctx.tenant_id, ctx.user_id)
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
         data, refs = await QueryService(SqlAnalyticsStore(conn, ctx.tenant_id)).run(
-            QueryContext(ctx.user_id, None, today, profile.timezone),
+            QueryContext(ctx.user_id, None, today, profile.timezone, scope),
             body.model_dump(by_alias=True))
     return {"data": data, "source_refs": refs}

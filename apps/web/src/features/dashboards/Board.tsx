@@ -27,7 +27,8 @@ export function CardButton({ card, onOpen, metricNames }: {
         // KPI mos bo‘lmasa majburan son qo‘yilmaydi (TZ 6).
         <span className="muted">Grafik va jadval — ochib ko‘ring</span>
       )}
-      {card.status !== "ready" && <span className="badge badge-warning">Natija topilmadi</span>}
+      {card.status === "missing" && <span className="badge badge-warning">Natija topilmadi</span>}
+      {card.status === "restricted" && <span className="badge badge-warning">Filialga ruxsat yo‘q</span>}
     </button>
   );
 }

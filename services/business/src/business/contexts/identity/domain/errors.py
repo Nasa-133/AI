@@ -13,6 +13,10 @@ class InvalidTenant(ValidationFailed):
     pass
 
 
+class InvalidBranchScope(ValidationFailed):
+    pass
+
+
 class MfaAlreadyEnabled(BusinessError):
     code = "MFA_ALREADY_ENABLED"
 

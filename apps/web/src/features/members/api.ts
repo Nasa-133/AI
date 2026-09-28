@@ -5,7 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, unwrap } from "@/api/client";
 
 export type Role = "owner" | "admin" | "analyst" | "viewer";
-export type Member = { user_id: string; email: string; role: Role; joined_at: string };
+/** branch_scope: null — barcha filiallar (S02). */
+export type Member = {
+  user_id: string; email: string; role: Role; joined_at: string; branch_scope?: string[] | null;
+};
 export type Invitation = { id: string; email: string; role: Role; expires_at: string };
 
 export const ROLE_LABEL: Record<Role, string> = {
@@ -53,6 +56,12 @@ export const useInvite = () =>
 export const useChangeRole = () =>
   useMembersMutation(({ userId, role }: { userId: string; role: Role }) =>
     unwrap(api.PATCH("/api/v1/members/{user_id}", { params: { path: { user_id: userId } }, body: { role } })));
+
+export const useSetBranchScope = () =>
+  useMembersMutation(({ userId, branches }: { userId: string; branches: string[] | null }) =>
+    unwrap(api.PUT("/api/v1/members/{user_id}/branches", {
+      params: { path: { user_id: userId } }, body: { branch_codes: branches },
+    })));
 
 export const useRemoveMember = () =>
   useMembersMutation((userId: string) =>

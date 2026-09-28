@@ -76,6 +76,7 @@ def _membership_from_row(row: RowMapping) -> Membership:
         user_id=row["user_id"],
         role=Role(row["role"]),
         created_at=row["created_at"],
+        branch_scope=tuple(row["branch_scope"]) if row["branch_scope"] is not None else None,
     )
 
 
@@ -202,7 +203,13 @@ class SqlMembershipRepository:
         await self._conn.execute(
             update(t.memberships)
             .where(t.memberships.c.id == membership.id)
-            .values(role=membership.role.value, updated_at=_now())
+            .values(
+                role=membership.role.value,
+                updated_at=_now(),
+                branch_scope=list(membership.branch_scope)
+                if membership.branch_scope is not None
+                else None,
+            )
         )
 
     async def delete(self, membership_id: UUID) -> None:

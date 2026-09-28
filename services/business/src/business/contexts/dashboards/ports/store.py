@@ -51,6 +51,13 @@ class QueryResults(Protocol):
         """Natijani yaratgan so‘rov argumentlari (drill-down keyingi darajasi uchun)."""
         ...
 
+    async def branch_filter(self, query_id: UUID) -> tuple[str, ...] | None:
+        """Natijaning amaldagi filial filtri (taqqoslash/hissa — asos so‘rovniki).
+
+        None — barcha filiallar.
+        """
+        ...
+
 
 class QueryRefresher(Protocol):
     async def rerun(self, query_id: UUID) -> UUID | None:

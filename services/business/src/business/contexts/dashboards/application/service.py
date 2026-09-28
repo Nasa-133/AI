@@ -10,7 +10,15 @@ from uuid import UUID, uuid4
 
 from business.kernel.errors import BusinessError
 
-from ..domain.access import MANAGERS, DashboardForbidden, Visibility, can_edit, can_view, csv_safe
+from ..domain.access import (
+    MANAGERS,
+    DashboardForbidden,
+    Visibility,
+    can_edit,
+    can_view,
+    csv_safe,
+    within_branch_scope,
+)
 from ..domain.edit import apply_edit
 from ..domain.spec import DashboardSpec, Widget, WidgetType, validate_widget
 from ..ports.store import DashboardRecord, DashboardStore, QueryRefresher, QueryResults
@@ -24,6 +32,8 @@ class DashboardNotFound(BusinessError):
 class Viewer:
     user_id: UUID
     role: str
+    # S02: None — barcha filiallar.
+    branch_scope: tuple[str, ...] | None = None
 
 
 class DashboardService:
@@ -34,11 +44,16 @@ class DashboardService:
         self._refresher = refresher
 
     async def create(self, *, user_id: UUID, task_id: UUID | None, title: str,
-                     description: str | None, widgets: list[dict[str, Any]]) -> DashboardRecord:
+                     description: str | None, widgets: list[dict[str, Any]],
+                     branch_scope: tuple[str, ...] | None = None) -> DashboardRecord:
         spec = DashboardSpec(title.strip(), description, tuple(
             Widget(f"w{i + 1}", w["title"], WidgetType(w["type"]),
                    UUID(w["query_spec_id"]) if w.get("query_spec_id") else None, w.get("text"))
             for i, w in enumerate(widgets)))
+        for widget in spec.widgets:
+            if widget.query_spec_id and not await self._allowed(branch_scope,
+                                                                widget.query_spec_id):
+                raise DashboardForbidden("Widget ruxsat etilmagan filial ma’lumotiga tayanadi.")
         await self._validate(spec)
         return await self._store.create(uuid4(), spec, user_id=user_id, task_id=task_id)
 
@@ -48,7 +63,7 @@ class DashboardService:
         cards = []
         for d in await self._store.list_visible(limit=limit, query=query, user_id=viewer.user_id,
                                         see_all=viewer.role in MANAGERS):
-            preview = await self._preview(d)
+            preview = await self._preview(d, viewer.branch_scope)
             cards.append({"id": str(d.id), "title": d.spec["title"], "version": d.version,
                           "updated_at": d.updated_at.isoformat(),
                           "visibility": d.visibility.value, **preview})
@@ -59,6 +74,10 @@ class DashboardService:
         widgets = []
         for w in d.spec["widgets"]:
             qid = w["query_spec_id"]
+            if qid and not await self._allowed(viewer.branch_scope, UUID(qid)):
+                # S02: ruxsatsiz filial raqamlari ko‘rsatilmaydi, widget borligi esa ko‘rinadi.
+                widgets.append({**w, "data": None, "query": None, "status": "restricted"})
+                continue
             data = await self._results.result(UUID(qid)) if qid else None
             spec = await self._results.spec(UUID(qid)) if qid else None
             status = "ready" if data or w["text"] else "missing"
@@ -96,6 +115,11 @@ class DashboardService:
         assert self._refresher is not None
         refreshed, skipped = [], []
         for w in d.spec["widgets"]:
+            if w["query_spec_id"] and not await self._allowed(viewer.branch_scope,
+                                                              UUID(w["query_spec_id"])):
+                skipped.append(w["title"])
+                refreshed.append(w)
+                continue
             new_id = await self._refresher.rerun(UUID(w["query_spec_id"])) if w[
                 "query_spec_id"] else None
             if w["query_spec_id"] and new_id is None:
@@ -115,6 +139,9 @@ class DashboardService:
         widget = next((w for w in d.spec["widgets"] if w["id"] == widget_id), None)
         if widget is None or not widget["query_spec_id"]:
             raise DashboardNotFound("Eksport qilinadigan widget topilmadi.")
+        if not await self._allowed(viewer.branch_scope, UUID(widget["query_spec_id"])):
+            raise DashboardForbidden("Bu widget ruxsat etilmagan filial ma’lumotini "
+                                     "o‘z ichiga oladi.")
         data = await self._results.result(UUID(widget["query_spec_id"]))
         if data is None:
             raise DashboardNotFound("Widget natijasi topilmadi.")
@@ -140,10 +167,17 @@ class DashboardService:
             raise DashboardForbidden("Bu dashboardni tahrirlash huquqi yo‘q.")
         return d
 
-    async def _preview(self, d: DashboardRecord) -> dict[str, Any]:
+    async def _allowed(self, scope: tuple[str, ...] | None, query_id: UUID) -> bool:
+        return scope is None or within_branch_scope(scope,
+                                                    await self._results.branch_filter(query_id))
+
+    async def _preview(self, d: DashboardRecord,
+                       scope: tuple[str, ...] | None = None) -> dict[str, Any]:
         for w in d.spec["widgets"]:
             if not w["query_spec_id"]:
                 continue
+            if not await self._allowed(scope, UUID(w["query_spec_id"])):
+                return {"period": None, "kpi": None, "status": "restricted"}
             data = await self._results.result(UUID(w["query_spec_id"]))
             if not data:
                 return {"period": None, "kpi": None, "status": "missing"}

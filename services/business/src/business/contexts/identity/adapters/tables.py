@@ -1,4 +1,15 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, Integer, MetaData, Table, Text, Uuid
+from sqlalchemy import (
+    ARRAY,
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Integer,
+    MetaData,
+    Table,
+    Text,
+    Uuid,
+)
 
 metadata = MetaData(schema="identity")
 
@@ -35,6 +46,7 @@ memberships = Table(
     Column("tenant_id", Uuid, nullable=False),
     Column("user_id", Uuid, nullable=False),
     Column("role", Text, nullable=False),
+    Column("branch_scope", ARRAY(Text), nullable=True),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
 )

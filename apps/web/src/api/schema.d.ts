@@ -646,6 +646,23 @@ export interface paths {
         patch: operations["change_role_api_v1_members__user_id__patch"];
         trace?: never;
     };
+    "/api/v1/members/{user_id}/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Branch Scope */
+        put: operations["set_branch_scope_api_v1_members__user_id__branches_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/metric-settings/approve": {
         parameters: {
             query?: never;
@@ -928,6 +945,14 @@ export interface components {
              */
             purpose: "document" | "dataset_import";
         };
+        /**
+         * BranchScopeRequest
+         * @description null — barcha filiallar (S02).
+         */
+        BranchScopeRequest: {
+            /** Branch Codes */
+            branch_codes?: string[] | null;
+        };
         /** BudgetIn */
         BudgetIn: {
             /** Daily Limit */
@@ -1059,6 +1084,8 @@ export interface components {
         };
         /** MemberResponse */
         MemberResponse: {
+            /** Branch Scope */
+            branch_scope?: string[] | null;
             /** Email */
             email: string;
             /**
@@ -2734,6 +2761,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ChangeRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_branch_scope_api_v1_members__user_id__branches_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BranchScopeRequest"];
             };
         };
         responses: {

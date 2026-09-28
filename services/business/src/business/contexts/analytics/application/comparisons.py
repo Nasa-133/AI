@@ -10,7 +10,14 @@ from ..domain.metrics import growth as growth_of
 from ..domain.query import InvalidQuery, Period, QuerySpec
 from ..ports.store import ComponentRow, StoredQuery
 from . import results as R
-from .queries import QueryContext, QueryNotFound, QueryService, source_refs, spec_from_args
+from .queries import (
+    QueryContext,
+    QueryNotFound,
+    QueryService,
+    apply_branch_scope,
+    source_refs,
+    spec_from_args,
+)
 
 
 def _period(p: dict[str, str]) -> Period:
@@ -25,15 +32,18 @@ class ComparisonService:
     def __init__(self, queries: QueryService) -> None:
         self._q = queries
 
-    async def _base(self, query_spec_id: str) -> tuple[StoredQuery, QuerySpec]:
+    async def _base(self, ctx: QueryContext,
+                    query_spec_id: str) -> tuple[StoredQuery, QuerySpec, str | None]:
         base = await self._q.store.get_query(UUID(query_spec_id))
         if base is None or base.kind != "query":
             raise QueryNotFound("query_spec_id topilmadi (avval run_metric_query chaqiring).")
-        return base, spec_from_args(base.spec)
+        # Boshqa foydalanuvchining so‘rovi ham joriy foydalanuvchi doirasida tekshiriladi (S02).
+        spec, note = apply_branch_scope(spec_from_args(base.spec), ctx.branch_scope)
+        return base, spec, note
 
     async def compare(self, ctx: QueryContext, args: dict[str, Any]) -> tuple[dict[str, Any],
                                                                               list[dict[str, Any]]]:
-        base, spec = await self._base(args["query_spec_id"])
+        base, spec, scope_note = await self._base(ctx, args["query_spec_id"])
         comparison = _period(args["comparison_range"])
         snaps = await self._q.require_ready(
             spec, await self._q.store.snapshots_by_ids(base.snapshot_ids))
@@ -74,6 +84,8 @@ class ComparisonService:
                 cells += [R.fmt(cur, d.unit), R.fmt(prev, d.unit), R.fmt(g.absolute, d.unit),
                           R.fmt(g.pct, Unit.PERCENT)]
             rows.append(cells)
+        if scope_note:
+            notes.append(scope_note)
         query_id = uuid4()
         data = {"query_spec_id": str(query_id), "base_query_spec_id": str(base.id),
                 "current_period": _pdict(spec.period), "comparison_period": _pdict(comparison),
@@ -86,7 +98,7 @@ class ComparisonService:
 
     async def explain(self, ctx: QueryContext, args: dict[str, Any]) -> tuple[dict[str, Any],
                                                                               list[dict[str, Any]]]:
-        base, spec = await self._base(args["query_spec_id"])
+        base, spec, scope_note = await self._base(ctx, args["query_spec_id"])
         metric_id, dim = args["metric_id"], Dimension(args["dimension"])
         if metric_id not in ADDITIVE_METRICS:
             raise InvalidQuery(f"“{metric_id}” nisbat metrikasi — hissaga ajratib bo‘lmaydi. "
@@ -129,7 +141,7 @@ class ComparisonService:
                               for i in items],
             "dataset_snapshot_ids": [str(s.id) for s in snaps.values()],
             "notes": ["Hisobiy hissa: har a’zoning umumiy o‘zgarishdagi ulushi. Bu sababni "
-                      "isbotlamaydi (TZ 7.3)."],
+                      "isbotlamaydi (TZ 7.3).", *([scope_note] if scope_note else [])],
         }
         query_id = uuid4()
         await self._q.store.save_query(StoredQuery(

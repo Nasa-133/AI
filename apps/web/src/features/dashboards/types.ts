@@ -28,7 +28,7 @@ export type Widget = {
   text: string | null;
   data: QueryResult | null;
   query: QuerySpec | null;
-  status: "ready" | "missing";
+  status: "ready" | "missing" | "restricted";
 };
 export type DashboardDetail = {
   id: string; title: string; description: string | null; version: number; updated_at: string;
@@ -43,5 +43,5 @@ export type DashboardCard = {
   id: string; title: string; version: number; updated_at: string;
   period: { from: string; to: string } | null;
   kpi: { metric_id: string; value: string | null; unit: Unit; currency: string | null } | null;
-  status: "ready" | "missing";
+  status: "ready" | "missing" | "restricted";
 };

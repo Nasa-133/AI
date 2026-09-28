@@ -31,7 +31,10 @@ export function WidgetView({ widget, dashboardId, metricNames, onDrill, allowDri
         )}
       </div>
       {widget.type === "text" && widget.text && <Markdown source={widget.text} />}
-      {widget.type !== "text" && !data && (
+      {widget.status === "restricted" && (
+        <div className="notice notice-warning">Filialga ruxsat yo‘q — widget boshqa filiallar ma’lumotini ko‘rsatadi.</div>
+      )}
+      {widget.type !== "text" && !data && widget.status !== "restricted" && (
         <div className="notice notice-warning">Natija topilmadi — manba o‘chirilgan bo‘lishi mumkin.</div>
       )}
       {data && widget.type === "kpi" && (() => {

@@ -36,6 +36,16 @@ def can_edit(access: Access, user_id: UUID, role: str) -> bool:
     return role != "viewer" and (role in MANAGERS or access.created_by == user_id)
 
 
+def within_branch_scope(scope: tuple[str, ...] | None, branches: tuple[str, ...] | None) -> bool:
+    """S02: widget natijasi faqat ruxsat etilgan filiallar bilan cheklangan bo‘lsa ko‘rinadi.
+
+    `branches` — widget so‘rovining amaldagi filial filtri (None — barcha filiallar).
+    """
+    if scope is None:
+        return True
+    return bool(branches) and set(branches or ()) <= set(scope)
+
+
 _DECIMAL = re.compile(r"^-?\d+(\.\d+)?$")
 _FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
 

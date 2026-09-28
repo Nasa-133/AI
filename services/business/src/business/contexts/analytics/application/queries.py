@@ -1,6 +1,6 @@
 """run_metric_query va list_available_metrics (TZ 7.2): deterministik hisob, natija saqlanadi."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Any
 from uuid import UUID, uuid4
@@ -26,12 +26,41 @@ class QueryNotFound(BusinessError):
     code = "NOT_FOUND"
 
 
+class BranchForbidden(BusinessError):
+    code = "BRANCH_FORBIDDEN"
+
+
 @dataclass(frozen=True, slots=True)
 class QueryContext:
     user_id: UUID
     task_id: UUID | None
     today: date
     timezone: str
+    # S02: foydalanuvchiga ruxsat etilgan filiallar; None — barchasi.
+    branch_scope: tuple[str, ...] | None = None
+
+
+def apply_branch_scope(spec: QuerySpec,
+                       scope: tuple[str, ...] | None) -> tuple[QuerySpec, str | None]:
+    """S02: filtr ruxsat etilgan filiallar bilan cheklanadi; ruxsatsiz filial so‘ralsa — rad.
+
+    Filtrsiz (umumiy) so‘rov jimgina qisqartirilmaydi: natijaga cheklov izohi qo‘shiladi.
+    """
+    if scope is None:
+        return spec, None
+    if not scope:
+        raise BranchForbidden("Sizga hech bir filial ma’lumoti ruxsat etilmagan.")
+    requested = spec.filters.branch_codes
+    if requested:
+        denied = [b for b in requested if b not in scope]
+        if denied:
+            raise BranchForbidden("Bu filial(lar) ma’lumoti sizga ruxsat etilmagan: "
+                                  + ", ".join(denied) + ".")
+        allowed = requested
+    else:
+        allowed = scope
+    note = "Faqat ruxsat etilgan filiallar: " + ", ".join(allowed) + "."
+    return replace(spec, filters=replace(spec.filters, branch_codes=tuple(allowed))), note
 
 
 def spec_from_args(a: dict[str, Any]) -> QuerySpec:
@@ -113,7 +142,7 @@ class QueryService:
 
     async def run(self, ctx: QueryContext, args: dict[str, Any]) -> tuple[dict[str, Any],
                                                                           list[dict[str, Any]]]:
-        spec = spec_from_args(args)
+        spec, scope_note = apply_branch_scope(spec_from_args(args), ctx.branch_scope)
         snaps = await self.require_ready(spec)
         rows = await self.components(spec, spec.period, snaps, spec.dimensions)
         currencies = sorted({r.key[-1] for r in rows})
@@ -133,6 +162,8 @@ class QueryService:
             notes.append("Davr hali tugamagan — to‘liq davr bilan izohsiz solishtirmang.")
         if not spec.is_receivable and Entity.SALES_RETURN not in snaps:
             notes.append("Qaytarishlar ma’lumoti yuklanmagan — sof savdoga ta’sir qilishi mumkin.")
+        if scope_note:
+            notes.append(scope_note)
         query_id = uuid4()
         data = {
             "query_spec_id": str(query_id),
@@ -147,7 +178,11 @@ class QueryService:
             "as_of": max(s.as_of for s in snaps.values()).isoformat(),
             "notes": list(dict.fromkeys(notes)),
         }
-        await self._s.save_query(StoredQuery(query_id, "query", args,
+        # Saqlangan spec’da amaldagi filial filtri — dashboard/yangilash doirani saqlaydi.
+        stored_args = (args if scope_note is None else
+                       {**args, "filters": {**(args.get("filters") or {}),
+                                            "branch_codes": list(spec.filters.branch_codes or ())}})
+        await self._s.save_query(StoredQuery(query_id, "query", stored_args,
                                              [s.id for s in snaps.values()], data, ctx.user_id,
                                              ctx.task_id))
         return data, source_refs(snaps, query_id)

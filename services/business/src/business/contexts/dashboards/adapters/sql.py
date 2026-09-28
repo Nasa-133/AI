@@ -119,3 +119,13 @@ class AnalyticsQueryResults:
         if stored is None or stored.kind != "query":
             return None
         return dict(stored.spec)
+
+    async def branch_filter(self, query_id: UUID) -> tuple[str, ...] | None:
+        stored = await self._reader.get_query(query_id)
+        if stored is not None and stored.kind != "query":
+            base_id = stored.spec.get("query_spec_id")
+            stored = await self._reader.get_query(UUID(base_id)) if base_id else None
+        if stored is None:
+            return None
+        codes = (stored.spec.get("filters") or {}).get("branch_codes")
+        return tuple(codes) if codes else None

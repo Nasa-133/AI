@@ -134,7 +134,7 @@ async def _execute(conn: Any, cap: Capability, name: str, args: dict[str, Any],
                                        AnalyticsQueryResults(store))
             d = await service.create(user_id=cap.user_id, task_id=cap.task_id,
                                      title=args["title"], description=args["description"],
-                                     widgets=args["widgets"])
+                                     widgets=args["widgets"], branch_scope=ctx.branch_scope)
             return {"dashboard_id": str(d.id), "version": d.version, "title": d.spec["title"],
                     "widget_count": len(d.spec["widgets"])}, []
     raise ToolArgumentsInvalid(f"Noma’lum vosita: {name}")
@@ -166,8 +166,10 @@ async def call_tool(name: str, body: ToolRequest, request: Request, container: C
                       for e in errors[:5])))
 
     profile = await container.identity.tenant_profile(cap.tenant_id)
+    # S02: doira topshiriq egasi (capability foydalanuvchisi) bo‘yicha, har chaqiruvda joriy qiymat.
     ctx = QueryContext(cap.user_id, cap.task_id, now.astimezone(ZoneInfo(profile.timezone)).date(),
-                       profile.timezone)
+                       profile.timezone,
+                       await container.identity.branch_scope_of(cap.tenant_id, cap.user_id))
     async with tenant_transaction(container.engine, tenant_id=cap.tenant_id,
                                   user_id=cap.user_id) as conn:
         log = SqlToolCallLog(conn, cap.tenant_id)

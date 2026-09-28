@@ -23,9 +23,9 @@ class StoredQueryRefresher:
     """Dashboards konteksti uchun: saqlangan so‘rovni oxirgi snapshot bilan qayta hisoblaydi."""
 
     def __init__(self, conn: AsyncConnection, tenant_id: UUID, *, user_id: UUID, today: date,
-                 timezone: str) -> None:
+                 timezone: str, branch_scope: tuple[str, ...] | None = None) -> None:
         self._service = QueryService(SqlAnalyticsStore(conn, tenant_id))
-        self._ctx = QueryContext(user_id, None, today, timezone)
+        self._ctx = QueryContext(user_id, None, today, timezone, branch_scope)
 
     async def rerun(self, query_id: UUID) -> UUID | None:
         return await rerun_stored(self._service, self._ctx, query_id)

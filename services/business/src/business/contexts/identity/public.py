@@ -15,6 +15,9 @@ class TenantDirectory(Protocol):
 
     async def tenant_profile(self, tenant_id: UUID) -> TenantProfile: ...
     async def role_of(self, tenant_id: UUID, user_id: UUID) -> Role | None: ...
+    async def branch_scope_of(self, tenant_id: UUID, user_id: UUID) -> tuple[str, ...] | None:
+        """S02: None — barcha filiallar."""
+        ...
 
 
 __all__ = ["AuthContext", "Role", "TenantDirectory", "TenantProfile"]
