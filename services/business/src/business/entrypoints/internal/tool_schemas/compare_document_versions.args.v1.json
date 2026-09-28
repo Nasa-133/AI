@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.ai-business-office/tools/compare_document_versions.args.v1.json",
+  "title": "compare_document_versions argumentlari",
+  "description": "Aynan tanlangan ikki versiyani solishtirish (TZ 5, 6-ssenariy).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "document_id",
+    "left_version_id",
+    "right_version_id"
+  ],
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "left_version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "right_version_id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

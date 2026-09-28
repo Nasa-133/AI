@@ -9,6 +9,7 @@ import json
 from datetime import UTC, datetime
 from importlib import resources
 from typing import Any
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Header, Request
@@ -16,11 +17,14 @@ from fastapi.responses import JSONResponse
 from jsonschema import Draft202012Validator, FormatChecker
 from pydantic import BaseModel, Field
 
+from business.bootstrap.container import Container
 from business.contexts.analytics.adapters.sql_store import SqlAnalyticsStore
 from business.contexts.analytics.application.comparisons import ComparisonService
 from business.contexts.analytics.application.queries import QueryContext, QueryService
 from business.contexts.dashboards.adapters.sql import AnalyticsQueryResults, SqlDashboardStore
 from business.contexts.dashboards.application.service import DashboardService
+from business.contexts.documents.application.common import Viewer as DocViewer
+from business.contexts.documents.domain.patch import ReplaceText
 from business.contexts.governance.public import is_allowed
 from business.contexts.workspace.adapters.tool_calls import SqlToolCallLog
 from business.kernel.errors import BusinessError
@@ -28,6 +32,10 @@ from business.platform.capability import Capability, InvalidCapability
 from business.platform.db import tenant_transaction
 
 from ..http.deps import ContainerDep
+from ..wiring import document_services
+
+DOCUMENT_TOOLS = frozenset({"search_documents", "read_document_section",
+                            "compare_document_versions", "create_document_draft"})
 
 router = APIRouter(prefix="/internal/v1/tools", tags=["internal-tools"], include_in_schema=False)
 
@@ -65,6 +73,43 @@ def _deny(request: Request, status: int, code: str, message: str) -> JSONRespons
 
 class ToolArgumentsInvalid(BusinessError):
     code = "INVALID_ARGUMENTS"
+
+
+def _doc_refs(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Hujjat manbalari: aniq versiya va manzil (TZ 9.3, D01)."""
+    return [{"kind": "document_version", "id": r["document_id"], "version_id": r["version_id"],
+             "locator": r["locator"]} for r in results]
+
+
+async def _execute_documents(conn: Any, container: Container, cap: Capability, role: str,
+                             name: str, args: dict[str, Any],
+                             ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    services = document_services(container, conn, cap.tenant_id)
+    viewer = DocViewer(cap.user_id, role)
+    match name:
+        case "search_documents":
+            ids = [UUID(i) for i in args["document_ids"]] if args["document_ids"] else None
+            data = await services.reading.search(viewer, args["query"], ids,
+                                                 args["limit"] or 8)
+            return data, _doc_refs(data["results"])
+        case "read_document_section":
+            data = await services.reading.read_section(
+                viewer, UUID(args["document_id"]), UUID(args["version_id"]), args["section_id"])
+            return data, _doc_refs([data])
+        case "compare_document_versions":
+            data = await services.reading.compare(viewer, UUID(args["document_id"]),
+                                                  UUID(args["left_version_id"]),
+                                                  UUID(args["right_version_id"]))
+            return data, []
+        case "create_document_draft":
+            data = await services.editing.create_draft(
+                viewer, UUID(args["document_id"]), UUID(args["base_version_id"]),
+                UUID(args["expected_version_id"]),
+                [ReplaceText(o["section_id"], o["find"], o["replace"], o["occurrence"])
+                 for o in args["operations"]], args["comment"])
+            return data, [{"kind": "document_version", "id": data["document_id"],
+                           "version_id": data["draft_version_id"], "locator": None}]
+    raise ToolArgumentsInvalid(f"Noma’lum vosita: {name}")
 
 
 async def _execute(conn: Any, cap: Capability, name: str, args: dict[str, Any],
@@ -126,8 +171,13 @@ async def call_tool(name: str, body: ToolRequest, request: Request, container: C
             return cached
         try:
             async with conn.begin_nested():
-                data, refs = await _execute(conn, cap, name, body.arguments, ctx)
-            result = _result(trace_id, data=data, refs=refs, warnings=data.get("notes", []))
+                if name in DOCUMENT_TOOLS:
+                    data, refs = await _execute_documents(conn, container, cap, role.value, name,
+                                                          body.arguments)
+                else:
+                    data, refs = await _execute(conn, cap, name, body.arguments, ctx)
+            warnings = [*data.get("notes", []), *data.get("warnings", [])]
+            result = _result(trace_id, data=data, refs=refs, warnings=warnings)
         except BusinessError as exc:
             result = _result(trace_id, error=exc)
         await log.save(cap.task_id, body.tool_call_id, name, result)

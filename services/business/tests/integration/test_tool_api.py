@@ -117,3 +117,51 @@ async def test_settings_not_approved_is_reported(client: httpx.AsyncClient,
     cap = capability(UUID(body["tenant_id"]), UUID(body["user_id"]))
     r = (await call(client, "run_metric_query", QUERY, cap)).json()
     assert r["error_code"] == "METRIC_SETTINGS_NOT_APPROVED"
+
+
+async def test_document_tools(client: httpx.AsyncClient, app_engine: AsyncEngine,
+                              tmp_path: Any) -> None:
+    from tests.unit.documents.samples import make_docx
+
+    from .test_documents import process, upload
+    from .test_identity_http import complete_mfa
+
+    async with new_client(client) as c:
+        _, body = await onboard(c, "Hujjat vosita MChJ")
+        await complete_mfa(c)
+        tenant, user = UUID(body["tenant_id"]), UUID(body["user_id"])
+        doc = await upload(c, make_docx(tmp_path / "Shartnoma.docx"))
+        await process(client, app_engine, tenant, doc)
+
+    cap = CapabilitySigner(CAPABILITY_KEY).issue(Capability(
+        uuid4(), tenant, user, "document_assistant",
+        ("search_documents", "read_document_section", "create_document_draft"),
+        datetime.now(UTC) + timedelta(minutes=5)))
+    found = (await call(client, "search_documents",
+                        {"query": "to‘lov muddati", "document_ids": None, "limit": 3}, cap)).json()
+    assert found["status"] == "ok" and found["data"]["results"]
+    ref = found["source_refs"][0]
+    assert ref["kind"] == "document_version" and ref["version_id"] == doc["version_id"]
+
+    section = (await call(client, "read_document_section", {
+        "document_id": doc["id"], "version_id": doc["version_id"], "section_id": "p2"},
+        cap, "c2")).json()
+    assert section["data"]["text"].startswith("To‘lov 15 kun")
+
+    draft = (await call(client, "create_document_draft", {
+        "document_id": doc["id"], "base_version_id": doc["version_id"],
+        "expected_version_id": doc["version_id"], "comment": None,
+        "operations": [{"op": "replace_text", "section_id": "p2", "find": "15 kun",
+                        "replace": "30 kun", "occurrence": 1}]}, cap, "c3")).json()
+    assert draft["status"] == "ok" and draft["data"]["version_no"] == 2
+
+    # Sales analitik agentiga hujjat tahriri berilmagan (siyosat).
+    sales = CapabilitySigner(CAPABILITY_KEY).issue(Capability(
+        uuid4(), tenant, user, "sales_analyst", ("create_document_draft",),
+        datetime.now(UTC) + timedelta(minutes=5)))
+    denied = await call(client, "create_document_draft", {
+        "document_id": doc["id"], "base_version_id": doc["version_id"],
+        "expected_version_id": doc["version_id"], "comment": None, "operations": [
+            {"op": "replace_text", "section_id": "p2", "find": "15", "replace": "9",
+             "occurrence": 1}]}, sales, "c4")
+    assert denied.status_code == 403
