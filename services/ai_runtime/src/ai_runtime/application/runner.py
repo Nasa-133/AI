@@ -11,6 +11,7 @@ from datetime import timedelta
 from typing import Any
 
 from ..domain.errors import ToolNotAllowed
+from ..domain.pricing import Pricing
 from ..domain.roles import allowed_tools
 from ..domain.run import AgentRun, RunStatus
 from ..ports.clock import Clock
@@ -54,7 +55,9 @@ class AgentRunner:
         clock: Clock,
         owner: str,
         lease: timedelta,
+        pricing: Pricing | None = None,
     ) -> None:
+        self._pricing = pricing or Pricing()
         self._store = store
         self._provider = provider
         self._tools = tools
@@ -193,8 +196,10 @@ class AgentRunner:
             "error_code": error_code,
             "usage": {"input_tokens": run.checkpoint.input_tokens,
                       "output_tokens": run.checkpoint.output_tokens,
-                      # Narxlar kodga tikilmaydi (TZ 19); hisob-kitob Governance’da.
-                      "cost_estimate": "0", "currency": "USD"},
+                      # Narx konfiguratsiyadan (TZ 19); limit va hisob Governance’da.
+                      "cost_estimate": str(self._pricing.cost(run.checkpoint.input_tokens,
+                                                              run.checkpoint.output_tokens)),
+                      "currency": self._pricing.currency},
         }
         await self._commit(run, PendingEvent(COMPLETED, payload, run.next_sequence()))
         raise _Finished

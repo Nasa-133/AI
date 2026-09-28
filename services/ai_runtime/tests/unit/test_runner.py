@@ -60,7 +60,7 @@ async def test_full_analytics_flow_emits_contract_valid_events() -> None:
     assert "hisobiy hissa" in answer and "Gipoteza" in answer and "sabab" not in answer.replace(
         "sababni isbotlamaydi", "")
     assert payload["result_candidate"]["structured"]["dashboard_ids"]
-    assert payload["source_refs"] and payload["usage"]["cost_estimate"] == "0"
+    assert payload["source_refs"] and payload["usage"]["cost_estimate"] == "0.000000"
 
 
 async def test_answer_numbers_come_only_from_tool_results() -> None:

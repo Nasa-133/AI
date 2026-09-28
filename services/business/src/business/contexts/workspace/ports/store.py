@@ -115,3 +115,18 @@ class CapabilityIssuer(Protocol):
 
 class QueryRefs(Protocol):
     async def exists(self, query_id: UUID) -> bool: ...
+
+
+@dataclass(frozen=True, slots=True)
+class BudgetDecision:
+    allowed: bool
+    reservation_id: UUID | None
+    message: str | None
+
+
+class BudgetGate(Protocol):
+    """Governance budjeti (TZ 19): vazifa AI’ga yuborilishidan oldin rezerv, yakunda sarf."""
+
+    async def reserve(self, task_id: UUID) -> BudgetDecision: ...
+    async def settle(self, task_id: UUID, usage: dict[str, Any]) -> None: ...
+    async def release(self, task_id: UUID) -> None: ...

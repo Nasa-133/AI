@@ -71,6 +71,7 @@ export function describeError(error: unknown): { title: string; action: string }
     UNSUPPORTED_MEDIA_TYPE: "Faylni CSV (UTF-8) formatida saqlab qayta yuklang.",
     DOCUMENT_UNREADABLE: "Faylni DOCX, matnli PDF yoki TXT sifatida qayta saqlab yuklang.",
     PAYLOAD_TOO_LARGE: "Faylni kichikroq qismlarga bo‘lib yuklang.",
+    BUDGET_EXCEEDED: "Korxona egasi Sozlamalar → AI budjeti bo‘limida limitni oshirishi mumkin.",
     VERSION_CONFLICT: "Hujjat boshqa foydalanuvchi tomonidan yangilandi — sahifani yangilab, farqni qayta ko‘ring.",
   };
   const ref = error.traceId ? ` (kod: ${error.traceId.slice(0, 8)})` : "";

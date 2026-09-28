@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncConnection
@@ -14,9 +15,15 @@ from business.contexts.documents.adapters.sql_store import SqlDocumentStore
 from business.contexts.documents.application.editing import DocumentEditing
 from business.contexts.documents.application.ingest import DocumentIngest
 from business.contexts.documents.application.reading import DocumentReading
-from business.contexts.governance.public import POLICY_VERSION
+from business.contexts.governance.public import (
+    POLICY_VERSION,
+    BudgetLimits,
+    BudgetService,
+    SqlBudgetStore,
+)
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
 from business.contexts.workspace.application.dispatch import Dispatcher
+from business.contexts.workspace.ports.store import BudgetDecision
 from business.platform.capability import Capability
 from business.platform.outbox import BoundOutbox
 
@@ -52,8 +59,41 @@ class CapabilityIssuer:
                                              expires_at))
 
 
+async def budget_service(container: Container, conn: AsyncConnection,
+                         tenant_id: UUID) -> BudgetService:
+    s = container.settings
+    profile = await container.identity.tenant_profile(tenant_id)
+    return BudgetService(SqlBudgetStore(conn, tenant_id),
+                         defaults=BudgetLimits(s.budget_daily_limit, s.budget_monthly_limit),
+                         reservation=s.budget_task_reservation, timezone=profile.timezone)
+
+
+class BudgetGateAdapter:
+    """Workspace BudgetGate porti → Governance BudgetService (vaqt mintaqasi kerak bo‘lganda)."""
+
+    def __init__(self, container: Container, conn: AsyncConnection, tenant_id: UUID) -> None:
+        self._args = (container, conn, tenant_id)
+        self._service: BudgetService | None = None
+
+    async def _get(self) -> BudgetService:
+        if self._service is None:
+            self._service = await budget_service(*self._args)
+        return self._service
+
+    async def reserve(self, task_id: UUID) -> BudgetDecision:
+        r = await (await self._get()).reserve(task_id)
+        return BudgetDecision(r.allowed, r.reservation_id, r.message)
+
+    async def settle(self, task_id: UUID, usage: dict[str, Any]) -> None:
+        await (await self._get()).settle(task_id, usage, str(usage.get("currency", "USD")))
+
+    async def release(self, task_id: UUID) -> None:
+        await (await self._get()).release(task_id)
+
+
 def task_dispatcher(container: Container, conn: AsyncConnection, tenant_id: UUID) -> Dispatcher:
     return Dispatcher(SqlWorkspaceStore(conn, tenant_id), BoundOutbox(conn, tenant_id),
                       CapabilityIssuer(container), tenant_id=tenant_id,
                       limit=container.settings.agent_parallel_limit,
-                      policy_version=POLICY_VERSION, clock=lambda: datetime.now(UTC))
+                      policy_version=POLICY_VERSION, clock=lambda: datetime.now(UTC),
+                      budget=BudgetGateAdapter(container, conn, tenant_id))

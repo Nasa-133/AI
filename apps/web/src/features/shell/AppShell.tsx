@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { useLogout, useSwitchTenant, type Me } from "@/features/auth/api";
+import { useBudget } from "@/features/budget/api";
 import { chatTarget } from "@/features/chat/chatTarget";
 import { ChatPanel } from "@/features/chat/ChatPanel";
 import { ThemeSelect } from "@/shared/theme/ThemeSelect";
@@ -30,6 +31,7 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
   const [chatCollapsed, setChatCollapsed] = useState(false);
   const [mobileView, setMobileView] = useState<"main" | "chat">("main");
   const current = me.memberships.find((m) => m.tenant_id === me.current_tenant_id);
+  const budget = useBudget();
   // “Chatga yozish” — chat yig‘ilgan bo‘lsa ochiladi, mobil’da chat ko‘rinishiga o‘tiladi.
   useEffect(() => chatTarget.listen(() => {
     setChatCollapsed(false);
@@ -70,6 +72,12 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
           <strong>{current?.tenant_name}</strong>
         )}
         <span className="badge">{me.role}</span>
+        {budget.data && budget.data.state !== "ok" && (
+          <Link href="/settings" className={budget.data.state === "exceeded" ? "badge badge-danger" : "badge badge-warning"}
+                title="AI budjeti — Sozlamalar">
+            AI budjeti {budget.data.percent}%
+          </Link>
+        )}
         <div className={styles.topSpacer} />
         <span className={styles.desktopOnly}><ThemeSelect /></span>
         <span className={`muted ${styles.desktopOnly}`}>{me.email}</span>

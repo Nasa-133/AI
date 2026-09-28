@@ -74,3 +74,14 @@ def test_checkpoint_pending_calls_and_roundtrip() -> None:
     assert [c["call_id"] for c in cp.pending_tool_calls()] == ["b"]
     assert Checkpoint.from_json(cp.to_json()) == cp
     assert Checkpoint.from_json(None).items == []
+
+
+def test_pricing_from_config() -> None:
+    from decimal import Decimal
+
+    from ai_runtime.domain.pricing import Pricing
+
+    p = Pricing(Decimal("2.50"), Decimal("10"))
+    assert p.cost(1_000_000, 0) == Decimal("2.500000")
+    assert p.cost(1200, 300) == Decimal("0.006000")
+    assert Pricing().cost(10**9, 10**9) == Decimal("0")

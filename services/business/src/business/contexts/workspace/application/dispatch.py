@@ -9,7 +9,8 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from ..ports.store import CapabilityIssuer, Outbox, QueuedTask, WorkspaceStore
+from ..domain.tasks import TaskStatus
+from ..ports.store import BudgetGate, CapabilityIssuer, Outbox, QueuedTask, WorkspaceStore
 
 TASK_DEADLINE = timedelta(minutes=10)
 
@@ -17,7 +18,8 @@ TASK_DEADLINE = timedelta(minutes=10)
 class Dispatcher:
     def __init__(self, store: WorkspaceStore, outbox: Outbox, capabilities: CapabilityIssuer, *,
                  tenant_id: UUID, limit: int, policy_version: int,
-                 clock: Callable[[], datetime]) -> None:
+                 clock: Callable[[], datetime], budget: BudgetGate) -> None:
+        self._budget = budget
         self._s = store
         self._outbox = outbox
         self._caps = capabilities
@@ -37,9 +39,13 @@ class Dispatcher:
         await self._s.lock_agent(role)
         free = self._limit - await self._s.count_active(role)
         waiting = await self._s.waiting(role)
-        sent = waiting[:max(free, 0)]
-        for q in sent:
-            await self._send(q, role)
+        sent: list[QueuedTask] = []
+        rest = list(waiting)
+        while rest and len(sent) < free:
+            q = rest.pop(0)
+            if await self._send(q, role):
+                sent.append(q)
+        waiting = sent + rest
         positions = {q.task_id: i for i, q in enumerate(waiting[len(sent):], start=1)}
         if announce:
             for q in sent:  # navbatdan chiqdi — AI’ga yuborildi
@@ -50,7 +56,12 @@ class Dispatcher:
                                         {"status": "queued", "queue_position": position})
         return positions
 
-    async def _send(self, q: QueuedTask, role: str) -> None:
+    async def _send(self, q: QueuedTask, role: str) -> bool:
+        """Budjet rezervi olinmasa vazifa aniq sabab bilan yakunlanadi (False)."""
+        decision = await self._budget.reserve(q.task_id)
+        if not decision.allowed:
+            await self._reject(q, decision.message or "AI budjeti limiti tugagan.")
+            return False
         now = self._clock()
         deadline = now + TASK_DEADLINE  # navbatda kutilgan vaqt limitga kirmaydi
         d = q.dispatch
@@ -61,8 +72,25 @@ class Dispatcher:
             "task_id": str(q.task_id), "task_step_id": str(q.step_id), "agent_role_key": role,
             "sanitized_instruction": d["instruction"], "context_refs": d["context_refs"],
             "deadline": deadline.isoformat(),
-            # Budjet rezervi Bosqich 5 da; hozircha faqat identifikator (limit qo‘llanmaydi).
-            "budget_reservation_id": str(uuid4()), "policy_version": self._policy_version,
+            "budget_reservation_id": str(decision.reservation_id or uuid4()),
+            "policy_version": self._policy_version,
             "locale": d.get("locale", "uz-Latn"), "capability_token": token,
         }, aggregate_id=q.task_id, aggregate_version=1)
         await self._s.mark_dispatched(q.task_id)
+        return True
+
+    async def _reject(self, q: QueuedTask, message: str) -> None:
+        task = await self._s.get_task(q.task_id)
+        await self._s.mark_dispatched(q.task_id)  # navbatdan chiqadi (AI’ga yuborilmaydi)
+        await self._s.set_task(q.task_id, status=TaskStatus.FAILED, error_code="BUDGET_EXCEEDED",
+                               limitations=[message])
+        await self._s.set_step(q.step_id, status="failed", phase=None, progress_seq=None,
+                               agent_run_id=None)
+        if task is not None:
+            await self._s.add_message({
+                "conversation_id": task.conversation_id, "author_kind": "agent",
+                "agent_role_key": task.agent_role_key, "content": message, "task_id": q.task_id,
+                "structured": {"error_code": "BUDGET_EXCEEDED"}, "source_refs": []})
+        await self._s.add_event(q.task_id, "task.completed", {
+            "status": "failed", "error_code": "BUDGET_EXCEEDED", "limitations": [message],
+            "has_answer": True, "structured": None})

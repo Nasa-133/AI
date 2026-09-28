@@ -43,6 +43,7 @@ export function TaskCard({ taskId, conversationId, startedAt }: {
     void qc.invalidateQueries({ queryKey: ["documents"] });
     void qc.invalidateQueries({ queryKey: ["office"] });
     void qc.invalidateQueries({ queryKey: ["tasks"] });
+    void qc.invalidateQueries({ queryKey: ["budget"] });
   }, [qc, conversationId]);
   const stream = useTaskStream(taskId, onDone);
   const live = !TERMINAL.has(stream.status);

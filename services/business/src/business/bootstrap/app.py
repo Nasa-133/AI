@@ -10,6 +10,7 @@ from business.entrypoints.http import (
     analytics,
     dashboards,
     documents,
+    governance,
     health,
     identity,
     integrations,
@@ -56,5 +57,6 @@ def create_app(
     app.include_router(dashboards.router)
     app.include_router(documents.router)
     app.include_router(integrations.router)
+    app.include_router(governance.router)
     app.include_router(tools.router)
     return app

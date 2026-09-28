@@ -9,7 +9,7 @@ from uuid import UUID
 
 from ..domain.office import CLARIFICATION, PHASE_KIND
 from ..domain.tasks import TaskStatus
-from ..ports.store import QueryRefs, WorkspaceStore
+from ..ports.store import BudgetGate, QueryRefs, WorkspaceStore
 from .dispatch import Dispatcher
 
 _STATUS = {"succeeded": TaskStatus.SUCCEEDED, "partial": TaskStatus.PARTIAL,
@@ -20,7 +20,8 @@ _STEP_STATUS = {"succeeded": "succeeded", "partial": "succeeded", "failed": "fai
 
 class AgentEventHandler:
     def __init__(self, store: WorkspaceStore, query_refs: QueryRefs,
-                 dispatcher: Dispatcher) -> None:
+                 dispatcher: Dispatcher, budget: BudgetGate) -> None:
+        self._budget = budget
         self._s = store
         self._refs = query_refs
         self._dispatcher = dispatcher
@@ -69,6 +70,7 @@ class AgentEventHandler:
                                progress_seq=None, agent_run_id=UUID(p["agent_run_id"]))
         await self._s.set_task(task_id, status=status, error_code=p["error_code"],
                                limitations=limitations)
+        await self._budget.settle(task_id, p["usage"])
         await self._s.add_event(task_id, "task.completed", {
             "status": status.value, "error_code": p["error_code"], "limitations": limitations,
             "has_answer": bool(answer), "structured": (candidate or {}).get("structured"),

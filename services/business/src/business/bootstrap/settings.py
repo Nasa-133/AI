@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import Field
@@ -30,3 +31,7 @@ class Settings(BaseSettings):
     ai_runtime_url: str = ""
     # Har agent uchun korxona bo‘yicha parallel vazifalar limiti (TZ 4); to‘lsa — navbat.
     agent_parallel_limit: int = Field(default=3, ge=1, le=20)
+    # AI budjeti standartlari (TZ 19; korxona egasi Sozlamalarda o‘zgartiradi). USD.
+    budget_monthly_limit: Decimal | None = Decimal("50")
+    budget_daily_limit: Decimal | None = None
+    budget_task_reservation: Decimal = Decimal("0.05")

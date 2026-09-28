@@ -16,6 +16,7 @@ from ..adapters.s3_store import S3ObjectStore
 from ..adapters.sql_store import SqlRunStore
 from ..adapters.tool_catalog import load_tool_specs
 from ..application.runner import AgentRunner
+from ..domain.pricing import Pricing
 from ..ports.clock import SystemClock
 from ..ports.embeddings import EmbeddingProvider
 from ..ports.model import ModelProvider
@@ -72,4 +73,6 @@ def make_runner(container: Container, *, tools: BusinessTools | None = None,
         clock=SystemClock(),
         owner=owner or f"{socket.gethostname()}:{uuid4().hex[:8]}",
         lease=timedelta(seconds=container.settings.lease_seconds),
+        pricing=Pricing(container.settings.price_input_per_1m,
+                        container.settings.price_output_per_1m, container.settings.price_currency),
     )

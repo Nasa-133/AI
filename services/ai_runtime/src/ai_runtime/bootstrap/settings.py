@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import AliasChoices, Field
@@ -36,6 +37,10 @@ class Settings(BaseSettings):
     s3_secret_key: str = ""
     s3_region: str = "us-east-1"
     vectors_bucket: str = "abo-ai"
+    # Narx 1 mln token uchun (valyuta — price_currency); fake provider uchun ham sinash mumkin.
+    price_input_per_1m: Decimal = Decimal("0")
+    price_output_per_1m: Decimal = Decimal("0")
+    price_currency: str = "USD"
     max_tool_calls: int = 20
     lease_seconds: int = 60
     runner_concurrency: int = 4
