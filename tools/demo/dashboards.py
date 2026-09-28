@@ -191,72 +191,88 @@ async def insights(b: Builder, last: date, last3: date, year_start: date) -> str
 
 
 async def build_dashboards(engine: AsyncEngine, tenant: UUID, user: UUID) -> None:
+    """Power BI uslubi: KPI kartalar (UI oldingi davr bilan o‘zgarishni o‘zi ko‘rsatadi), trend,
+    ulush, voronka, issiqlik xaritasi, top-N. Jadval — faqat ko‘p ustunli taqqoslashlar uchun."""
     today = datetime.now(UTC).astimezone(ZoneInfo(TZ)).date()
     last = add_months(today.replace(day=1), -1)  # oxirgi to‘liq oy
     lm_start, lm_end = last, month_end(last)
     last3 = add_months(last, -2)
+    last6 = add_months(last, -5)
     year_start = add_months(last, -11)
+    mtd = today.replace(day=1)
     async with tenant_transaction(engine, tenant_id=tenant, user_id=user) as conn:
         b = Builder(conn, tenant, user, today)
         period = f"{label(year_start)} — {label(lm_start)}"
+        span3 = f"{label(last3)} — {label(lm_start)}"
+        month = label(lm_start)
 
         await b.create("Rahbar paneli",
-                       f"Asosiy ko‘rsatkichlar, {label(lm_start)}; trend: {period}.", [
-            ("Asosiy xulosalar", "text", await insights(b, last, last3, year_start)),
-            (f"Sof savdo — {label(lm_start)}", "kpi", await b.run(["net_sales"], lm_start, lm_end)),
-            (f"Yalpi marja — {label(lm_start)}", "kpi",
-             await b.run(["gross_margin"], lm_start, lm_end)),
-            (f"Yutilgan bitimlar summasi — {label(lm_start)}", "kpi",
-             await b.run(["crm_won_amount"], lm_start, lm_end)),
-            (f"Konversiya — {label(lm_start)}", "kpi",
+                       f"Asosiy ko‘rsatkichlar, {month}; trend: {period}.", [
+            (f"Sof savdo · {month}", "kpi", await b.run(["net_sales"], lm_start, lm_end)),
+            (f"Yalpi foyda · {month}", "kpi", await b.run(["gross_profit"], lm_start, lm_end)),
+            (f"Konversiya (CRM) · {month}", "kpi",
              await b.run(["crm_win_rate"], lm_start, lm_end)),
-            ("Debitorlik qoldig‘i", "kpi", await b.run(["receivables_open"], lm_start, lm_end)),
             ("Muddati o‘tgan debitorlik", "kpi",
              await b.run(["receivables_overdue"], lm_start, lm_end)),
-            ("Sof savdo va yalpi foyda — oylar", "line",
-             await b.run(["net_sales", "gross_profit"], year_start, lm_end, ["month"])),
-            ("Yalpi marja — oylar", "line",
+            ("Sof savdo — oylar", "area",
+             await b.run(["net_sales"], year_start, lm_end, ["month"])),
+            ("Yalpi marja, % — oylar", "line",
              await b.run(["gross_margin"], year_start, lm_end, ["month"])),
+            (f"Savdo ulushi filiallar bo‘yicha · {span3}", "pie",
+             await b.run(["net_sales"], last3, lm_end, ["branch"], order="net_sales")),
+            ("Ochiq voronka — bosqichlar", "funnel",
+             await b.run(["crm_pipeline_open"], mtd, today, ["stage"], order="crm_pipeline_open")),
+            ("Muddati o‘tgan qarz — filiallar", "bar",
+             await b.run(["receivables_overdue"], lm_start, lm_end, ["branch"],
+                         order="receivables_overdue")),
+            ("Asosiy xulosalar", "text", await insights(b, last, last3, year_start)),
         ])
 
-        span3 = f"{label(last3)} — {label(lm_start)}"
         await b.create("Savdo va foyda", f"Filiallar va mahsulotlar: {span3}; trend: {period}.", [
-            ("Sof savdo — oylar", "line",
-             await b.run(["net_sales"], year_start, lm_end, ["month"])),
-            (f"Filiallar — {span3}", "table",
+            (f"Sof savdo · {month}", "kpi", await b.run(["net_sales"], lm_start, lm_end)),
+            (f"Yalpi marja · {month}", "kpi", await b.run(["gross_margin"], lm_start, lm_end)),
+            (f"Qaytarishlar · {month}", "kpi", await b.run(["returns"], lm_start, lm_end)),
+            (f"Hujjatlar soni · {month}", "kpi", await b.run(["order_count"], lm_start, lm_end)),
+            ("Sof savdo filiallar bo‘yicha — oylar", "stacked_bar",
+             await b.run(["net_sales"], last6, lm_end, ["month", "branch"])),
+            ("Yalpi marja, % — filial × oy", "heatmap",
+             await b.run(["gross_margin"], last6, lm_end, ["month", "branch"])),
+            (f"Top 15 mahsulot · {span3}", "bar",
+             await b.run(["net_sales"], last3, lm_end, ["product"], order="net_sales", limit=15)),
+            (f"Eng past marjali 10 mahsulot, % · {span3}", "bar",
+             await b.run(["gross_margin"], last3, lm_end, ["product"], order="gross_margin",
+                         asc=True, limit=10)),
+            (f"Sof savdo ulushi · {span3}", "pie",
+             await b.run(["net_sales"], last3, lm_end, ["branch"], order="net_sales")),
+            (f"Qaytarishlar ulushi · {span3}", "pie",
+             await b.run(["returns"], last3, lm_end, ["branch"], order="returns")),
+            (f"Filiallar taqqoslovi · {span3}", "table",
              await b.run(["net_sales", "gross_profit", "gross_margin", "returns"], last3, lm_end,
                          ["branch"], order="net_sales")),
-            (f"Filiallar sof savdosi — {span3}", "bar",
-             await b.run(["net_sales"], last3, lm_end, ["branch"], order="net_sales")),
-            ("Filiallar marjasi — oylar bo‘yicha", "table",
-             await b.run(["gross_margin"], add_months(last, -5), lm_end, ["month", "branch"])),
-            (f"Top 15 mahsulot — {span3}", "table",
-             await b.run(["net_sales", "gross_margin"], last3, lm_end, ["product"],
-                         order="net_sales", limit=15)),
-            (f"Eng past marjali 10 mahsulot — {span3}", "table",
-             await b.run(["gross_margin", "net_sales"], last3, lm_end, ["product"],
-                         order="gross_margin", asc=True, limit=10)),
-            (f"Qaytarishlar — {span3}", "bar",
-             await b.run(["returns"], last3, lm_end, ["branch"], order="returns")),
         ])
 
         await b.create("CRM — savdo voronkasi",
                        f"Bitimlar, konversiya va kanallar; trend: {period}.", [
-            ("Ochiq voronka — bosqichlar (bugun)", "bar",
-             await b.run(["crm_pipeline_open"], today.replace(day=1), today, ["stage"],
-                         order="crm_pipeline_open")),
+            (f"Yangi bitimlar · {month}", "kpi",
+             await b.run(["crm_deals_created"], lm_start, lm_end)),
+            (f"Yutilgan bitimlar · {month}", "kpi",
+             await b.run(["crm_deals_won"], lm_start, lm_end)),
+            (f"Konversiya · {month}", "kpi", await b.run(["crm_win_rate"], lm_start, lm_end)),
+            ("Ochiq voronka (bugun)", "kpi", await b.run(["crm_pipeline_open"], mtd, today)),
+            ("Voronka — bosqichlar", "funnel",
+             await b.run(["crm_pipeline_open"], mtd, today, ["stage"], order="crm_pipeline_open")),
+            ("Yutilgan bitimlar — kanallar ulushi (12 oy)", "pie",
+             await b.run(["crm_won_amount"], add_months(lm_start, -11), lm_end, ["channel"],
+                         order="crm_won_amount")),
             ("Yangi va yutilgan bitimlar — oylar", "line",
              await b.run(["crm_deals_created", "crm_deals_won"], year_start, lm_end, ["month"])),
-            ("Konversiya — oylar", "line",
-             await b.run(["crm_win_rate"], year_start, lm_end, ["month"])),
-            (f"Konversiya filiallar bo‘yicha — {span3}", "table",
-             await b.run(["crm_win_rate", "crm_deals_won", "crm_won_amount"], last3, lm_end,
-                         ["branch"], order="crm_win_rate", asc=True)),
+            ("Konversiya, % — filial × oy", "heatmap",
+             await b.run(["crm_win_rate"], last6, lm_end, ["month", "branch"])),
+            (f"Konversiya filiallar bo‘yicha · {span3}", "bar",
+             await b.run(["crm_win_rate"], last3, lm_end, ["branch"], order="crm_win_rate")),
             ("Kanallar samaradorligi — 12 oy", "table",
              await b.run(["crm_deals_created", "crm_deals_won", "crm_win_rate", "crm_avg_deal"],
                          add_months(lm_start, -11), lm_end, ["channel"], order="crm_win_rate")),
-            (f"Yutilgan bitimlar summasi — {span3}", "bar",
-             await b.run(["crm_won_amount"], last3, lm_end, ["branch"], order="crm_won_amount")),
         ])
 
         await b.create("Debitorlik",
@@ -266,9 +282,15 @@ async def build_dashboards(engine: AsyncEngine, tenant: UUID, user: UUID) -> Non
             ("Filiallar: qoldiq va muddati o‘tgan", "bar",
              await b.run(["receivables_open", "receivables_overdue"], lm_start, lm_end, ["branch"],
                          order="receivables_overdue")),
-            ("Muddati o‘tgan qarzi eng katta 15 mijoz", "table",
-             await b.run(["receivables_overdue", "receivables_open"], lm_start, lm_end,
-                         ["customer"], order="receivables_overdue", limit=15)),
+            ("Jami qoldiq — filiallar ulushi", "pie",
+             await b.run(["receivables_open"], lm_start, lm_end, ["branch"],
+                         order="receivables_open")),
+            ("Muddati o‘tgan qarz — filiallar ulushi", "pie",
+             await b.run(["receivables_overdue"], lm_start, lm_end, ["branch"],
+                         order="receivables_overdue")),
+            ("Muddati o‘tgan qarzi eng katta 15 mijoz", "bar",
+             await b.run(["receivables_overdue"], lm_start, lm_end, ["customer"],
+                         order="receivables_overdue", limit=15)),
         ])
 
 

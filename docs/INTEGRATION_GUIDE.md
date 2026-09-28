@@ -327,6 +327,15 @@ FAKE_ERP_FAIL_RATE=0.3 make fake-erp
 sinxron. Keyin chatda: “Ali, 2026 sentabr oyidagi savdoni filiallar bo‘yicha ko‘rsat”,
 “Madina, avgust oxiridagi debitorlik qoldig‘i qancha?”. Ma’lumot 15 daqiqada avtomatik yangilanadi.
 
+**Dashboardlar (Power BI / Superset uslubi):** widget turlari — `kpi` (oldingi teng davrga nisbatan
+o‘zgarish bilan), `line`, `area`, `bar` (ko‘p/uzun nomli a’zolarda yotiq, top-N), `stacked_bar`
+va `heatmap` (2 kesim, masalan filial × oy), `pie` (ulush, ≤12 bo‘lak), `funnel` (CRM bosqichlari),
+`table`, `text`. Tur ma’lumot shakliga qarab tekshiriladi (masalan, foizni doiraviy grafikda
+ko‘rsatib bo‘lmaydi). Agent turni savol va natija shaklidan tanlaydi; foydalanuvchi “Tahrirlash”da
+almashtiradi. Dashboard tepasidagi filtr (davr, filiallar) barcha widget’larni qayta hisoblaydi.
+Test korxonasi uchun tayyor to‘plam: `setup_test_company.py --dashboards` (Rahbar paneli, Savdo va
+foyda, CRM voronkasi, Debitorlik) — qayta ishga tushirilsa yangi versiya yaratadi.
+
 ---
 
 ## 8. Muammolar va yechimlar

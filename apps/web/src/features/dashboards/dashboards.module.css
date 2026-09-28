@@ -23,10 +23,33 @@
   .headActions :global(.btn-sm) { padding: 0; width: var(--control-sm); }
 }
 .windowBody { flex: 1; overflow: auto; padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: var(--space-4); }
-.widget { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-4); }
-.widgetKpi { font-size: 26px; font-weight: 600; }
+/* 12 ustunli to‘r (Power BI uslubi): KPI 3, doiraviy/voronka 4, grafik 6, keng jadval/matn 12. */
+.grid { container-type: inline-size; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-4); align-items: stretch; }
+.cell { grid-column: span var(--span, 6); min-width: 0; display: flex; }
+.cell > * { flex: 1; min-width: 0; }
+@container (max-width: 980px) {
+  .cell { grid-column: span 12; }
+  .cell:has([data-type="kpi"]), .cell:has([data-type="pie"]), .cell:has([data-type="funnel"]) { grid-column: span 6; }
+}
+@container (max-width: 560px) { .cell, .cell:has([data-type]) { grid-column: span 12; } }
+.widget { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4) var(--space-5); }
+.widgetHead { display: flex; align-items: center; gap: 2px; min-height: 32px; }
+.widgetTitle { margin-right: auto; font-size: var(--text-sm); font-weight: 600; color: var(--text-muted); letter-spacing: 0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.widget[data-type="kpi"] { justify-content: space-between; }
+.kpiBody { display: flex; flex-direction: column; gap: 6px; }
+.widgetKpi { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; overflow-wrap: anywhere; }
+.delta { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-sm); font-weight: 500; color: var(--text-muted); }
+.delta svg { width: 16px; height: 16px; }
+.delta[data-good="true"] { color: var(--success); }
+.delta[data-good="false"] { color: var(--danger); }
+.widgetFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--text-subtle); margin-top: auto; }
+.notes { margin: 0; padding-left: 18px; font-size: var(--text-xs); color: var(--text-muted); display: flex; flex-direction: column; gap: 2px; }
+.textBody { font-size: var(--text-sm); line-height: 1.6; }
+.textBody :global(.md) { display: flex; flex-direction: column; gap: var(--space-2); }
+.textBody :global(.md ul) { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.filterBar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .crumbs { display: flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
 .pickerGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3); }
 .pickerGrid .card { width: auto; }
-@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+

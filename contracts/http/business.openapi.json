@@ -1222,7 +1222,12 @@
                 "enum": [
                   "kpi",
                   "line",
+                  "area",
                   "bar",
+                  "stacked_bar",
+                  "pie",
+                  "funnel",
+                  "heatmap",
                   "table",
                   "text"
                 ],

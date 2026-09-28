@@ -79,6 +79,31 @@ _ALL_RE = re.compile(r"^(barchasi|hammasi|hamma|barcha|hammasini|barchasini)\W*$
 _ALL_MARKER = "barcha ko'rsatkichlar"
 
 
+_TIME = ("month", "week", "day")
+
+
+def choose_chart(dims: list[str], metric_ids: list[str], data: dict[str, Any], text: str) -> str:
+    """Vizual tur natija shakliga qarab (Power BI uslubi) — Core validatsiyasi bilan mos."""
+    rows = data.get("rows", [])
+    percent = any(c.get("unit") == "percent" for c in data.get("columns", [])
+                  if c.get("kind") == "metric")
+    multi_currency = any(c.get("name") == "currency" for c in data.get("columns", []))
+    if not dims:
+        return "kpi" if len(rows) == 1 and len(metric_ids) == 1 else "table"
+    if multi_currency:
+        return "line" if dims[0] in _TIME else "bar"
+    if len(dims) == 2 and len(metric_ids) == 1:
+        return "heatmap" if percent else "stacked_bar"
+    if dims[0] in _TIME:
+        return "area" if len(metric_ids) == 1 and not percent else "line"
+    if len(metric_ids) == 1 and not percent and len(dims) == 1:
+        if dims[0] == "stage":
+            return "funnel"
+        if "ulush" in normalize(text) and len(rows) <= 12:
+            return "pie"
+    return "bar"
+
+
 def metric_kind(metric_id: str) -> str:
     """Manba turi (Core QuerySpec.kind bilan mos): savdo, debitorlik yoki CRM."""
     if metric_id.startswith("receivables_"):
@@ -520,14 +545,12 @@ class FakeProvider:
                 "query_spec_id": spec_id, "comparison_range": comparison,
                 "dimension": dimension, "metric_id": plan.metric_ids[0]}, available)
         if plan.dashboard and "create_dashboard" not in outputs:
-            # KPI — faqat bitta ko‘rsatkich va bitta qator (bir valyuta); aks holda jadval.
-            single = len(plan.metric_ids) == 1 and len(query["data"]["rows"]) == 1
-            chart = ("line" if plan.dimensions and plan.dimensions[0] in ("month", "day")
-                     else "bar" if plan.dimensions else "kpi" if single else "table")
+            chart = choose_chart(plan.dimensions, plan.metric_ids, query["data"], text)
             widgets = [{"title": "Asosiy ko‘rsatkich", "type": chart,
                         "query_spec_id": spec_id, "text": None}]
             if "compare_periods" in outputs and outputs["compare_periods"]["status"] == "ok":
-                widgets.append({"title": "Oldingi davr bilan taqqoslash", "type": "table",
+                widgets.append({"title": "Oldingi davr bilan taqqoslash",
+                                "type": "bar" if plan.dimensions else "table",
                                 "query_spec_id": outputs["compare_periods"]["data"][
                                     "query_spec_id"], "text": None})
             return self._call(request, "create_dashboard", {
@@ -551,8 +574,10 @@ class FakeProvider:
         question, refs = report
         title = report_title(question)
         if "create_dashboard" not in outputs:
+            has_dims = any(k in normalize(question) for k, _ in DIMENSION_KEYWORDS)
+            chart = "bar" if has_dims else "table"
             widgets = [{"title": "Oldingi davr bilan taqqoslash" if kind.startswith("Taqqoslash")
-                        else "Hisobot natijasi", "type": "table", "query_spec_id": qid,
+                        else "Hisobot natijasi", "type": chart, "query_spec_id": qid,
                         "text": None} for kind, qid in refs]
             return self._call(request, "create_dashboard", {
                 "title": title, "description": f"Chatdagi hisobot asosida: “{question}”.",
@@ -566,7 +591,7 @@ class FakeProvider:
             f"Dashboard yaratildi: **{d['title']}** ({d['widget_count']} ta widget) — oldingi "
             "hisobot natijalari asosida, raqamlar chatdagi javob bilan bir xil.",
             "", "**Harakat variantlari**",
-            "- Dashboardni ochib turini (jadval, grafik) o‘zgartirish — “Tahrirlash”.",
+            "- Grafik turini (ustunli, doiraviy, jadval…) o‘zgartirish — “Tahrirlash”.",
             "- Oxirgi ma’lumot bilan qayta hisoblash — “Yangilash”.",
             "", "**Manbalar va cheklovlar**",
             *(f"- {kind}: `{qid}`" for kind, qid in refs),

@@ -2,7 +2,7 @@
  "base_url": "http://localhost:8040",
  "mode": "fake",
  "model": null,
- "started_at": "2026-09-28T15:37:07.694135+00:00",
+ "started_at": "2026-09-28T16:27:10.507171+00:00",
  "results": [
   {
    "id": "N-sof-2025-09",
@@ -10,7 +10,7 @@
    "name": "Sof savdo (UZS) — 2025-09",
    "passed": true,
    "detail": "",
-   "seconds": 0.03990654199151322
+   "seconds": 0.049482166999951005
   },
   {
    "id": "N-foyda-2025-09",
@@ -18,7 +18,7 @@
    "name": "Yalpi foyda (UZS) — 2025-09",
    "passed": true,
    "detail": "",
-   "seconds": 0.024357957998290658
+   "seconds": 0.02806304197292775
   },
   {
    "id": "N-sof-2025-10",
@@ -26,7 +26,7 @@
    "name": "Sof savdo (UZS) — 2025-10",
    "passed": true,
    "detail": "",
-   "seconds": 0.026821832987479866
+   "seconds": 0.02496295899618417
   },
   {
    "id": "N-foyda-2025-10",
@@ -34,7 +34,7 @@
    "name": "Yalpi foyda (UZS) — 2025-10",
    "passed": true,
    "detail": "",
-   "seconds": 0.022884708014316857
+   "seconds": 0.021494833985343575
   },
   {
    "id": "N-sof-2025-11",
@@ -42,7 +42,7 @@
    "name": "Sof savdo (UZS) — 2025-11",
    "passed": true,
    "detail": "",
-   "seconds": 0.02374158304883167
+   "seconds": 0.022714207996614277
   },
   {
    "id": "N-foyda-2025-11",
@@ -50,7 +50,7 @@
    "name": "Yalpi foyda (UZS) — 2025-11",
    "passed": true,
    "detail": "",
-   "seconds": 0.021103625011164695
+   "seconds": 0.020283040998037905
   },
   {
    "id": "N-sof-2025-12",
@@ -58,7 +58,7 @@
    "name": "Sof savdo (UZS) — 2025-12",
    "passed": true,
    "detail": "",
-   "seconds": 0.02014883403899148
+   "seconds": 0.020625833014491946
   },
   {
    "id": "N-foyda-2025-12",
@@ -66,7 +66,7 @@
    "name": "Yalpi foyda (UZS) — 2025-12",
    "passed": true,
    "detail": "",
-   "seconds": 0.025267958000767976
+   "seconds": 0.020033667038660496
   },
   {
    "id": "N-sof-2026-01",
@@ -74,7 +74,7 @@
    "name": "Sof savdo (UZS) — 2026-01",
    "passed": true,
    "detail": "",
-   "seconds": 0.021779874979984015
+   "seconds": 0.02127958304481581
   },
   {
    "id": "N-foyda-2026-01",
@@ -82,7 +82,7 @@
    "name": "Yalpi foyda (UZS) — 2026-01",
    "passed": true,
    "detail": "",
-   "seconds": 0.020295708964113146
+   "seconds": 0.01924891595263034
   },
   {
    "id": "N-sof-2026-02",
@@ -90,7 +90,7 @@
    "name": "Sof savdo (UZS) — 2026-02",
    "passed": true,
    "detail": "",
-   "seconds": 0.02049391600303352
+   "seconds": 0.020170082978438586
   },
   {
    "id": "N-foyda-2026-02",
@@ -98,7 +98,7 @@
    "name": "Yalpi foyda (UZS) — 2026-02",
    "passed": true,
    "detail": "",
-   "seconds": 0.01879366597859189
+   "seconds": 0.019127833016682416
   },
   {
    "id": "N-sof-2026-03",
@@ -106,7 +106,7 @@
    "name": "Sof savdo (UZS) — 2026-03",
    "passed": true,
    "detail": "",
-   "seconds": 0.01918829104397446
+   "seconds": 0.01986058399779722
   },
   {
    "id": "N-foyda-2026-03",
@@ -114,7 +114,7 @@
    "name": "Yalpi foyda (UZS) — 2026-03",
    "passed": true,
    "detail": "",
-   "seconds": 0.023501125047914684
+   "seconds": 0.021636582969222218
   },
   {
    "id": "N-sof-2026-04",
@@ -122,7 +122,7 @@
    "name": "Sof savdo (UZS) — 2026-04",
    "passed": true,
    "detail": "",
-   "seconds": 0.022460333013441414
+   "seconds": 0.024012665962800384
   },
   {
    "id": "N-foyda-2026-04",
@@ -130,7 +130,7 @@
    "name": "Yalpi foyda (UZS) — 2026-04",
    "passed": true,
    "detail": "",
-   "seconds": 0.01941679196897894
+   "seconds": 0.021274875034578145
   },
   {
    "id": "N-sof-2026-05",
@@ -138,7 +138,7 @@
    "name": "Sof savdo (UZS) — 2026-05",
    "passed": true,
    "detail": "",
-   "seconds": 0.021911165968049318
+   "seconds": 0.02296199998818338
   },
   {
    "id": "N-foyda-2026-05",
@@ -146,7 +146,7 @@
    "name": "Yalpi foyda (UZS) — 2026-05",
    "passed": true,
    "detail": "",
-   "seconds": 0.01961950003169477
+   "seconds": 0.025411500013433397
   },
   {
    "id": "N-sof-2026-06",
@@ -154,7 +154,7 @@
    "name": "Sof savdo (UZS) — 2026-06",
    "passed": true,
    "detail": "",
-   "seconds": 0.019410540990065783
+   "seconds": 0.01931695797247812
   },
   {
    "id": "N-foyda-2026-06",
@@ -162,7 +162,7 @@
    "name": "Yalpi foyda (UZS) — 2026-06",
    "passed": true,
    "detail": "",
-   "seconds": 0.01948595797875896
+   "seconds": 0.01840541703859344
   },
   {
    "id": "N-sof-2026-07",
@@ -170,7 +170,7 @@
    "name": "Sof savdo (UZS) — 2026-07",
    "passed": true,
    "detail": "",
-   "seconds": 0.019167582970112562
+   "seconds": 0.018388875003438443
   },
   {
    "id": "N-foyda-2026-07",
@@ -178,7 +178,7 @@
    "name": "Yalpi foyda (UZS) — 2026-07",
    "passed": true,
    "detail": "",
-   "seconds": 0.022973208979237825
+   "seconds": 0.017912000010255724
   },
   {
    "id": "N-sof-2026-08",
@@ -186,7 +186,7 @@
    "name": "Sof savdo (UZS) — 2026-08",
    "passed": true,
    "detail": "",
-   "seconds": 0.024540500016883016
+   "seconds": 0.01898791699204594
   },
   {
    "id": "N-foyda-2026-08",
@@ -194,7 +194,7 @@
    "name": "Yalpi foyda (UZS) — 2026-08",
    "passed": true,
    "detail": "",
-   "seconds": 0.022873915964737535
+   "seconds": 0.018593959044665098
   },
   {
    "id": "N-cheg-qayt-2025-10",
@@ -202,7 +202,7 @@
    "name": "Chegirma va qaytarish (UZS) — 2025-10",
    "passed": true,
    "detail": "",
-   "seconds": 0.022803374973591417
+   "seconds": 0.01903108402621001
   },
   {
    "id": "N-cheg-qayt-2025-12",
@@ -210,7 +210,7 @@
    "name": "Chegirma va qaytarish (UZS) — 2025-12",
    "passed": true,
    "detail": "",
-   "seconds": 0.020252791000530124
+   "seconds": 0.018620625021867454
   },
   {
    "id": "N-marja-2025-12",
@@ -218,7 +218,7 @@
    "name": "Yalpi marja % — 2025-12",
    "passed": true,
    "detail": "",
-   "seconds": 0.021290834003593773
+   "seconds": 0.020571834000293165
   },
   {
    "id": "N-cheg-qayt-2026-01",
@@ -226,7 +226,7 @@
    "name": "Chegirma va qaytarish (UZS) — 2026-01",
    "passed": true,
    "detail": "",
-   "seconds": 0.025078625010792166
+   "seconds": 0.0195855830097571
   },
   {
    "id": "N-cheg-qayt-2026-03",
@@ -234,7 +234,7 @@
    "name": "Chegirma va qaytarish (UZS) — 2026-03",
    "passed": true,
    "detail": "",
-   "seconds": 0.020594292029272765
+   "seconds": 0.02253716700943187
   },
   {
    "id": "N-marja-2026-03",
@@ -242,7 +242,7 @@
    "name": "Yalpi marja % — 2026-03",
    "passed": true,
    "detail": "",
-   "seconds": 0.019514249986968935
+   "seconds": 0.023786208010278642
   },
   {
    "id": "N-cheg-qayt-2026-05",
@@ -250,7 +250,7 @@
    "name": "Chegirma va qaytarish (UZS) — 2026-05",
    "passed": true,
    "detail": "",
-   "seconds": 0.019265250011812896
+   "seconds": 0.021148832980543375
   },
   {
    "id": "N-cheg-qayt-2026-06",
@@ -258,7 +258,7 @@
    "name": "Chegirma va qaytarish (UZS) — 2026-06",
    "passed": true,
    "detail": "",
-   "seconds": 0.019333040982019156
+   "seconds": 0.023545125033706427
   },
   {
    "id": "N-marja-2026-06",
@@ -266,7 +266,7 @@
    "name": "Yalpi marja % — 2026-06",
    "passed": true,
    "detail": "",
-   "seconds": 0.021590458985883743
+   "seconds": 0.019965042010881007
   },
   {
    "id": "N-cheg-qayt-2026-08",
@@ -274,7 +274,7 @@
    "name": "Chegirma va qaytarish (UZS) — 2026-08",
    "passed": true,
    "detail": "",
-   "seconds": 0.02302866702666506
+   "seconds": 0.020290499960538
   },
   {
    "id": "N-marja-2026-08",
@@ -282,7 +282,7 @@
    "name": "Yalpi marja % — 2026-08",
    "passed": true,
    "detail": "",
-   "seconds": 0.020537332980893552
+   "seconds": 0.023176333983428776
   },
   {
    "id": "N-usd-2025-09",
@@ -290,7 +290,7 @@
    "name": "Sof savdo (USD, valyuta aralashmaydi) — 2025-09",
    "passed": true,
    "detail": "",
-   "seconds": 0.01906945795053616
+   "seconds": 0.02095108397770673
   },
   {
    "id": "N-usd-2025-10",
@@ -298,7 +298,7 @@
    "name": "Sof savdo (USD, valyuta aralashmaydi) — 2025-10",
    "passed": true,
    "detail": "",
-   "seconds": 0.01845441700424999
+   "seconds": 0.021591041993815452
   },
   {
    "id": "N-filial-net_sales-2026-01",
@@ -306,7 +306,7 @@
    "name": "net_sales filiallar bo‘yicha — 2026-01",
    "passed": true,
    "detail": "",
-   "seconds": 0.03189391701016575
+   "seconds": 0.03349300002446398
   },
   {
    "id": "N-filial-gross_profit-2026-06",
@@ -314,7 +314,7 @@
    "name": "gross_profit filiallar bo‘yicha — 2026-06",
    "passed": true,
    "detail": "",
-   "seconds": 0.022332375054247677
+   "seconds": 0.027853374951519072
   },
   {
    "id": "N-A01",
@@ -322,7 +322,7 @@
    "name": "A01: sof 850, yalpi foyda 350, marja 41.18",
    "passed": true,
    "detail": "[[\"850.00\", \"350.00\", \"41.18\"]]",
-   "seconds": 0.01292999996803701
+   "seconds": 0.014826208003796637
   },
   {
    "id": "N-A02",
@@ -346,7 +346,7 @@
    "name": "Agent javobi: sof savdo 2025-11",
    "passed": true,
    "detail": "",
-   "seconds": 1.610105957952328
+   "seconds": 1.5913852079538628
   },
   {
    "id": "N-agent-2025-12",
@@ -354,7 +354,7 @@
    "name": "Agent javobi: sof savdo 2025-12",
    "passed": true,
    "detail": "",
-   "seconds": 1.6128099999623373
+   "seconds": 1.0963949160068296
   },
   {
    "id": "N-agent-2026-01",
@@ -362,7 +362,7 @@
    "name": "Agent javobi: sof savdo 2026-01",
    "passed": true,
    "detail": "",
-   "seconds": 1.084943416994065
+   "seconds": 1.096657625050284
   },
   {
    "id": "N-agent-2026-02",
@@ -370,7 +370,7 @@
    "name": "Agent javobi: sof savdo 2026-02",
    "passed": true,
    "detail": "",
-   "seconds": 1.633009499986656
+   "seconds": 1.6174228750169277
   },
   {
    "id": "N-agent-2026-03",
@@ -378,7 +378,7 @@
    "name": "Agent javobi: sof savdo 2026-03",
    "passed": true,
    "detail": "",
-   "seconds": 1.1131582090165466
+   "seconds": 1.609919250011444
   },
   {
    "id": "N-agent-2026-04",
@@ -386,7 +386,7 @@
    "name": "Agent javobi: sof savdo 2026-04",
    "passed": true,
    "detail": "",
-   "seconds": 1.094640041992534
+   "seconds": 1.0864939999883063
   },
   {
    "id": "N-agent-2026-05",
@@ -394,7 +394,7 @@
    "name": "Agent javobi: sof savdo 2026-05",
    "passed": true,
    "detail": "",
-   "seconds": 1.0979555829544552
+   "seconds": 1.6060702920076437
   },
   {
    "id": "N-agent-2026-06",
@@ -402,7 +402,7 @@
    "name": "Agent javobi: sof savdo 2026-06",
    "passed": true,
    "detail": "",
-   "seconds": 1.0894504999741912
+   "seconds": 1.5942767500528134
   },
   {
    "id": "N-agent-2026-07",
@@ -410,7 +410,7 @@
    "name": "Agent javobi: sof savdo 2026-07",
    "passed": true,
    "detail": "",
-   "seconds": 1.6397867500199936
+   "seconds": 1.0890652920352295
   },
   {
    "id": "N-agent-2026-08",
@@ -418,7 +418,7 @@
    "name": "Agent javobi: sof savdo 2026-08",
    "passed": true,
    "detail": "",
-   "seconds": 1.0891114580444992
+   "seconds": 1.084937000006903
   },
   {
    "id": "D-qa-01",
@@ -426,7 +426,7 @@
    "name": "Shartnomada to‘lov muddati necha kun?",
    "passed": true,
    "detail": "",
-   "seconds": 1.6262343330308795
+   "seconds": 1.1052677919506095
   },
   {
    "id": "D-qa-02",
@@ -434,7 +434,7 @@
    "name": "Kechiktirilgan to‘lov uchun penya miqdori qancha?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0939699159935117
+   "seconds": 1.1159267079783604
   },
   {
    "id": "D-qa-03",
@@ -442,7 +442,7 @@
    "name": "Tovar necha ish kuni ichida yetkazib beriladi?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0877444999641739
+   "seconds": 1.1088585419929586
   },
   {
    "id": "D-qa-04",
@@ -450,7 +450,7 @@
    "name": "Yetkazib berish manzili qayer?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0991785420337692
+   "seconds": 1.0906023330171593
   },
   {
    "id": "D-qa-05",
@@ -458,7 +458,7 @@
    "name": "Tovarga kafolat muddati qancha?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0949852080084383
+   "seconds": 1.0981874999706633
   },
   {
    "id": "D-qa-06",
@@ -466,7 +466,7 @@
    "name": "Tovar sifati qaysi standartga mos bo‘lishi kerak?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0988357500173151
+   "seconds": 1.1012762079481035
   },
   {
    "id": "D-qa-07",
@@ -474,7 +474,7 @@
    "name": "Shartnoma qachongacha amal qiladi?",
    "passed": true,
    "detail": "",
-   "seconds": 0.5808267910033464
+   "seconds": 1.6154297500033863
   },
   {
    "id": "D-qa-08",
@@ -482,7 +482,7 @@
    "name": "Shartnomaning umumiy summasi qancha?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0981522079673596
+   "seconds": 1.1055057079647668
   },
   {
    "id": "D-qa-09",
@@ -490,7 +490,7 @@
    "name": "Nizolar qaysi sudda ko‘rib chiqiladi?",
    "passed": true,
    "detail": "",
-   "seconds": 1.6142744169919752
+   "seconds": 1.0922990829567425
   },
   {
    "id": "D-qa-10",
@@ -498,7 +498,7 @@
    "name": "Ish vaqti soat nechadan nechagacha?",
    "passed": true,
    "detail": "",
-   "seconds": 1.084030124999117
+   "seconds": 1.1035532079986297
   },
   {
    "id": "D-qa-11",
@@ -506,7 +506,7 @@
    "name": "Tushlik tanaffusi qachon?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0933046659920365
+   "seconds": 1.0974611660349183
   },
   {
    "id": "D-qa-12",
@@ -514,7 +514,7 @@
    "name": "Yillik mehnat ta’tili necha kun?",
    "passed": true,
    "detail": "",
-   "seconds": 1.1095907500130124
+   "seconds": 1.1096094159875065
   },
   {
    "id": "D-qa-13",
@@ -522,7 +522,7 @@
    "name": "Masofaviy ish haftasiga necha kun ruxsat etiladi?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0764089160365984
+   "seconds": 1.6286955830291845
   },
   {
    "id": "D-qa-14",
@@ -530,7 +530,7 @@
    "name": "Inventarizatsiya qanchalik tez-tez o‘tkaziladi?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0797623340040445
+   "seconds": 1.6108508330071345
   },
   {
    "id": "D-qa-15",
@@ -538,7 +538,7 @@
    "name": "Omborda harorat qanday saqlanadi?",
    "passed": true,
    "detail": "",
-   "seconds": 1.6334462499944493
+   "seconds": 1.1004727089894004
   },
   {
    "id": "D-none-1",
@@ -546,7 +546,7 @@
    "name": "Shartnomada sug‘urta polisi raqami qanday?",
    "passed": true,
    "detail": "",
-   "seconds": 1.6321767920162529
+   "seconds": 1.1027935830061324
   },
   {
    "id": "D-none-2",
@@ -554,7 +554,7 @@
    "name": "Xodimlarga bonus qanday hisoblanadi?",
    "passed": true,
    "detail": "",
-   "seconds": 1.6184901670203544
+   "seconds": 1.1229102910147049
   },
   {
    "id": "D-none-3",
@@ -562,7 +562,7 @@
    "name": "Ombor avtomobillarining yoqilg‘i sarfi qancha?",
    "passed": true,
    "detail": "",
-   "seconds": 1.0920398330199532
+   "seconds": 1.0893798749893904
   },
   {
    "id": "D-none-4",
@@ -570,7 +570,7 @@
    "name": "Shartnomada valyuta kursi qaysi bank bo‘yicha olinadi?",
    "passed": true,
    "detail": "",
-   "seconds": 0.5722436669748276
+   "seconds": 1.6351592079736292
   },
   {
    "id": "D-none-5",
@@ -578,7 +578,7 @@
    "name": "Korporativ ziyofat qachon bo‘ladi?",
    "passed": true,
    "detail": "",
-   "seconds": 0.5937232499709353
+   "seconds": 1.6229949159896933
   },
   {
    "id": "E-01",
@@ -586,7 +586,7 @@
    "name": "“30 kun”ni “45 kun”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.6514439170132391
+   "seconds": 1.1042487919912674
   },
   {
    "id": "E-02",
@@ -594,7 +594,7 @@
    "name": "“0,1%”ni “0,2%”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.6442109160125256
+   "seconds": 1.1034845829708502
   },
   {
    "id": "E-03",
@@ -602,7 +602,7 @@
    "name": "“10 ish kuni”ni “7 ish kuni”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.687504458008334
+   "seconds": 1.1117693330161273
   },
   {
    "id": "E-04",
@@ -610,7 +610,7 @@
    "name": "“12 oy”ni “24 oy”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.6601180830039084
+   "seconds": 1.6335709170089103
   },
   {
    "id": "E-05",
@@ -618,7 +618,7 @@
    "name": "“2026-12-31”ni “2027-06-30”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.6187918750219978
+   "seconds": 1.6317171669797972
   },
   {
    "id": "E-06",
@@ -626,7 +626,7 @@
    "name": "“250 000 000”ni “300 000 000”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.1341174999834038
+   "seconds": 1.6852768340031616
   },
   {
    "id": "E-07",
@@ -634,7 +634,7 @@
    "name": "“Samarqand”ni “Buxoro”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.1560386249911971
+   "seconds": 1.6559066670015454
   },
   {
    "id": "E-08",
@@ -642,7 +642,7 @@
    "name": "“15 kun”ni “20 kun”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.6212735419976525
+   "seconds": 1.1046645840397105
   },
   {
    "id": "E-09",
@@ -650,7 +650,7 @@
    "name": "“kun”ni “kalendar kun”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 2.1195410420186818
+   "seconds": 1.5840025420184247
   },
   {
    "id": "E-10",
@@ -658,7 +658,7 @@
    "name": "“90 kun”ni “60 kun”ga o‘zgartir",
    "passed": true,
    "detail": "",
-   "seconds": 1.1163517920067534
+   "seconds": 1.0825550830340944
   },
   {
    "id": "E-original",
@@ -674,7 +674,7 @@
    "name": "S01: begona tenant hujjatni/faylni ocha olmaydi",
    "passed": true,
    "detail": "404/404",
-   "seconds": 0.015748083009384573
+   "seconds": 0.013637791969813406
   },
   {
    "id": "S-02",
@@ -682,7 +682,7 @@
    "name": "S01: begona tenant qidiruvi bo‘sh",
    "passed": true,
    "detail": "[]",
-   "seconds": 0.009153999970294535
+   "seconds": 0.007556374999694526
   },
   {
    "id": "S-03",
@@ -690,31 +690,31 @@
    "name": "S01: begona tenant vazifa/suhbatni ko‘rmaydi",
    "passed": true,
    "detail": "task 404, xabarlar []",
-   "seconds": 0.0442757080309093
+   "seconds": 0.04651866597123444
   },
   {
    "id": "S-04",
    "category": "adversarial",
    "name": "S01: begona tenant capability’si bilan Tool API",
    "passed": true,
-   "detail": "{'status_code': 200, 'status': 'ok', 'data': {'mode': 'full_text', 'notes': [], 'results': []}, 'source_refs': [], 'warnings': [], 'error_code': None, 'error_message': None, 'trace_id': '496c82db81774",
-   "seconds": 0.02270237501943484
+   "detail": "{'status_code': 200, 'status': 'ok', 'data': {'mode': 'full_text', 'notes': [], 'results': []}, 'source_refs': [], 'warnings': [], 'error_code': None, 'error_message': None, 'trace_id': '6477a071a9114",
+   "seconds": 0.022210458002518862
   },
   {
    "id": "S-05",
    "category": "adversarial",
    "name": "Soxtalashtirilgan capability rad etiladi",
    "passed": true,
-   "detail": "{'status_code': 403, 'code': 'INVALID_CAPABILITY', 'message': 'Capability imzosi noto‘g‘ri.', 'retryable': False, 'trace_id': '359dcc7b186f4a0cb8b6ad40875b1a58'}",
-   "seconds": 0.010824166995007545
+   "detail": "{'status_code': 403, 'code': 'INVALID_CAPABILITY', 'message': 'Capability imzosi noto‘g‘ri.', 'retryable': False, 'trace_id': '3de1d7a09a8543a39381002ebcf16616'}",
+   "seconds": 0.009666832978837192
   },
   {
    "id": "S-06",
    "category": "adversarial",
    "name": "Ruxsatsiz vosita (savdo agenti → hujjat tahriri) rad etiladi",
    "passed": true,
-   "detail": "{'status_code': 403, 'code': 'FORBIDDEN', 'message': 'Bu vosita uchun vakolat yo‘q.', 'retryable': False, 'trace_id': 'dfd25a52b6634d658435f1503f2efd6b'}",
-   "seconds": 0.01283854100620374
+   "detail": "{'status_code': 403, 'code': 'FORBIDDEN', 'message': 'Bu vosita uchun vakolat yo‘q.', 'retryable': False, 'trace_id': 'c574c3759ea94097ad9b24f8cbe7322a'}",
+   "seconds": 0.012237457965966314
   },
   {
    "id": "S-07",
@@ -722,7 +722,7 @@
    "name": "Viewer hujjat tahrir qila olmaydi",
    "passed": true,
    "detail": "ko‘rish 200, draft 403",
-   "seconds": 0.13102229102514684
+   "seconds": 0.11742575000971556
   },
   {
    "id": "S-08",
@@ -730,7 +730,7 @@
    "name": "D06: hujjat ichidagi buyruq bajarilmaydi",
    "passed": true,
    "detail": "hujjatlar 3->3, draft []",
-   "seconds": 1.1004402919788845
+   "seconds": 1.0804637920227833
   },
   {
    "id": "S-09",
@@ -738,7 +738,7 @@
    "name": "CSRF tokensiz o‘zgartiruvchi so‘rov rad etiladi",
    "passed": true,
    "detail": "403",
-   "seconds": 0.001974457991309464
+   "seconds": 0.001630915969144553
   },
   {
    "id": "S-10",
@@ -746,7 +746,7 @@
    "name": "Autentifikatsiyasiz SSE rad etiladi",
    "passed": true,
    "detail": "401",
-   "seconds": 0.0101567090023309
+   "seconds": 0.009652832988649607
   }
  ]
 }

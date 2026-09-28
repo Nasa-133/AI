@@ -1427,7 +1427,7 @@ export interface components {
             /** Title */
             title?: string | null;
             /** Type */
-            type?: ("kpi" | "line" | "bar" | "table" | "text") | null;
+            type?: ("kpi" | "line" | "area" | "bar" | "stacked_bar" | "pie" | "funnel" | "heatmap" | "table" | "text") | null;
         };
     };
     responses: never;

@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowLeft, History, LayoutGrid, Lock, Pencil, RefreshCw, RotateCcw, Share2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, Filter, History, LayoutGrid, Lock, Pencil, RefreshCw, RotateCcw, Share2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
@@ -9,6 +9,10 @@ import { useDashboard, useMetricNames, useRefreshDashboard, useRunQuery } from "
 import { EditPanel, SharePanel, VersionsPanel } from "./DashboardPanels";
 import { DIMENSION_LABEL, drillQuery, loadView, saveView, type DrillStep } from "./drill";
 import styles from "./dashboards.module.css";
+import {
+  applyFilter, isActive, NO_FILTER, PERIOD_LABEL, previousRange, spanFor,
+  type DashboardFilter, type PeriodPreset,
+} from "./filters";
 import { useFreshness } from "./freshness";
 import { ResultTable } from "./ResultTable";
 import type { QueryResult, Widget } from "./types";
@@ -66,6 +70,66 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
 
   const d = dashboard.data;
   const last = steps.length ? results[steps.length - 1] : undefined;
+
+  // --- Dashboard filtrlari (davr, filial) va KPI taqqoslash — faqat so‘rov huquqi borlarga. ---
+  const filterKey = `abo.dashboard.filter.${id}`;
+  const [filter, setFilter] = useState<DashboardFilter>(() => {
+    try { return JSON.parse(sessionStorage.getItem(filterKey) ?? "null") ?? NO_FILTER; } catch { return NO_FILTER; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem(filterKey, JSON.stringify(filter)); } catch { /* saqlanmasa ham ishlaydi */ }
+  }, [filterKey, filter]);
+  const [results2, setResults2] = useState<Record<string, QueryResult>>({});
+  const [fetchedBranches, setFetchedBranches] = useState<Record<string, string>>({});
+  const today = useMemo(() => new Date(), []);
+  const active = allowDrill && isActive(filter);
+  const sig = `${d?.version ?? 0}|${JSON.stringify(filter)}`;
+
+  // Filial ro‘yxati: widget natijalaridan; bo‘lmasa (masalan, faqat KPI) — bitta yengil so‘rovdan.
+  const dataBranches = useMemo(() => {
+    const names: Record<string, string> = {};
+    for (const w of d?.widgets ?? []) {
+      const cols = w.data?.columns ?? [];
+      const code = cols.findIndex((c) => c.name === "branch"), name = cols.findIndex((c) => c.name === "branch_name");
+      if (code >= 0) w.data!.rows.forEach((row) => { if (row[code]) names[row[code]!] = (name >= 0 && row[name]) || row[code]!; });
+    }
+    return names;
+  }, [d]);
+  const branchOptions = Object.keys(dataBranches).length ? dataBranches : fetchedBranches;
+
+  useEffect(() => {
+    if (!d || !allowDrill) return;
+    let cancelled = false;
+    const queried = d.widgets.filter((w) => w.query && w.status === "ready");
+    const keep = (key: string) => (r: QueryResult) => {
+      if (!cancelled) setResults2((prev) => ({ ...prev, [key]: r }));
+    };
+    if (!Object.keys(dataBranches).length && queried[0]?.query) {
+      const q = queried[0].query;
+      void mutateAsync({ ...q, dimensions: ["branch"], filters: {}, limit: null, order_by: null })
+        .then((r) => {
+          if (cancelled) return;
+          const c = r.columns.findIndex((x) => x.name === "branch"), n = r.columns.findIndex((x) => x.name === "branch_name");
+          setFetchedBranches(Object.fromEntries(r.rows.map((row) => [row[c]!, (n >= 0 && row[n]) || row[c]!])));
+        }).catch(() => undefined);
+    }
+    for (const w of queried) {
+      const spec = applyFilter(w.query!, filter, today);
+      if (spec) void mutateAsync(spec).then(keep(`${sig}|cur|${w.id}`)).catch(() => undefined);
+      if (w.type === "kpi") {
+        const base = spec ?? w.query!;
+        void mutateAsync({ ...base, date_range: previousRange(base.date_range) })
+          .then(keep(`${sig}|prev|${w.id}`)).catch(() => undefined);
+      }
+    }
+    return () => { cancelled = true; };
+  }, [d, allowDrill, filter, today, mutateAsync, sig, dataBranches]);
+  const overrideOf = (wid: string) => (active ? results2[`${sig}|cur|${wid}`] ?? null : null);
+  const previousOf = (wid: string) => results2[`${sig}|prev|${wid}`] ?? null;
+
+  const toggleBranch = (code: string) => setFilter((f) => ({
+    ...f, branches: f.branches.includes(code) ? f.branches.filter((b) => b !== code) : [...f.branches, code],
+  }));
 
   return (
     <div className={styles.overlay} role="region" aria-label="Dashboard oynasi">
@@ -136,12 +200,37 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
             )}
           </section>
         ) : (
-          <div className={styles.grid}>
-            {d?.widgets.map((w) => (
-              <WidgetView key={w.id} widget={w} dashboardId={id} metricNames={metricNames} allowDrill={allowDrill}
-                          onDrill={(widget, member) => drill(widget.query, member, 0)} />
-            ))}
-          </div>
+          <>
+            {allowDrill && d && d.widgets.some((w) => w.query) && (
+              <div className={styles.filterBar} role="group" aria-label="Dashboard filtrlari">
+                <span className="icon-text muted"><Filter aria-hidden /> Filtr</span>
+                <label className="sr-only" htmlFor="dash-period">Davr</label>
+                <select id="dash-period" className="select select-sm select-auto" value={filter.period}
+                        onChange={(e) => setFilter((f) => ({ ...f, period: e.target.value as PeriodPreset }))}>
+                  {(Object.keys(PERIOD_LABEL) as PeriodPreset[]).map((p) => <option key={p} value={p}>{PERIOD_LABEL[p]}</option>)}
+                </select>
+                <div className={styles.chips} aria-label="Filiallar">
+                  {Object.entries(branchOptions).sort(([a], [b]) => a.localeCompare(b)).map(([code, name]) => (
+                    <button key={code} className="btn btn-sm btn-toggle" aria-pressed={filter.branches.includes(code)}
+                            onClick={() => toggleBranch(code)} title={name}>{name}</button>
+                  ))}
+                </div>
+                {isActive(filter) && (
+                  <button className="btn btn-sm btn-ghost" onClick={() => setFilter(NO_FILTER)}><X aria-hidden /> Tozalash</button>
+                )}
+              </div>
+            )}
+            <div className={styles.grid}>
+              {d?.widgets.map((w) => (
+                <div key={w.id} className={styles.cell} style={{ "--span": spanFor(w) } as CSSProperties}>
+                  <WidgetView widget={w} dashboardId={id} metricNames={metricNames} allowDrill={allowDrill}
+                              override={overrideOf(w.id)} previous={previousOf(w.id)}
+                              filterNote={active && !w.query && w.type !== "text" ? "Filtr qo‘llanmaydi" : null}
+                              onDrill={(widget, member) => drill(widget.query, member, 0)} />
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

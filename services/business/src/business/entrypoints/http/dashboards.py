@@ -41,7 +41,8 @@ async def _viewer(ctx: AuthContext, container: Container) -> Viewer:
 class WidgetEdit(BaseModel):
     id: str = Field(max_length=20)
     title: str | None = Field(default=None, max_length=200)
-    type: Literal["kpi", "line", "bar", "table", "text"] | None = None
+    type: Literal["kpi", "line", "area", "bar", "stacked_bar", "pie", "funnel", "heatmap",
+                  "table", "text"] | None = None
 
 
 class DashboardEdit(BaseModel):

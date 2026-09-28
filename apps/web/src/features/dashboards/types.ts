@@ -19,11 +19,12 @@ export type QuerySpec = {
   filters: { branch_codes?: string[] | null; product_codes?: string[] | null; customer_codes?: string[] | null };
   currency: string | null;
   limit?: number | null;
+  order_by?: { metric_id: string; direction: "desc" | "asc" } | null;
 };
 export type Widget = {
   id: string;
   title: string;
-  type: "kpi" | "line" | "bar" | "table" | "text";
+  type: "kpi" | "line" | "area" | "bar" | "stacked_bar" | "pie" | "funnel" | "heatmap" | "table" | "text";
   query_spec_id: string | null;
   text: string | null;
   data: QueryResult | null;

@@ -11,6 +11,8 @@ test("drill-down: oy → filial → mahsulot, breadcrumb va sessiyada tiklanish 
   await page.getByRole("link", { name: "Dashboardni ochish" }).click({ timeout: 30_000 });
 
   const win = page.getByRole("region", { name: "Dashboard oynasi" });
+  // Grafik birinchi; drill-down — grafik ustunini yoki jadval qatorini bosish.
+  await win.getByRole("button", { name: "Ma’lumot jadvali" }).first().click();
   await win.getByRole("button", { name: "2026-01 ›" }).click();
   const crumbs = win.getByRole("navigation", { name: "Drill-down yo‘li" });
   await expect(crumbs).toContainText("2026-01 → Filial");

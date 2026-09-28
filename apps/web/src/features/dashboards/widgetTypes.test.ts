@@ -14,13 +14,18 @@ const widget = (dims: string[], rows: number): Widget => ({
 });
 
 describe("allowedTypes", () => {
-  it("oy kesimi: chiziqli, ustunli, jadval", () => {
-    expect(allowedTypes(widget(["month"], 4))).toEqual(["line", "bar", "table"]);
+  it("oy kesimi: chiziqli, maydonli, ustunli, ulush emas (vaqt)", () => {
+    expect(allowedTypes(widget(["month"], 4))).toEqual(["line", "area", "bar", "pie", "funnel", "table"]);
   });
   it("kesimsiz bitta qator: KPI yoki jadval", () => {
     expect(allowedTypes(widget([], 1))).toEqual(["kpi", "table"]);
   });
-  it("filial kesimi: chiziqli emas", () => {
-    expect(allowedTypes(widget(["branch"], 3))).toEqual(["bar", "table"]);
+  it("filial kesimi: ustunli, doiraviy, voronka", () => {
+    expect(allowedTypes(widget(["branch"], 3))).toEqual(["bar", "pie", "funnel", "table"]);
+  });
+  it("ikki kesim: ustma-ust va issiqlik xaritasi; ko‘p a’zoda doiraviy yo‘q", () => {
+    expect(allowedTypes(widget(["month", "branch"], 20))).toEqual(
+      ["line", "area", "bar", "stacked_bar", "heatmap", "table"]);
+    expect(allowedTypes(widget(["product"], 40))).toEqual(["bar", "funnel", "table"]);
   });
 });
