@@ -86,6 +86,19 @@ class SqlIntegrationsStore:
             " status, requested_by, requested_at) VALUES (:t, :id, :source, :version,"
             " 'requested', :by, now())"), {"t": self._t, **run})
 
+    async def due_for_auto_sync(self, connectors: tuple[str, ...],
+                                interval_seconds: int) -> list[dict[str, Any]]:
+        rows = (await self._c.execute(text(
+            "SELECT s.id, s.created_by FROM integrations.data_sources s"
+            " LEFT JOIN integrations.sync_runs r"
+            "   ON r.tenant_id = s.tenant_id AND r.id = s.last_sync_run_id"
+            " WHERE s.connector_id = ANY(:c) AND s.mapping_version IS NOT NULL"
+            "   AND s.status IN ('ready', 'synced', 'failed')"
+            "   AND (r.requested_at IS NULL"
+            "        OR r.requested_at < now() - make_interval(secs => :i))"
+            " ORDER BY s.id"), {"c": list(connectors), "i": interval_seconds})).mappings()
+        return [dict(r) for r in rows.all()]
+
     async def finish_sync_run(self, run_id: UUID, status: str, result: dict[str, Any]) -> None:
         await self._c.execute(text(
             "UPDATE integrations.sync_runs SET status = :s, result = CAST(:r AS jsonb),"

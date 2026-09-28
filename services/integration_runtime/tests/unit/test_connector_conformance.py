@@ -1,7 +1,7 @@
 """Connector conformance suite (TZ 13.10, 13.15 gate 4; qabul I01, I02).
 
-Har connector — mavjud ikkitasi va faqat shu testda yozilgan uchinchi “sintetik” connector —
-bir xil Connector porti kontraktidan o‘tadi. Uchinchi connector uchun Sync Engine, domen, Core,
+Har connector — fayl, demo ERP, ERP REST API (tools/fake_erp ilovasiga qarshi) va faqat shu
+testda yozilgan “sintetik” connector — bir xil Connector porti kontraktidan o‘tadi. Uchinchi connector uchun Sync Engine, domen, Core,
 AI va Web kodida hech narsa o‘zgarmaydi (I01): u faqat portni amalga oshiradi.
 I02: CSV import va demo ERP bir xil faylni bir xil kanonik batch’ga aylantiradi (checksum teng).
 """
@@ -10,14 +10,17 @@ import csv
 import json
 import re
 import shutil
+import sys
 from collections.abc import AsyncIterator
 from pathlib import Path
 from uuid import uuid4
 
+import httpx
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 
 from integration_runtime.adapters.connectors import DemoErpConnector, FileImportConnector
+from integration_runtime.adapters.erp_api import ErpApiConnector
 from integration_runtime.application.sync_engine import SyncEngine
 from integration_runtime.domain.mapping import SourceConfig, SourceMapping
 from integration_runtime.domain.templates import suggest
@@ -32,6 +35,21 @@ from integration_runtime.ports.connector import (
 
 ROOT = Path(__file__).resolve().parents[4]
 DEMO = ROOT / "fixtures/synthetic/demo"
+sys.path.insert(0, str(ROOT / "tools"))
+from fake_erp.app import create_app  # noqa: E402
+from fake_erp.erp import ErpData  # noqa: E402
+
+FAKE_ERP_KEY = "test-erp-key"
+_ERP_DATA: list[ErpData] = []
+
+
+def fake_erp_connector(**app_kwargs: object) -> ErpApiConnector:
+    """ERP connector soxta ERP ilovasiga (tarmoqsiz, ASGI) ulangan; ma’lumot bir marta yuklanadi."""
+    if not _ERP_DATA:
+        _ERP_DATA.append(ErpData.load(DEMO))
+    app = create_app(data=_ERP_DATA[0], api_key=FAKE_ERP_KEY, **app_kwargs)  # type: ignore[arg-type]
+    return ErpApiConnector("http://erp.test", FAKE_ERP_KEY,
+                           transport=httpx.ASGITransport(app=app))
 SCHEMAS = {
     "sales.order_line": ROOT / "contracts/canonical/sales/order_line.v1.json",
     "sales.return": ROOT / "contracts/canonical/sales/return.v1.json",
@@ -101,10 +119,11 @@ def connectors(tmp: Path) -> list[tuple[Connector, SourceHandle, str]]:
         (FileImportConnector(storage, work_dir=tmp), handle("sotuvlar.csv"), "sales.order_line"),
         (DemoErpConnector(DEMO), handle(), "sales.return"),
         (SyntheticApiConnector(rows), handle(), "sales.order_line"),
+        (fake_erp_connector(), handle(), "sales.order_line"),
     ]
 
 
-@pytest.fixture(params=["file_import", "demo_erp", "synthetic_api"])
+@pytest.fixture(params=["file_import", "demo_erp", "synthetic_api", "erp_api"])
 def subject(request: pytest.FixtureRequest, tmp_path: Path) -> tuple[Connector, SourceHandle, str]:
     return next(c for c in connectors(tmp_path) if c[0].manifest.connector_id == request.param)
 
@@ -131,9 +150,9 @@ async def test_discovery_contract(subject: tuple[Connector, SourceHandle, str]) 
 
 async def test_rows_are_ordered_raw_strings(subject: tuple[Connector, SourceHandle, str]) -> None:
     connector, source, entity = subject
-    previous = 1
+    previous = 0
     async for line, row in connector.read_rows(source, entity):
-        assert line > previous  # manbadagi fizik satr raqami (sarlavha — 1)
+        assert line > previous  # manbadagi tartib raqami (CSV’da fizik satr, sarlavha — 1)
         previous = line
         assert all(v is None or isinstance(v, str) for v in row.values())  # xom — tip yo‘q
         if line > 60:

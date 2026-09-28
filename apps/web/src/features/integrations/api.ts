@@ -54,6 +54,30 @@ async function uploadFile(file: File): Promise<{ id: string }> {
   return body;
 }
 
+/** ERP bir nechta obyektni beradi; har biri alohida manba (o‘z mapping’i va sinxroni bilan). */
+export const ERP_OBJECTS = [
+  { entity: "sales.order_line", name: "ERP: Sotuvlar" },
+  { entity: "sales.return", name: "ERP: Qaytarishlar" },
+  { entity: "inventory.movement", name: "ERP: Ombor harakatlari" },
+  { entity: "finance.receivable", name: "ERP: Debitorlik" },
+] as const;
+
+export function useConnectErp() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const created: { id: string }[] = [];
+      for (const o of ERP_OBJECTS) {
+        created.push(await (unwrap(api.POST("/api/v1/integrations", {
+          body: { connector_id: "erp_api", name: o.name, entity: o.entity },
+        })) as Promise<{ id: string }>));
+      }
+      return created;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["sources"] }),
+  });
+}
+
 export function useCreateSource() {
   const qc = useQueryClient();
   return useMutation({

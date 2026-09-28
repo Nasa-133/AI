@@ -49,9 +49,12 @@ def _json(row: dict[str, Any]) -> dict[str, Any]:
 
 
 class SourceIn(BaseModel):
-    connector_id: Literal["file_import", "demo_erp"]
+    connector_id: Literal["file_import", "demo_erp", "erp_api"]
     name: str = Field(default="", max_length=200)
     upload_id: UUID | None = None
+    # Ko‘p obyektli manba (ERP): shu manba qaysi obyekt uchun (mapping oynasida oldindan tanlanadi).
+    entity: Literal["sales.order_line", "sales.return", "inventory.movement",
+                    "finance.receivable"] | None = None
 
 
 class MappingItem(BaseModel):
@@ -92,7 +95,7 @@ async def create_source(body: SourceIn, ctx: AuthCtx, container: ContainerDep) -
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
         return await _service(container, conn, ctx).create(ctx.user_id, body.connector_id,
-                                                           body.name, body.upload_id)
+                                                           body.name, body.upload_id, body.entity)
 
 
 @router.get("/integrations")

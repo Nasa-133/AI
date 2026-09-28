@@ -100,3 +100,49 @@ async def test_retention_and_document_jobs(client: httpx.AsyncClient, app_engine
                               " event_type = 'CleanupDocument.v1' AND"
                               " envelope->'payload'->>'cleanup_job_id' = :j", j=str(job))
         assert published[0][0] == 1  # type: ignore[index]
+
+
+async def test_erp_sources_are_synced_periodically(client: httpx.AsyncClient,
+                                                   app_engine: AsyncEngine) -> None:
+    async with owner(client, "ERP MChJ") as (c, tenant):
+        r = await c.post("/api/v1/integrations", headers=csrf(c), json={
+            "connector_id": "erp_api", "name": "ERP: Sotuvlar", "entity": "sales.order_line"})
+        assert r.status_code == 202, r.text
+        erp = r.json()["id"]
+        detail = (await c.get(f"/api/v1/integrations/{erp}")).json()
+        assert detail["entity"] == "sales.order_line" and detail["status"] == "discovering"
+        # Mapping tasdiqlanmagan manba avtomatik sinxronlanmaydi.
+        assert (await maintain(client, tenant)).auto_syncs == 0
+
+        async def sync_requests() -> int:
+            rows = await sql(app_engine, tenant,
+                             "SELECT count(*) FROM integrations.sync_runs WHERE data_source_id = :s",
+                             s=UUID(erp))
+            return int(rows[0][0])  # type: ignore[index]
+
+        await sql(app_engine, tenant, "UPDATE integrations.data_sources SET status = 'synced',"
+                  " mapping_version = 1 WHERE id = :s", s=UUID(erp))
+        assert (await maintain(client, tenant)).auto_syncs == 1
+        assert await sync_requests() == 1
+        assert (await c.get(f"/api/v1/integrations/{erp}")).json()["status"] == "syncing"
+        # Sinxron davom etayotganda yoki yaqinda bo‘lgan bo‘lsa — yangi so‘rov yo‘q.
+        assert (await maintain(client, tenant)).auto_syncs == 0
+        await sql(app_engine, tenant,
+                  "UPDATE integrations.data_sources SET status = 'failed' WHERE id = :s",
+                  s=UUID(erp))
+        assert (await maintain(client, tenant)).auto_syncs == 0
+        # Oraliq o‘tgach (standart 15 daqiqa) muvaffaqiyatsiz sinxron ham qayta uriniladi.
+        await sql(app_engine, tenant, "UPDATE integrations.sync_runs SET requested_at ="
+                  " now() - interval '1 hour' WHERE data_source_id = :s", s=UUID(erp))
+        assert (await maintain(client, tenant)).auto_syncs == 1
+        assert await sync_requests() == 2
+        events = await sql(app_engine, tenant,
+                           "SELECT envelope->'payload'->>'connector_id' FROM messaging.outbox"
+                           " WHERE event_type = 'SyncSource.v1' AND tenant_id = :t", t=tenant)
+        assert [e[0] for e in events] == ["erp_api", "erp_api"]  # type: ignore[index]
+        # Qo‘lda: muvaffaqiyatsiz (mapping bor) manbani qayta sinxronlash mumkin.
+        await sql(app_engine, tenant,
+                  "UPDATE integrations.data_sources SET status = 'failed' WHERE id = :s",
+                  s=UUID(erp))
+        r = await c.post(f"/api/v1/integrations/{erp}/sync", headers=csrf(c))
+        assert r.status_code == 202, r.text

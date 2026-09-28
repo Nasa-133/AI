@@ -18,12 +18,14 @@ make migrate     # uch baza migratsiyasi
 ## Butun stek
 
 ```bash
-make stack       # API :8010, AI embed :8011, 3 worker, web http://localhost:3010
+make stack       # API :8010, AI embed :8011, 3 worker, web http://localhost:3010, soxta ERP :8070
 ```
 
 Loglar: `.dev-logs/`. Taklif va parol tiklash havolalari lokalda API logiga yoziladi
 (`BUSINESS_NOTIFIER=log`). Ro‘yxatdan o‘tish: http://localhost:3010/register → MFA → Sozlamalar
-(hisob qoidalarini tasdiqlash) → Integratsiyalar (`fixtures/synthetic/demo/*.csv` yuklang).
+(hisob qoidalarini tasdiqlash) → Integratsiyalar → **“ERP ulash (API)”** (soxta ERP; mapping’larni
+tasdiqlab sinxronlang) yoki `fixtures/synthetic/demo/*.csv` ni yuklang. ERP ulash va haqiqiy
+tizimga o‘tish: [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md).
 
 Sintetik ma’lumot: `make synthetic` (19 000 satr); golden to‘plam `fixtures/synthetic/golden`.
 

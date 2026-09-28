@@ -7,6 +7,7 @@ osilgan vazifalar `FOR UPDATE SKIP LOCKED`, tozalash qayta urinishi idempotent.
 import asyncio
 import logging
 from dataclasses import dataclass, field
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import text
@@ -16,6 +17,8 @@ from business.contexts.documents.adapters.files import S3FileStore
 from business.contexts.documents.adapters.sql_store import SqlDocumentStore
 from business.contexts.documents.application.maintenance import DocumentMaintenance
 from business.contexts.governance.public import SqlAuditLog, SqlPrivacySettings
+from business.contexts.integrations.adapters.sql import SqlIntegrationsStore
+from business.contexts.integrations.application.sources import SourceService
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
 from business.contexts.workspace.application.maintenance import WorkspaceMaintenance
 from business.platform.db import tenant_transaction
@@ -34,7 +37,15 @@ class MaintenanceStats:
     drafts_purged: int = 0
     conversations_purged: int = 0
     audit_purged: int = 0
+    auto_syncs: int = 0
     errors: list[str] = field(default_factory=list)
+
+
+class _NoUploads:
+    """Fon ishi fayl yuklamaydi (faqat davriy sinxron)."""
+
+    async def put(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        raise RuntimeError("fon ishida fayl yuklash yo‘q")
 
 
 async def tenant_ids(container: Container) -> list[UUID]:
@@ -59,6 +70,10 @@ async def run_for_tenant(container: Container, tenant_id: UUID, stats: Maintenan
         stats.audit_purged += await SqlAuditLog(conn, tenant_id).purge(s.retention_audit_days)
         # Psevdonim tokenlari faqat vazifa davomida kerak (javob allaqachon tiklangan).
         await SqlPrivacySettings(conn, tenant_id).purge_tokens(days=7)
+        if s.erp_auto_sync_seconds:
+            stats.auto_syncs += await SourceService(
+                SqlIntegrationsStore(conn, tenant_id), _NoUploads(), BoundOutbox(conn, tenant_id),
+                tenant_id).auto_sync(s.erp_auto_sync_seconds)
 
 
 async def run_maintenance(container: Container) -> MaintenanceStats:
@@ -78,7 +93,7 @@ async def maintenance_loop(container: Container, stop: asyncio.Event) -> None:
     while not stop.is_set():
         stats = await run_maintenance(container)
         if (stats.reaped or stats.cleanups_retried or stats.drafts_purged
-                or stats.conversations_purged or stats.errors):
+                or stats.conversations_purged or stats.auto_syncs or stats.errors):
             logger.info("Fon ishlari: %s", stats)
         try:
             await asyncio.wait_for(stop.wait(), timeout=interval)

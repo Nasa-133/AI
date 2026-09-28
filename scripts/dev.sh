@@ -20,6 +20,10 @@ AI_PORT="${AI_PORT:-8011}"
 export BUSINESS_AI_RUNTIME_URL="http://localhost:$AI_PORT" AI_S3_ACCESS_KEY=abo AI_S3_SECRET_KEY=abo_dev_password
 export INTEGRATION_DATABASE_URL=postgresql+asyncpg://integration_app:integration_app_dev@localhost:55432/integration_runtime
 export INTEGRATION_AMQP_URL=amqp://abo:abo_dev@localhost:5672/ INTEGRATION_S3_ACCESS_KEY=abo INTEGRATION_S3_SECRET_KEY=abo_dev_password
+# Soxta ERP (tools/fake_erp): erp_api connector shunga ulanadi. Haqiqiy ERP’da URL/kalit boshqa.
+ERP_PORT="${FAKE_ERP_PORT:-8070}"
+export FAKE_ERP_API_KEY="${FAKE_ERP_API_KEY:-fake-erp-dev-key}"
+export INTEGRATION_ERP_API_URL="http://localhost:$ERP_PORT" INTEGRATION_ERP_API_KEY="$FAKE_ERP_API_KEY"
 
 PIDS=()
 cleanup() { for p in "${PIDS[@]}"; do kill -TERM "$p" 2>/dev/null || true; done; wait 2>/dev/null || true; }
@@ -28,9 +32,10 @@ trap cleanup EXIT INT TERM
 make -C "$ROOT" migrate >/dev/null
 (cd "$ROOT/services/business" && exec uv run uvicorn business.bootstrap.app:create_app --factory --port "$PORT" >"$LOGS/api.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/business" && exec uv run python -m business.entrypoints.worker >"$LOGS/business-worker.log" 2>&1) & PIDS+=($!)
+(cd "$ROOT/services/integration_runtime" && exec uv run python ../../tools/fake_erp/app.py --port "$ERP_PORT" >"$LOGS/fake-erp.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/integration_runtime" && exec uv run python -m integration_runtime.bootstrap.worker >"$LOGS/integration-worker.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/ai_runtime" && exec uv run python -m ai_runtime.bootstrap.worker >"$LOGS/ai-worker.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/services/ai_runtime" && exec uv run uvicorn ai_runtime.bootstrap.app:create_app --factory --port "$AI_PORT" >"$LOGS/ai-api.log" 2>&1) & PIDS+=($!)
 (cd "$ROOT/apps/web" && BUSINESS_API_URL="http://localhost:$PORT" exec npx next dev --port "$WEB_PORT" >"$LOGS/web.log" 2>&1) & PIDS+=($!)
-echo "API: http://localhost:$PORT  ·  Web: http://localhost:$WEB_PORT  ·  loglar: $LOGS"
+echo "API: http://localhost:$PORT  ·  Web: http://localhost:$WEB_PORT  ·  Soxta ERP: http://localhost:$ERP_PORT  ·  loglar: $LOGS"
 wait

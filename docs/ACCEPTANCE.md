@@ -66,7 +66,7 @@ eval (fake) barcha toifalar 100%; yuklama — TZ 19 maqsadlari bajarildi; restor
 
 | ID | Holat | Dalil |
 |---|---|---|
-| I01 | ✅ | `integration_runtime .../test_connector_conformance.py` — 3 connector (fayl, demo ERP, test-only sintetik API) bitta suite’dan; Core/AI/Web o‘zgarmagan |
+| I01 | ✅ | `integration_runtime .../test_connector_conformance.py` — 4 connector (fayl, demo ERP, ERP REST API — soxta ERP’ga qarshi, test-only sintetik API) bitta suite’dan; Core/AI domeni o‘zgarmagan. Tizim testi: `tests/system/test_erp.py` |
 | I02 | ✅ | `test_connector_conformance.py::test_i02_csv_and_demo_erp_give_identical_canonical_batch` |
 | I03 | ✅ | `tests/system/test_degradation.py::test_i03_integration_down_import_waits_dashboards_marked_stale`; UI “Eskirgan” belgisi |
 | I04 | ✅ | `test_analytics.py::test_duplicate_batch_is_idempotent_and_quarantine`, `abo_messaging .../test_outbox_inbox.py::test_duplicate_delivery_is_processed_once` |

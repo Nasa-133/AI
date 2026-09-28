@@ -5,7 +5,7 @@ import { useState } from "react";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 import { useApproveMapping, type DiscoveredEntity, type MappingItem } from "./api";
-import { CANONICAL_STATUSES, statusValues } from "./statusMap";
+import { canonicalOptions, statusValues } from "./statusMap";
 
 const TRANSFORMS: MappingItem["transform"][] = ["text", "decimal", "decimal_or_null", "datetime_tz", "date", "status_map", "const"];
 
@@ -26,12 +26,12 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <p className="muted">
-        Fayl: <strong>{entity.source_name}</strong> → <span className="mono">{entity.entity}</span>
+        Manba: <strong>{entity.source_name}</strong> → <span className="mono">{entity.entity}</span>
         {" "}· moslik {Math.round(entity.match_score * 100)}%
       </p>
       <div style={{ overflowX: "auto" }}>
         <table className="table">
-          <thead><tr><th>Canonical maydon</th><th>Fayl ustuni</th><th>O‘girish</th><th>Doimiy qiymat</th></tr></thead>
+          <thead><tr><th>Canonical maydon</th><th>Manba ustuni</th><th>O‘girish</th><th>Doimiy qiymat</th></tr></thead>
           <tbody>
             {items.map((it, i) => (
               <tr key={it.canonical_field}>
@@ -67,8 +67,8 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
       </div>
       {statuses.length > 0 && (
         <div>
-          <h3>Holat qiymatlari</h3>
-          <p className="muted">Faqat “confirmed” holatidagi satrlar hisobga olinadi.</p>
+          <h3>{entity.entity === "inventory.movement" ? "Harakat turlari" : "Holat qiymatlari"}</h3>
+          {entity.entity !== "inventory.movement" && <p className="muted">Faqat “confirmed” holatidagi satrlar hisobga olinadi.</p>}
           {statuses.map((s, i) => (
             <div key={s.source_value} style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}>
               <span style={{ minWidth: 160 }}>{s.source_value}</span>→
@@ -76,7 +76,7 @@ export function MappingEditor({ sourceId, entity }: { sourceId: string; entity: 
                       aria-label={`${s.source_value} holati`}
                       onChange={(e) => setStatuses(statuses.map((x, j) => j === i ? { ...x, canonical_value: e.target.value } : x))}>
                 <option value="">— tanlang —</option>
-                {CANONICAL_STATUSES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {canonicalOptions(entity.entity).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           ))}

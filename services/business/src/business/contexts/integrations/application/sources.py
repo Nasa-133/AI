@@ -7,7 +7,13 @@ from uuid import UUID, uuid4
 
 from business.kernel.errors import BusinessError
 
-from ..domain.sources import SourceNotReady, SourceStatus, check_upload, requires_file
+from ..domain.sources import (
+    AUTO_SYNC_CONNECTORS,
+    SourceNotReady,
+    SourceStatus,
+    check_upload,
+    requires_file,
+)
 from ..ports.store import FileStore, IntegrationsStore, Outbox
 
 
@@ -39,7 +45,8 @@ class SourceService:
                 "sha256": ref["checksum_sha256"], "purpose": purpose}
 
     async def create(self, user_id: UUID, connector_id: str, name: str,
-                     upload_id: UUID | None) -> dict[str, Any]:
+                     upload_id: UUID | None, entity: str | None = None) -> dict[str, Any]:
+        """`entity` — ixtiyoriy ishora: ko‘p obyektli manbada (ERP) qaysi obyekt ulanmoqda."""
         object_ref = None
         if requires_file(connector_id):
             upload = await self._s.get_upload(upload_id) if upload_id else None
@@ -50,6 +57,8 @@ class SourceService:
         await self._s.add_source({"id": source_id, "name": name.strip()[:200] or connector_id,
                                   "connector": connector_id, "upload": upload_id,
                                   "status": SourceStatus.DISCOVERING.value, "by": user_id})
+        if entity:
+            await self._s.update_source(source_id, entity=entity)
         await self._outbox.publish("DiscoverSchema.v1", {
             "discovery_id": str(uuid4()), "data_source_id": str(source_id),
             "connector_id": connector_id, "object_ref": object_ref, "requested_by": str(user_id)},
@@ -80,7 +89,8 @@ class SourceService:
 
     async def sync(self, user_id: UUID, source_id: UUID) -> dict[str, Any]:
         source = await self._require(source_id)
-        if source["status"] not in (SourceStatus.READY, SourceStatus.SYNCED):
+        retry_failed = source["status"] == SourceStatus.FAILED and source["mapping_version"]
+        if source["status"] not in (SourceStatus.READY, SourceStatus.SYNCED) and not retry_failed:
             raise SourceNotReady("Avval mapping’ni tasdiqlang (manba tayyor emas).")
         object_ref = None
         if requires_file(source["connector_id"]):
@@ -98,6 +108,18 @@ class SourceService:
             "requested_by": str(user_id), "mapping_version": source["mapping_version"]},
             aggregate_id=source_id, aggregate_version=source["mapping_version"])
         return {"sync_run_id": str(run_id), "status": SourceStatus.SYNCING.value}
+
+    async def auto_sync(self, interval_seconds: int) -> int:
+        """Fon ishi: tashqi tizim manbalari oxirgi sinxrondan `interval` o‘tgach qayta o‘qiladi.
+
+        Muvaffaqiyatsiz sinxron ham shu oraliqda qayta uriniladi (ERP tiklangach o‘zi tuzaladi).
+        So‘rovchi — manbani ulagan foydalanuvchi (audit va sync_runs.requested_by uchun).
+        """
+        started = 0
+        for row in await self._s.due_for_auto_sync(AUTO_SYNC_CONNECTORS, interval_seconds):
+            await self.sync(row["created_by"], row["id"])
+            started += 1
+        return started
 
     async def detail(self, source_id: UUID) -> dict[str, Any]:
         return await self._require(source_id)

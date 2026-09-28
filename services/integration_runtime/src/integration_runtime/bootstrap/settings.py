@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _REPO = Path(__file__).resolve().parents[5]
@@ -20,6 +21,11 @@ class Settings(BaseSettings):
     # DEMO connector ma’lumotlari (sintetik). Productionda demo_erp o‘chiq bo‘ladi.
     demo_data_dir: Path = _REPO / "fixtures/synthetic/demo"
     enable_demo_connector: bool = True
+    # ERP REST API connector (`erp_api`). URL bo‘sh bo‘lsa connector yoqilmaydi.
+    # Lokal/demo: tools/fake_erp (make fake-erp) — http://localhost:8070.
+    erp_api_url: str = ""
+    erp_api_key: SecretStr = SecretStr("")
+    erp_api_page_size: int = 500
     worker_id: str = "integration-worker"
 
 

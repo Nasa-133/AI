@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     maintenance_interval_seconds: int = Field(default=60, ge=5)
     # I03: import/sync shuncha vaqt siljimasa dashboardlar “eskirgan” deb belgilanadi.
     data_stale_after_seconds: int = Field(default=300, ge=1)
+    # Tashqi tizim (ERP API) manbalarini avtomatik qayta sinxronlash oralig‘i; 0 — o‘chiq.
+    erp_auto_sync_seconds: int = Field(default=900, ge=0)
     retention_conversation_days: int = Field(default=90, ge=1)
     retention_draft_days: int = Field(default=90, ge=1)
     retention_audit_days: int = Field(default=365, ge=30)

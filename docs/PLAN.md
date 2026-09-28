@@ -348,3 +348,20 @@ P95 5.5 s → 2.0 s); pg_restore xatolari yashirin qolishi; S02 umuman amalga os
 
 Qolgan: real OpenAI bilan `make eval-openai` (kalit kerak); yuridik xulosa (TZ 18) va email
 kanali — [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
+
+### ERP integratsiyasi (soxta ERP bilan): ✅
+
+Yo‘riqnoma: [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) — ulash usullari, ma’lumot talablari,
+REST API shartnomasi, bosqichma-bosqich ulash va tekshirish, yangi connector yozish, diagnostika.
+
+- `tools/fake_erp` — shartnomaga mos soxta ERP REST API (Bearer kalit, izchil kursor, 429/503
+  simulyatsiyasi); demo tarixi + 2026-09-01 dan bugungacha “jonli” yangi hujjatlar. `make stack`
+  bilan :8070 da ishga tushadi.
+- Integration Runtime: `erp_api` connector (sahifa darajasida retry, `Retry-After`, kalit xatosi
+  qayta urinilmaydi), ERP maydonlari uchun mapping shablonlari (100% moslik).
+- Business: `erp_api` manbalari har 15 daqiqada avtomatik qayta sinxronlanadi
+  (`BUSINESS_ERP_AUTO_SYNC_SECONDS`); muvaffaqiyatsiz sinxronni qayta boshlash.
+- Web: “ERP ulash (API)” — 4 obyekt; holat xaritasi obyektga mos (ombor harakati turlari endi UI’da
+  ham ulanadi — avval faqat savdo holatlari taklif qilinardi).
+- Testlar: conformance (4 connector), ERP xatolari/kursor, avtomatik sinxron, tizim testi
+  (`tests/system/test_erp.py`), Playwright (`e2e/erp.spec.ts`).

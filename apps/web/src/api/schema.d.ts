@@ -1313,7 +1313,9 @@ export interface components {
              * Connector Id
              * @enum {string}
              */
-            connector_id: "file_import" | "demo_erp";
+            connector_id: "file_import" | "demo_erp" | "erp_api";
+            /** Entity */
+            entity?: ("sales.order_line" | "sales.return" | "inventory.movement" | "finance.receivable") | null;
             /**
              * Name
              * @default

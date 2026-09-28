@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 
-import { useCreateSource, useSource, useSources, useSync } from "@/features/integrations/api";
+import { useConnectErp, useCreateSource, useSource, useSources, useSync } from "@/features/integrations/api";
 import { useFreshness } from "@/features/dashboards/freshness";
 import { MappingEditor } from "@/features/integrations/MappingEditor";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 const STATUS: Record<string, [string, string]> = {
-  discovering: ["Fayl o‘qilmoqda", "badge badge-accent"],
+  discovering: ["Manba o‘qilmoqda", "badge badge-accent"],
   awaiting_mapping: ["Mapping tasdiqlanishi kerak", "badge badge-warning"],
   configuring: ["Mapping tekshirilmoqda", "badge badge-accent"],
   ready: ["Sinxronlashga tayyor", "badge"],
@@ -30,17 +30,22 @@ function Status({ status, id }: { status: string; id?: string }) {
 function SourceDetail({ id }: { id: string }) {
   const source = useSource(id);
   const sync = useSync(id);
-  const [choice, setChoice] = useState(0);
+  const [choice, setChoice] = useState<number | null>(null);
   const s = source.data;
   if (!s) return <div className="skeleton" style={{ height: 120 }} />;
   // Eng mos entity birinchi (backend moslik bo‘yicha saralaydi); qolganlari — tanlov sifatida.
   const entities = [...(s.discovery?.entities ?? [])].sort((a, b) => b.match_score - a.match_score);
-  const entity = entities[Math.min(choice, entities.length - 1)];
+  // Ko‘p obyektli manba (ERP): yaratishda ko‘rsatilgan obyekt oldindan tanlanadi.
+  const hinted = entities.findIndex((e) => e.entity === s.entity);
+  const index = choice ?? (hinted >= 0 ? hinted : 0);
+  const entity = entities[Math.min(index, entities.length - 1)];
+  const canSync = s.status === "ready" || s.status === "synced" || (s.status === "failed" && s.mapping_version != null);
   return (
     <section className="panel panel-pad" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <h2 style={{ marginRight: "auto" }}>{s.name}</h2>
         {s.connector_id === "demo_erp" && <span className="badge badge-warning">DEMO — haqiqiy ERP emas</span>}
+        {s.connector_id === "erp_api" && <span className="badge" title="Integration Runtime sozlamasidagi ERP API">ERP API</span>}
         <Status status={s.status} id={s.id} />
       </div>
       {s.error_message && (
@@ -51,7 +56,7 @@ function SourceDetail({ id }: { id: string }) {
           {entities.length > 1 && (
             <label className="field" style={{ maxWidth: 420 }}>
               <span>Fayl turi</span>
-              <select className="select" value={choice} onChange={(e) => setChoice(Number(e.target.value))}>
+              <select className="select" value={index} onChange={(e) => setChoice(Number(e.target.value))}>
                 {entities.map((e, i) => (
                   <option key={e.entity} value={i}>{e.entity} — moslik {Math.round(e.match_score * 100)}%</option>
                 ))}
@@ -61,12 +66,13 @@ function SourceDetail({ id }: { id: string }) {
           <MappingEditor key={`${entity.entity}:${entity.source_name}`} sourceId={id} entity={entity} />
         </>
       )}
-      {(s.status === "ready" || s.status === "synced") && (
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      {canSync && (
+        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <span className="muted">Mapping versiyasi: {s.mapping_version} · {s.entity}</span>
           <button className="btn btn-primary" disabled={sync.isPending} onClick={() => sync.mutate()}>
-            {s.status === "synced" ? "Qayta sinxronlash" : "Sinxronlash"}
+            {s.status === "ready" ? "Sinxronlash" : "Qayta sinxronlash"}
           </button>
+          {s.connector_id === "erp_api" && <span className="hint">ERP avtomatik qayta o‘qiladi (standart: har 15 daqiqada).</span>}
         </div>
       )}
       <ErrorNotice error={sync.error} />
@@ -77,6 +83,7 @@ function SourceDetail({ id }: { id: string }) {
 export default function IntegrationsPage() {
   const sources = useSources();
   const create = useCreateSource();
+  const connectErp = useConnectErp();
   const [selected, setSelected] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const current = selected ?? sources.data?.[0]?.id ?? null;
@@ -96,11 +103,16 @@ export default function IntegrationsPage() {
                   { onSuccess: ({ id }) => { setSelected(id); setFile(null); } })}>
           Yuklash
         </button>
+        <button className="btn" disabled={connectErp.isPending}
+                title="ERP REST API: sotuvlar, qaytarishlar, ombor, debitorlik — har biri alohida manba"
+                onClick={() => connectErp.mutate(undefined, { onSuccess: (list) => setSelected(list[0]?.id ?? null) })}>
+          ERP ulash (API)
+        </button>
         <button className="btn" disabled={create.isPending}
                 onClick={() => create.mutate({ connector: "demo_erp" }, { onSuccess: ({ id }) => setSelected(id) })}>
-          Demo ERP ulash (sintetik)
+          Demo ERP ulash (sintetik fayl)
         </button>
-        <ErrorNotice error={create.error} />
+        <ErrorNotice error={create.error ?? connectErp.error} />
       </section>
       <ErrorNotice error={sources.error} />
       {/* Tor ekranda (chat ochiq bo‘lsa ham) manbalar ro‘yxati tepaga o‘tadi. */}
@@ -116,7 +128,7 @@ export default function IntegrationsPage() {
             </button>
           ))}
         </nav>
-        {current && <div style={{ gridColumn: "1 / -1", minWidth: 0 }}><SourceDetail id={current} /></div>}
+        {current && <div style={{ gridColumn: "1 / -1", minWidth: 0 }}><SourceDetail key={current} id={current} /></div>}
       </div>
     </div>
   );

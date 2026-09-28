@@ -1011,10 +1011,28 @@
           "connector_id": {
             "enum": [
               "file_import",
-              "demo_erp"
+              "demo_erp",
+              "erp_api"
             ],
             "title": "Connector Id",
             "type": "string"
+          },
+          "entity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sales.order_line",
+                  "sales.return",
+                  "inventory.movement",
+                  "finance.receivable"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity"
           },
           "name": {
             "default": "",

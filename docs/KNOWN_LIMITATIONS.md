@@ -18,7 +18,8 @@ Yuridik/biznes qarorlari (TZ 24) alohida bo‘limda.
 | OCR yo‘q | Skaner PDF “OCR kerak” deb belgilanadi (D03) |
 | PDF tahriri DOCX sifatida saqlanadi | Asl PDF maketi saqlanmaydi |
 | XLSX import yo‘q | CSV (UTF-8) — aniq 415 xabari bilan |
-| Haqiqiy ERP connector’i yo‘q | CSV va demo ERP; connector SDK va conformance suite tayyor |
+| Haqiqiy ERP’ga ulanish sinalmagan | `erp_api` REST connector va soxta ERP tayyor ([INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)); faqat to‘liq sinxron, inkremental — P1 |
+| Ombor qoldig‘i metrikalari yo‘q | Harakatlar yuklanadi, katalogda qoldiq/aylanma metrikasi — P1 |
 | Agent profillari (ism sozlash, doimiy UUID) | Standart ismlar |
 | `awaiting_approval` holati | Mapping’da bor, tasdiq talab qiladigan qadam yo‘q |
 | Tasodifiy “ofis hayoti” animatsiyalari | Ongli yo‘q — harakat faqat backend holatiga bog‘langan |

@@ -10,6 +10,7 @@ from abo_messaging.rabbit import RabbitConsumer, RabbitPublisher, connect
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from ..adapters.connectors import DemoErpConnector, FileImportConnector
+from ..adapters.erp_api import ErpApiConnector
 from ..adapters.s3_storage import S3Storage
 from ..adapters.sql_uow import SqlUnitOfWorkFactory
 from ..application.handlers import CommandHandlers
@@ -30,6 +31,10 @@ async def main_async(settings: Settings) -> None:
     connectors: dict[str, Connector] = {"file_import": FileImportConnector(storage)}
     if settings.enable_demo_connector:
         connectors["demo_erp"] = DemoErpConnector(settings.demo_data_dir)
+    if settings.erp_api_url:
+        connectors["erp_api"] = ErpApiConnector(
+            settings.erp_api_url, settings.erp_api_key.get_secret_value(),
+            page_size=settings.erp_api_page_size)
 
     connection = await connect(settings.amqp_url)
     messages = MessageHandlers(CommandHandlers(connectors))

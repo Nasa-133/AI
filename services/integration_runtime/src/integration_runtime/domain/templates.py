@@ -120,7 +120,97 @@ TEMPLATES: tuple[Template, ...] = (
     ),
 )
 
-TEMPLATES_BY_ENTITY = {t.entity: t for t in TEMPLATES}
+# ERP REST API (erp_api connector, tools/fake_erp shartnomasi): inglizcha ERP maydonlari.
+_ERP_STATE = {"posted": "confirmed", "draft": "draft", "cancelled": "cancelled"}
+_ERP_KIND = {k: k for k in ("receipt", "sale", "return", "transfer_in", "transfer_out",
+                            "adjustment")}
+
+ERP_TEMPLATES: tuple[Template, ...] = (
+    Template(
+        entity="sales.order_line",
+        source_name="erp://sales-invoice-lines",
+        fields={
+            "source_id": ("line_id", T.TEXT, None),
+            "source_revision": ("updated_at", T.TEXT, None),
+            "document_number": ("invoice_no", T.TEXT, None),
+            "occurred_at": ("posted_at", T.DATETIME_TZ, None),
+            "branch_code": ("branch_code", T.TEXT, None),
+            "branch_name": ("branch_name", T.TEXT, None),
+            "product_code": ("item_code", T.TEXT, None),
+            "product_name": ("item_name", T.TEXT, None),
+            "customer_code": ("customer_code", T.TEXT, None),
+            "customer_name": ("customer_name", T.TEXT, None),
+            "quantity": ("qty", T.DECIMAL, None),
+            "unit_price": ("price", T.DECIMAL, None),
+            "gross_amount": ("amount", T.DECIMAL, None),
+            "discount_amount": ("discount", T.DECIMAL, None),
+            "discount_already_deducted": (None, T.CONST, "false"),
+            "vat_amount": ("vat", T.DECIMAL, None),
+            "amount_includes_vat": (None, T.CONST, "false"),
+            "currency": ("currency", T.TEXT, None),
+            "status": ("state", T.STATUS_MAP, None),
+            "cost_amount": ("cost", T.DECIMAL_OR_NULL, None),
+        },
+        status_map=_ERP_STATE,
+    ),
+    Template(
+        entity="sales.return",
+        source_name="erp://sales-returns",
+        fields={
+            "source_id": ("return_id", T.TEXT, None),
+            "source_revision": ("updated_at", T.TEXT, None),
+            "original_order_source_id": ("invoice_line_id", T.TEXT, None),
+            "occurred_at": ("posted_at", T.DATETIME_TZ, None),
+            "branch_code": ("branch_code", T.TEXT, None),
+            "product_code": ("item_code", T.TEXT, None),
+            "customer_code": ("customer_code", T.TEXT, None),
+            "quantity": ("qty", T.DECIMAL, None),
+            "amount": ("amount", T.DECIMAL, None),
+            "vat_amount": ("vat", T.DECIMAL, None),
+            "amount_includes_vat": (None, T.CONST, "false"),
+            "currency": ("currency", T.TEXT, None),
+            "cost_amount": ("cost", T.DECIMAL_OR_NULL, None),
+            "status": ("state", T.STATUS_MAP, None),
+        },
+        status_map=_ERP_STATE,
+    ),
+    Template(
+        entity="inventory.movement",
+        source_name="erp://stock-movements",
+        fields={
+            "source_id": ("movement_id", T.TEXT, None),
+            "occurred_at": ("moved_at", T.DATETIME_TZ, None),
+            "warehouse_code": ("warehouse_code", T.TEXT, None),
+            "branch_code": ("branch_code", T.TEXT, None),
+            "product_code": ("item_code", T.TEXT, None),
+            "quantity_delta": ("qty", T.DECIMAL, None),
+            "movement_type": ("kind", T.STATUS_MAP, None),
+            "unit_cost": ("unit_cost", T.DECIMAL_OR_NULL, None),
+            "currency": ("currency", T.TEXT, None),
+        },
+        status_map=_ERP_KIND,
+    ),
+    Template(
+        entity="finance.receivable",
+        source_name="erp://receivables",
+        fields={
+            "source_id": ("doc_id", T.TEXT, None),
+            "source_revision": ("updated_at", T.TEXT, None),
+            "customer_code": ("customer_code", T.TEXT, None),
+            "customer_name": ("customer_name", T.TEXT, None),
+            "document_number": ("invoice_no", T.TEXT, None),
+            "issued_on": ("doc_date", T.DATE, None),
+            "due_on": ("due_date", T.DATE, None),
+            "amount": ("amount", T.DECIMAL, None),
+            "paid_amount": ("paid", T.DECIMAL, None),
+            "currency": ("currency", T.TEXT, None),
+            "branch_code": ("branch_code", T.TEXT, None),
+        },
+        status_map={},
+    ),
+)
+TEMPLATES_BY_ENTITY = {t.entity: t for t in TEMPLATES}  # CSV shablonlari (fayl importi)
+TEMPLATES = TEMPLATES + ERP_TEMPLATES
 
 
 @dataclass(frozen=True, slots=True)
