@@ -1,17 +1,14 @@
 "use client";
 
-import { memo, useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
 
 import { stateLabel, type OfficeAgent } from "./api";
 import styles from "./officeMap.module.css";
 import { centerOn, fit, initialFor, pan, zoomAt, zoomLevel, type Camera } from "./world/camera";
-import { FURNITURE, ROOMS, seatOf, TILE, WORLD_H, WORLD_W, wallRuns, type Point } from "./world/map";
+import { accentOf, AgentLabel, AgentSprite, OfficeStatic } from "./OfficeArt";
+import { PIXEL, SPRITE_H } from "./world/sprites";
+import { ROOMS, seatOf, TILE, type Point } from "./world/map";
 import { officeSim, WORKING } from "./world/sim";
-
-const COLORS: Record<string, string> = {
-  coordinator: "var(--chart-1)", sales_analyst: "var(--chart-2)", finance_analyst: "var(--chart-3)",
-  inventory_analyst: "var(--chart-4)", document_assistant: "var(--chart-5)",
-};
 
 // Kamera sessiya davomida saqlanadi: dashboard oynasi yoki boshqa sahifadan qaytganda joyida.
 let savedCamera: Camera | null = null;
@@ -29,32 +26,6 @@ function subscribeMotion(cb: () => void) {
   return () => mq.removeEventListener("change", cb);
 }
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-/** Statik qatlam: pol, devorlar, eshiklar, mebel, xona nomlari. Bir marta chiziladi. */
-const StaticLayer = memo(function StaticLayer() {
-  const walls = wallRuns(officeSim.grid);
-  return (
-    <g>
-      <rect x={0} y={0} width={WORLD_W} height={WORLD_H} className={styles.hall} />
-      {ROOMS.map((r) => (
-        <rect key={r.id} x={r.x * TILE} y={r.y * TILE} width={r.w * TILE} height={r.h * TILE}
-              className={styles.room} data-kind={r.kind} />
-      ))}
-      {walls.map((w, i) => (
-        <rect key={i} x={w.x * TILE} y={w.y * TILE} width={w.w * TILE} height={w.h * TILE} className={styles.wall} />
-      ))}
-      {FURNITURE.map((f, i) => (
-        <g key={i} data-owner={f.owner} className={styles.furniture} data-kind={f.kind}>
-          <rect x={f.x * TILE + 1} y={f.y * TILE + 1} width={f.w * TILE - 2} height={f.h * TILE - 2} rx={f.kind === "plant" ? 7 : 3} />
-          {f.kind === "desk" && (
-            <rect className={styles.monitor} x={(f.x + f.w / 2 - 0.9) * TILE} y={f.y * TILE + 3}
-                  width={1.8 * TILE} height={TILE * 0.55} rx={2} />
-          )}
-        </g>
-      ))}
-    </g>
-  );
-});
 
 function RoomLabels() {
   return (
@@ -131,7 +102,7 @@ export function OfficeMap({ agents, selected, onSelect }: {
       // ixcham rejimda bo‘sh agentlar yorlig‘i faqat tanlanganda/fokusda (ustma-ust tushmasin).
       const labelScale = (1 / Math.max(scale, 0.45)).toFixed(3);
       if (svg) {
-        svg.dataset.compact = String(scale < 0.55);
+        svg.dataset.compact = String(scale < 0.72);
         svg.dataset.tiny = String(scale < 0.42);
       }
       for (const a of agentsRef.current) {
@@ -251,43 +222,44 @@ export function OfficeMap({ agents, selected, onSelect }: {
            aria-label="Ofis xaritasi. Plyus/minus — yaqinlashtirish, strelkalar — surish, 0 — butun ofis. Agentlarga Tab bilan o‘ting."
            onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
            onPointerCancel={onPointerUp} onKeyDown={onKey}>
-        <StaticLayer />
+        <OfficeStatic />
         <g data-room-labels><RoomLabels /></g>
         {agents.map((a) => (
           <g key={a.role_key} ref={(el) => { if (el) agentRefs.current.set(a.role_key, el); else agentRefs.current.delete(a.role_key); }}
              className={styles.agent} data-agent={a.role_key} data-state={a.state}
              data-selected={selected === a.role_key} role="button" tabIndex={0}
              aria-label={`${a.name}, ${a.title}: ${stateLabel(a)}`} aria-pressed={selected === a.role_key}
-             style={{ ["--agent" as string]: COLORS[a.role_key] ?? "var(--accent)" }}
+             style={{ ["--agent" as string]: accentOf(a.role_key) }}
              onClick={() => select(a.role_key)}
              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(a.role_key); } }}>
-            <circle r={20} className={styles.hit} />
-            <ellipse cx={0} cy={9} rx={14} ry={5} className={styles.shadow} />
-            <g data-body>
-              {/* Tepadan: yelkalar, bosh, stolga cho‘zilgan qo‘llar (faqat ishlayotganda). */}
-              <ellipse cx={0} cy={2} rx={14} ry={10} className={styles.body} />
-              <circle cx={0} cy={-1} r={8} className={styles.head} />
-              <circle cx={-8} cy={-11} r={3} className={styles.hand} data-hand="l" />
-              <circle cx={8} cy={-11} r={3} className={styles.hand} data-hand="r" />
-            </g>
-            <g data-label className={styles.label}>
-              <g data-label-offset transform="translate(0,-20)">
-                <text className={styles.name} textAnchor="middle" y={-12}>{a.name}</text>
-                {a.state !== "idle" && (
-                  <g className={styles.pill} data-state={a.state}>
-                    <rect x={-pillWidth(a) / 2} y={-8} width={pillWidth(a)} height={16} rx={8} />
-                    <text textAnchor="middle" y={3.5}>{stateLabel(a)}</text>
-                  </g>
-                )}
+            <circle r={24} cy={-14} className={styles.hit} />
+            <AgentSprite agent={a} />
+            {/* Siljish masshtabdan tashqarida: yaqinlashtirganda ham nishon boshdan yuqorida. */}
+            <g data-label-offset transform={`translate(0,${LABEL_ANCHOR})`}>
+              <g data-label className={styles.label}>
+                <AgentLabel agent={a} />
               </g>
             </g>
           </g>
         ))}
       </svg>
       </div>
+      <ul className={styles.statusBar} aria-label="Agentlar holati">
+        {agents.map((a) => (
+          <li key={a.role_key}>
+            <button type="button" data-state={a.state} aria-pressed={selected === a.role_key}
+                    onClick={() => { officeFocus.show(a.role_key); onSelect(a.role_key); }}>
+              <span className={styles.dot} style={{ background: accentOf(a.role_key) }} aria-hidden />
+              <strong>{a.name}</strong> · <span className={styles.statusText}>{stateLabel(a)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
+
+const LABEL_ANCHOR = 8 - SPRITE_H * PIXEL - 3;  // sprite boshi ustida
 
 /** Faol agentlar (bo‘lmasa hammasi) markazi — kamerani shu yerga qaratish uchun. */
 function agentsFocus(agents: OfficeAgent[]): Point | null {
@@ -296,11 +268,6 @@ function agentsFocus(agents: OfficeAgent[]): Point | null {
     .map((a) => officeSim.walkers.get(a.role_key)?.pos).filter((p): p is Point => Boolean(p));
   if (!pts.length) return null;
   return { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length };
-}
-
-/** Holat yorlig‘i kengligi matn uzunligiga qarab (10.5px shrift, ~6.3px harf). */
-function pillWidth(a: OfficeAgent): number {
-  return Math.max(56, stateLabel(a).length * 6.3 + 18);
 }
 
 function toWorld(svg: SVGSVGElement, clientX: number, clientY: number): Point {

@@ -19,7 +19,8 @@ export type Room = Rect & {
   doors: Point[];
 };
 
-export type FurnitureKind = "desk" | "table" | "sofa" | "plant" | "cabinet" | "coffee";
+export type FurnitureKind = "desk" | "table" | "sofa" | "plant" | "cabinet" | "coffee" | "bookshelf"
+  | "shelf";
 export type Furniture = Rect & { kind: FurnitureKind; owner?: string };
 
 /** Agentning ish joyi (stol oldidagi stul) va bo‘sh vaqtdagi joyi (dam olish zonasi). */
@@ -30,19 +31,19 @@ const doorRow = (x: number, y: number, n = 3): Point[] =>
   Array.from({ length: n }, (_, i) => ({ x: x + i, y }));
 
 export const ROOMS: Room[] = [
-  { id: "coordinator", name: "Koordinator kabineti", kind: "department", x: 0, y: 0, w: 16, h: 15,
+  { id: "coordinator", name: "Koordinator", kind: "department", x: 0, y: 0, w: 16, h: 15,
     doors: doorRow(6, 14) },
-  { id: "sales", name: "Savdo bo‘limi", kind: "department", x: 15, y: 0, w: 19, h: 15,
+  { id: "sales", name: "Savdo", kind: "department", x: 15, y: 0, w: 19, h: 15,
     doors: doorRow(23, 14) },
-  { id: "finance", name: "Moliya bo‘limi", kind: "department", x: 33, y: 0, w: 19, h: 15,
+  { id: "finance", name: "Moliya", kind: "department", x: 33, y: 0, w: 19, h: 15,
     doors: doorRow(41, 14) },
-  { id: "meeting", name: "Majlis xonasi", kind: "meeting", x: 51, y: 0, w: 9, h: 15,
+  { id: "meeting", name: "Majlis", kind: "meeting", x: 51, y: 0, w: 9, h: 15,
     doors: doorRow(54, 14) },
-  { id: "inventory", name: "Ombor bo‘limi", kind: "department", x: 0, y: 21, w: 21, h: 15,
+  { id: "inventory", name: "Ombor", kind: "department", x: 0, y: 21, w: 21, h: 15,
     doors: doorRow(9, 21) },
-  { id: "documents", name: "Hujjatlar bo‘limi", kind: "department", x: 20, y: 21, w: 21, h: 15,
+  { id: "documents", name: "Hujjatlar", kind: "department", x: 20, y: 21, w: 21, h: 15,
     doors: doorRow(29, 21) },
-  { id: "lounge", name: "Dam olish zonasi", kind: "lounge", x: 40, y: 21, w: 20, h: 15,
+  { id: "lounge", name: "Dam olish", kind: "lounge", x: 40, y: 21, w: 20, h: 15,
     doors: doorRow(45, 21, 5) },
 ];
 
@@ -64,22 +65,41 @@ export const FURNITURE: Furniture[] = [
   { kind: "plant", x: 31, y: 1, w: 1, h: 1 },
   // Moliya
   ...deskGroup(36, 4, "finance_analyst"), ...deskGroup(43, 4), ...deskGroup(36, 9), ...deskGroup(43, 9),
-  { kind: "cabinet", x: 49, y: 2, w: 1, h: 4 },
+  { kind: "bookshelf", x: 49, y: 2, w: 1, h: 4 },
   // Majlis
   { kind: "table", x: 53, y: 4, w: 4, h: 6 },
   // Ombor
   ...deskGroup(4, 25, "inventory_analyst"),
-  { kind: "cabinet", x: 12, y: 23, w: 1, h: 6 }, { kind: "cabinet", x: 16, y: 23, w: 1, h: 6 },
-  { kind: "cabinet", x: 12, y: 31, w: 6, h: 1 },
+  { kind: "shelf", x: 12, y: 23, w: 1, h: 6 }, { kind: "shelf", x: 16, y: 23, w: 1, h: 6 },
+  { kind: "shelf", x: 12, y: 31, w: 6, h: 1 },
   // Hujjatlar
   ...deskGroup(24, 25, "document_assistant"), ...deskGroup(31, 25), ...deskGroup(24, 30),
-  { kind: "cabinet", x: 38, y: 23, w: 1, h: 5 },
+  { kind: "bookshelf", x: 38, y: 23, w: 1, h: 5 },
   // Dam olish
   // Divan va stol orasida ikki qator bo‘sh joy: o‘tirgan agentlar yo‘lni to‘sib qo‘ymaydi.
   { kind: "sofa", x: 42, y: 27, w: 13, h: 1 }, { kind: "table", x: 44, y: 30, w: 9, h: 1 },
   { kind: "sofa", x: 42, y: 34, w: 13, h: 1 },
   { kind: "coffee", x: 56, y: 23, w: 2, h: 1 },
   { kind: "plant", x: 57, y: 33, w: 1, h: 1 }, { kind: "plant", x: 57, y: 26, w: 1, h: 1 },
+];
+
+/**
+ * Bezak (to‘siq emas — yo‘l topishga ta’sir qilmaydi): derazalar devorda, gilam polda, doskalar
+ * devor yonida. Faqat ko‘rinish uchun.
+ */
+export type DecorKind = "window" | "rug" | "kanban" | "whiteboard" | "cooler" | "clock";
+export type Decor = Rect & { kind: DecorKind };
+
+export const DECOR: Decor[] = [
+  // Tashqi devordagi derazalar (yuqori va pastki devor, 1 katak qalinlik).
+  ...[2, 9, 17, 22, 28, 35, 40, 46, 53].map((x) => ({ kind: "window" as const, x, y: 0, w: 3, h: 1 })),
+  ...[3, 14, 23, 32, 44, 51].map((x) => ({ kind: "window" as const, x, y: 35, w: 3, h: 1 })),
+  { kind: "rug", x: 43, y: 28, w: 11, h: 5 },
+  { kind: "rug", x: 52, y: 3, w: 6, h: 8 },
+  { kind: "kanban", x: 9, y: 1, w: 4, h: 2 },
+  { kind: "whiteboard", x: 29, y: 1, w: 3, h: 1 },
+  { kind: "whiteboard", x: 45, y: 1, w: 3, h: 1 },
+  { kind: "cooler", x: 58, y: 24, w: 1, h: 1 },
 ];
 
 /** Ish joyi — stolning pastki chetidagi stul (stoldan keyingi qator, o‘rtada). */
