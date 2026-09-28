@@ -58,6 +58,7 @@ services:
     environment:
       BUSINESS_DATABASE_URL: postgresql+asyncpg://business_app:${BUSINESS_DB_APP_PASSWORD:-business_app_dev}@postgres:5432/business
       BUSINESS_MIGRATIONS_DATABASE_URL: postgresql+asyncpg://business_owner:${BUSINESS_DB_OWNER_PASSWORD:-business_owner_dev}@postgres:5432/business
+      BUSINESS_AI_RUNTIME_URL: http://ai-api:8100
     ports: ["8000:8000"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -87,9 +88,18 @@ services:
       AI_DATABASE_URL: postgresql+asyncpg://ai_app:${AI_DB_APP_PASSWORD:-ai_app_dev}@postgres:5432/ai_runtime
       AI_AMQP_URL: amqp://${RABBITMQ_DEFAULT_USER:-abo}:${RABBITMQ_DEFAULT_PASS:-abo_dev}@rabbitmq:5672/
       AI_BUSINESS_TOOLS_URL: http://business-api:8000
+      AI_S3_ENDPOINT_URL: http://objectstore:9000
     depends_on:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+
+  # Ichki HTTP (faqat /internal/v1/embed va health) — tashqariga port ochilmaydi.
+  ai-api:
+    profiles: ["apps"]
+    build:
+      context: ../..
+      dockerfile: services/ai_runtime/Dockerfile
+    <<: *app-env
 
   integration-worker:
     profiles: ["apps"]

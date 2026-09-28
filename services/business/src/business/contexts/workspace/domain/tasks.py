@@ -44,6 +44,7 @@ AGENTS: dict[str, tuple[str, str]] = {
     "document_assistant": ("Dilnoza", "Hujjat yordamchisi"),
 }
 _BY_NAME = {name.lower(): role for role, (name, _) in AGENTS.items()}
+_DOCUMENT_RE = re.compile(r"\b(hujjat|shartnoma|band|nizom|kelishuv|reglament)")
 _KEYWORDS = (
     ("finance_analyst", ("foyda", "marja", "tannarx", "qarz", "debitor", "xarajat")),
     ("inventory_analyst", ("ombor", "qoldiq", "zaxira")),
@@ -61,8 +62,10 @@ def sanitize(text: str) -> str:
     return cleaned
 
 
-def route(text: str, explicit_role: str | None = None) -> str:
-    """Tartib (TZ 4): aniq tanlov (@ism yoki rol) → mutaxassislik → koordinator."""
+def route(text: str, explicit_role: str | None = None, *, has_documents: bool = False) -> str:
+    """Tartib (TZ 4): aniq tanlov (@ism yoki rol) → mutaxassislik → koordinator.
+
+    Hujjat tanlangan (chip) yoki hujjat so‘zlari bo‘lsa — hujjat yordamchisi."""
     if explicit_role is not None:
         if explicit_role not in AGENTS:
             raise InvalidMessage(f"Noma’lum agent: {explicit_role}")
@@ -71,6 +74,8 @@ def route(text: str, explicit_role: str | None = None) -> str:
         if (role := _BY_NAME.get(mention.group(1).lower())) is not None:
             return role
     lowered = text.lower()
+    if has_documents or _DOCUMENT_RE.search(lowered):
+        return "document_assistant"
     for role, words in _KEYWORDS:
         if any(w in lowered for w in words):
             return role

@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from business.bootstrap.container import Container
+from business.contexts.documents.application.common import Viewer
 from business.contexts.governance.public import POLICY_VERSION, tools_for
 from business.contexts.identity.public import AuthContext
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
@@ -21,6 +22,7 @@ from business.platform.capability import Capability
 from business.platform.db import tenant_transaction
 from business.platform.outbox import BoundOutbox
 
+from ..wiring import document_services
 from .deps import AuthCtx, ContainerDep
 
 router = APIRouter(prefix="/api/v1", tags=["workspace"])
@@ -56,6 +58,8 @@ class ConversationIn(BaseModel):
 class MessageIn(BaseModel):
     content: str = Field(min_length=1, max_length=20_000)
     agent: str | None = Field(default=None, description="Agent roli (masalan sales_analyst)")
+    document_ids: list[UUID] = Field(default_factory=list, max_length=10,
+                                     description="Kontekst sifatida tanlangan hujjatlar (chip)")
 
 
 @router.post("/conversations", status_code=status.HTTP_201_CREATED)
@@ -91,9 +95,18 @@ async def post_message(conversation_id: UUID, body: MessageIn, ctx: AuthCtx,
                        ) -> dict[str, Any]:
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
+        documents = []
+        if body.document_ids:
+            # ACL: faqat foydalanuvchi ko‘ra oladigan hujjat kontekstga qo‘shiladi (aks holda 404).
+            reading = document_services(container, conn, ctx.tenant_id).reading
+            for document_id in dict.fromkeys(body.document_ids):
+                d = await reading.detail(Viewer(ctx.user_id, ctx.role.value), document_id)
+                documents.append({"id": d["id"], "version_id": d["current_version_id"],
+                                  "title": d["title"]})
         return await _service(container, conn, ctx).post_message(
             _actor(ctx), conversation_id, body.content, agent=body.agent,
-            idempotency_key=idempotency_key, now=datetime.now(UTC))
+            idempotency_key=idempotency_key, now=datetime.now(UTC),
+            context_documents=documents)
 
 
 @router.get("/tasks/{task_id}")

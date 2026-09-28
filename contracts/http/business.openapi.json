@@ -471,6 +471,16 @@
             "minLength": 1,
             "title": "Content",
             "type": "string"
+          },
+          "document_ids": {
+            "description": "Kontekst sifatida tanlangan hujjatlar (chip)",
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Document Ids",
+            "type": "array"
           }
         },
         "required": [

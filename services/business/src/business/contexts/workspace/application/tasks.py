@@ -42,19 +42,25 @@ class TaskService:
 
     async def post_message(self, actor: Actor, conversation_id: UUID, content: str, *,
                            agent: str | None, idempotency_key: str | None,
-                           now: datetime) -> dict[str, Any]:
+                           now: datetime, context_documents: list[dict[str, Any]] | None = None,
+                           ) -> dict[str, Any]:
+        """`context_documents` — foydalanuvchi ko‘ra oladigan hujjatlar (ACL chaqiruvchida
+        tekshirilgan): [{id, version_id, title}]."""
         if idempotency_key and (done := await self._s.idempotent_response(actor.user_id,
                                                                           idempotency_key)):
             return done  # takroriy yuborish: yangi task yo‘q (T04)
         if not await self._s.conversation_exists(conversation_id):
             raise NotFound("Suhbat topilmadi.")
         text = sanitize(content)
-        role = route(text, agent)
+        documents = context_documents or []
+        role = route(text, agent, has_documents=bool(documents))
         tools = tuple(sorted(self._tools_for(role, actor.role)))
         message_id, task_id, step_id = uuid4(), uuid4(), uuid4()
         await self._s.add_message({"id": message_id, "conversation_id": conversation_id,
                                    "author_kind": "user", "author_id": actor.user_id,
-                                   "content": text, "task_id": task_id})
+                                   "content": text, "task_id": task_id,
+                                   "structured": {"context_documents": documents}
+                                   if documents else None})
         await self._s.create_task(task_id, conversation_id, actor.user_id, role, step_id)
         deadline = now + TASK_DEADLINE
         token = self._caps.issue_for_task(task_id=task_id, tenant_id=actor.tenant_id,
@@ -62,7 +68,11 @@ class TaskService:
                                           expires_at=deadline)
         await self._outbox.publish("RunAgent.v1", {
             "task_id": str(task_id), "task_step_id": str(step_id), "agent_role_key": role,
-            "sanitized_instruction": text, "context_refs": [], "deadline": deadline.isoformat(),
+            "sanitized_instruction": text,
+            "context_refs": [{"kind": "document_version", "id": d["id"],
+                              "version_id": d["version_id"], "locator": None}
+                             for d in documents],
+            "deadline": deadline.isoformat(),
             # Budjet rezervi Bosqich 5 da; hozircha faqat identifikator (limit qo‘llanmaydi).
             "budget_reservation_id": str(uuid4()), "policy_version": self._policy_version,
             "locale": "uz-Latn", "capability_token": token,

@@ -171,3 +171,51 @@ async def test_acl_and_s03_delete(client: httpx.AsyncClient, app_engine: AsyncEn
         with pytest.raises(Exception):  # noqa: B017 — fayl ombordan haqiqatan o‘chgan
             await container.storage.download_to(
                 ObjectRef(keys[0][0], keys[0][1], "0" * 64, 0), tmp_path / "x")
+
+
+async def test_chat_document_chip_routes_to_assistant_with_context(
+        client: httpx.AsyncClient, app_engine: AsyncEngine, tmp_path: Path) -> None:
+    async with owner(client, "Chip MChJ") as (c, tenant):
+        doc = await upload(c, make_docx(tmp_path / "Shartnoma.docx"))
+        await process(client, app_engine, tenant, doc)
+        conv = (await c.post("/api/v1/conversations", headers=csrf(c), json={})).json()["id"]
+        url = f"/api/v1/conversations/{conv}/messages"
+        missing = await c.post(url, headers=csrf(c),
+                               json={"content": "Muddat qancha?", "document_ids": [str(uuid4())]})
+        assert missing.status_code == 404  # ko‘rinmaydigan hujjat kontekstga qo‘shilmaydi
+
+        r = await c.post(url, headers=csrf(c), json={"content": "To‘lov muddati qancha?",
+                                                     "document_ids": [doc["id"]]})
+        assert r.status_code == 202 and r.json()["agent_role_key"] == "document_assistant"
+        async with tenant_transaction(app_engine, tenant_id=tenant, user_id=None) as conn:
+            payload = (await conn.execute(text(
+                "SELECT envelope->'payload' FROM messaging.outbox WHERE event_type = 'RunAgent.v1'"
+                " AND envelope->'payload'->>'task_id' = :t"), {"t": r.json()["task_id"]})).scalar_one()
+        assert payload["context_refs"] == [{"kind": "document_version", "id": doc["id"],
+                                            "version_id": doc["version_id"], "locator": None}]
+        messages = (await c.get(url)).json()
+        assert messages[0]["structured"]["context_documents"][0]["title"] == "Shartnoma"
+
+        # Chip’siz, lekin hujjat so‘zi bilan — ham hujjat yordamchisi.
+        r2 = await c.post(url, headers=csrf(c), json={"content": "Shartnomadagi 3-bandni ko‘rsat"})
+        assert r2.json()["agent_role_key"] == "document_assistant"
+
+
+async def test_vector_embeddings_stored_and_searchable(
+        client: httpx.AsyncClient, app_engine: AsyncEngine, tmp_path: Path) -> None:
+    """App roli pgvector turidan foydalana oladi (0010) va vektor qidiruv ACL doirasida."""
+    async with owner(client, "Vektor MChJ") as (c, tenant):
+        doc = await upload(c, make_docx(tmp_path / "Shartnoma.docx"))
+        await process(client, app_engine, tenant, doc)
+        container = client._transport.app.state.container  # type: ignore[attr-defined]
+        version = UUID(doc["version_id"])
+        async with tenant_transaction(app_engine, tenant_id=tenant, user_id=None) as conn:
+            store = document_services(container, conn, tenant).store
+            chunks = await store.chunks_of(version)
+            vectors = {cid: [1.0 if i == n % 4 else 0.0 for i in range(4)]
+                       for n, (cid, _) in enumerate(chunks)}
+            assert await store.set_embeddings(version, vectors, "test-4") == len(chunks)
+            scope = await store.search_scope(user_id=uuid4(), see_all=True, document_ids=None)
+            hits = await store.search_vector(scope, [1.0, 0.0, 0.0, 0.0], 3)
+            assert hits and hits[0].chunk_id == chunks[0][0]
+            assert await store.search_vector(scope, [1.0] * 8, 3) == []  # boshqa o‘lcham
