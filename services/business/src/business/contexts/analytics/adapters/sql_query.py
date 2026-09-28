@@ -14,7 +14,7 @@ from ..domain.ingestion import Entity
 from ..domain.metrics import Component as C
 from ..domain.metrics import Dimension as D
 from ..domain.query import Filters, Period, QuerySpec
-from ..ports.store import ComponentRow, Coverage, SnapshotRef
+from ..ports.store import ComponentRow, Coverage, Snapshots, SnapshotSet
 from .sql_tables import visible
 
 _DIM_SQL = {
@@ -95,18 +95,31 @@ class _SnapshotCache:
 SNAPSHOT_CACHE = _SnapshotCache()
 
 
+def visible_any(parts: SnapshotSet, params: dict[str, Any]) -> str:
+    """Bir nechta manba snapshot’lari (har biri o‘z `seq` holatida) — yig‘indi birlashadi."""
+    clauses = []
+    for i, snap in enumerate(parts):
+        params[f"p{i}_ds"], params[f"p{i}_seq"] = snap.dataset_id, snap.seq
+        clauses.append(f"({visible(prefix=f'p{i}_')})")
+    return "(" + " OR ".join(clauses) + ")" if clauses else "false"
+
+
+def _parts_key(parts: SnapshotSet) -> tuple[tuple[UUID, int], ...]:
+    return tuple(sorted((p.dataset_id, p.seq) for p in parts))
+
+
 class SqlAggregates:
     def __init__(self, conn: AsyncConnection, tenant_id: UUID | None = None) -> None:
         self._c = conn
         self._cache_tenant = tenant_id
 
-    async def _sums(self, table: str, snapshot: SnapshotRef, sums: dict[C, str],
+    async def _sums(self, table: str, snapshot: SnapshotSet, sums: dict[C, str],
                     spec: QuerySpec, period: Period, dims: tuple[D, ...],
                     where_extra: str = "") -> list[tuple[tuple[str, ...], dict[C, Decimal]]]:
         groups = _group_exprs(dims)
-        params: dict[str, Any] = {"ds": snapshot.dataset_id, "seq": snapshot.seq,
-                                  "start": period.start, "end": period.end}
-        where = (f"{visible()} AND status = 'confirmed' AND local_date BETWEEN :start AND :end"
+        params: dict[str, Any] = {"start": period.start, "end": period.end}
+        where = (f"{visible_any(snapshot, params)} AND status = 'confirmed'"
+                 " AND local_date BETWEEN :start AND :end"
                  + where_extra + _filters(spec, spec.filters, params))
         select = ", ".join([*(f"{g} AS g{i}" for i, g in enumerate(groups)),
                             *(f"{expr} AS {c.value}" for c, expr in sums.items())])
@@ -121,24 +134,24 @@ class SqlAggregates:
         return out
 
     async def sales_components(self, spec: QuerySpec, period: Period,
-                               snapshots: dict[Entity, SnapshotRef],
+                               snapshots: Snapshots,
                                dimensions: tuple[D, ...]) -> list[ComponentRow]:
         merged: dict[tuple[str, ...], dict[C, Decimal]] = defaultdict(dict)
         parts = [(Entity.SALES_ORDER_LINE, "analytics.order_lines", _ORDER_SUMS),
                  (Entity.SALES_RETURN, "analytics.returns", _RETURN_SUMS)]
         for entity, table, sums in parts:
             snap = snapshots.get(entity)
-            if snap is None:
+            if not snap:
                 continue
             for key, values in await self._sums(table, snap, sums, spec, period, dimensions):
                 merged[key].update(values)
         return [ComponentRow(k, v) for k, v in sorted(merged.items())]
 
-    async def receivable_components(self, spec: QuerySpec, as_of: date, snapshot: SnapshotRef,
+    async def receivable_components(self, spec: QuerySpec, as_of: date, snapshot: SnapshotSet,
                                     dimensions: tuple[D, ...]) -> list[ComponentRow]:
         groups = [*(_DIM_SQL[d] for d in dimensions if d is not D.CURRENCY), "currency"]
-        params: dict[str, Any] = {"ds": snapshot.dataset_id, "seq": snapshot.seq, "as_of": as_of}
-        where = (f"{visible()} AND issued_on <= :as_of"
+        params: dict[str, Any] = {"as_of": as_of}
+        where = (f"{visible_any(snapshot, params)} AND issued_on <= :as_of"
                  + _filters(spec, spec.filters, params, products=False))
         open_amount = "GREATEST(amount - paid_amount, 0)"
         select = ", ".join([*(f"{g} AS g{i}" for i, g in enumerate(groups)),
@@ -155,42 +168,44 @@ class SqlAggregates:
                 for r in rows]
 
     async def dimension_names(self, dimension: D, codes: list[str],
-                              snapshots: dict[Entity, SnapshotRef]) -> dict[str, str]:
+                              snapshots: Snapshots) -> dict[str, str]:
         snap = snapshots.get(Entity.SALES_ORDER_LINE)
-        if dimension not in _NAME_SQL or snap is None or not codes:
+        if dimension not in _NAME_SQL or not snap or not codes:
             return {}
         code_col, name_col, table = _NAME_SQL[dimension]
-        key = (self._cache_tenant, "names", dimension.value, snap.dataset_id, snap.seq)
+        key = (self._cache_tenant, "names", dimension.value, _parts_key(snap))
         names: dict[str, str] | None = SNAPSHOT_CACHE.get(key)
         if names is None:
             # Butun snapshot lug‘ati bir marta (kod ustunida indeks yo‘q — har so‘rovda skan emas).
+            params: dict[str, Any] = {}
+            where = visible_any(snap, params)
             rows = (await self._c.execute(text(
                 f"SELECT {code_col} AS code, max({name_col}) AS name FROM {table}"
-                f" WHERE {visible()} GROUP BY 1"),
-                {"ds": snap.dataset_id, "seq": snap.seq})).all()
+                f" WHERE {where} GROUP BY 1"), params)).all()
             names = {r.code: r.name for r in rows if r.name}
             SNAPSHOT_CACHE.put(key, names)
         return {c: names[c] for c in codes if c in names}
 
-    async def coverage(self, snapshots: dict[Entity, SnapshotRef]) -> Coverage:
+    async def coverage(self, snapshots: Snapshots) -> Coverage:
         snap = snapshots.get(Entity.SALES_ORDER_LINE)
-        if snap is None:
+        if not snap:
             return Coverage(None, None, [])
-        key = (self._cache_tenant, "coverage", snap.dataset_id, snap.seq)
+        key = (self._cache_tenant, "coverage", _parts_key(snap))
         cached: Coverage | None = SNAPSHOT_CACHE.get(key)
         if cached is not None:
             return cached
-        params = {"ds": snap.dataset_id, "seq": snap.seq}
+        params: dict[str, Any] = {}
+        where = visible_any(snap, params)
         r = (await self._c.execute(text(
             f"SELECT min(local_date) AS a, max(local_date) AS b FROM analytics.order_lines"
-            f" WHERE {visible()}"), params)).one()
+            f" WHERE {where}"), params)).one()
         currencies: list[str] = list((await self._c.execute(text(
-            f"SELECT DISTINCT currency FROM analytics.order_lines WHERE {visible()} ORDER BY 1"),
+            f"SELECT DISTINCT currency FROM analytics.order_lines WHERE {where} ORDER BY 1"),
             params)).scalars().all())
         coverage = Coverage(r.a, r.b, [str(c).strip() for c in currencies])
         SNAPSHOT_CACHE.put(key, coverage)
         return coverage
 
 
-def snapshot_ids(snapshots: dict[Entity, SnapshotRef]) -> list[UUID]:
-    return [s.id for s in snapshots.values()]
+def snapshot_ids(snapshots: Snapshots) -> list[UUID]:
+    return [s.id for parts in snapshots.values() for s in parts]

@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncConnection
 
 from business.bootstrap.container import Container
+from business.contexts.analytics.public import SourceDatasets
 from business.contexts.identity.domain.errors import Forbidden
 from business.contexts.identity.public import AuthContext, Role
 from business.contexts.integrations.adapters.sql import SqlIntegrationsStore
@@ -98,11 +99,29 @@ async def create_source(body: SourceIn, ctx: AuthCtx, container: ContainerDep) -
                                                            body.name, body.upload_id, body.entity)
 
 
+def _usage(source_id: UUID, by_source: dict[UUID, list[dict[str, Any]]],
+           names: dict[UUID, str]) -> dict[str, Any] | None:
+    """Analitikada hisobga olinadimi: takroriy baza bo‘lsa — qaysi manbaning takrori."""
+    rows = by_source.get(source_id)
+    if not rows:
+        return None
+    dup = next((r for r in rows if not r["is_active"]), None)
+    if dup is None:
+        return {"counted": True, "duplicate_of": None, "duplicate_of_name": None}
+    other = dup["duplicate_of_source"]
+    return {"counted": False, "duplicate_of": str(other) if other else None,
+            "duplicate_of_name": names.get(other) if other else None,
+            "overlap": float(dup["overlap"]) if dup["overlap"] is not None else None}
+
+
 @router.get("/integrations")
 async def list_sources(ctx: AuthCtx, container: ContainerDep) -> list[dict[str, Any]]:
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
-        return [_json(r) for r in await SqlIntegrationsStore(conn, ctx.tenant_id).list_sources()]
+        rows = await SqlIntegrationsStore(conn, ctx.tenant_id).list_sources()
+        by_source = await SourceDatasets(conn, ctx.tenant_id).status()
+    names = {r["id"]: r["name"] for r in rows}
+    return [{**_json(r), "usage": _usage(r["id"], by_source, names)} for r in rows]
 
 
 @router.get("/data-freshness")
@@ -119,7 +138,11 @@ async def data_freshness(ctx: AuthCtx, container: ContainerDep) -> dict[str, Any
 async def get_source(source_id: UUID, ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
-        return _json(await _service(container, conn, ctx).detail(source_id))
+        source = await _service(container, conn, ctx).detail(source_id)
+        by_source = await SourceDatasets(conn, ctx.tenant_id).status()
+        names = {r["id"]: r["name"]
+                 for r in await SqlIntegrationsStore(conn, ctx.tenant_id).list_sources()}
+    return {**_json(source), "usage": _usage(source_id, by_source, names)}
 
 
 @router.post("/integrations/{source_id}/mapping", status_code=status.HTTP_202_ACCEPTED)
@@ -132,6 +155,18 @@ async def approve_mapping(source_id: UUID, body: MappingIn, ctx: AuthCtx,
         return await _service(container, conn, ctx).approve_mapping(
             ctx.user_id, source_id, body.entity, [m.model_dump() for m in body.mapping],
             [s.model_dump() for s in body.status_map])
+
+
+@router.post("/integrations/{source_id}/use")
+async def use_source(source_id: UUID, ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
+    """Takroriy bazalardan qaysi biri hisobga olinishini foydalanuvchi tanlaydi (masalan, eski
+    CSV o‘rniga ERP). Tanlangan manba bilan bir xil bo‘lganlar hisobdan chiqadi."""
+    _require_manager(ctx)
+    async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
+                                  user_id=ctx.user_id) as conn:
+        await _service(container, conn, ctx).detail(source_id)  # mavjudligi (RLS)
+        deactivated = await SourceDatasets(conn, ctx.tenant_id).use(source_id)
+    return {"id": str(source_id), "deactivated_datasets": [str(d) for d in deactivated]}
 
 
 @router.post("/integrations/{source_id}/sync", status_code=status.HTTP_202_ACCEPTED)

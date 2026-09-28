@@ -146,3 +146,18 @@ async def test_erp_sources_are_synced_periodically(client: httpx.AsyncClient,
                   s=UUID(erp))
         r = await c.post(f"/api/v1/integrations/{erp}/sync", headers=csrf(c))
         assert r.status_code == 202, r.text
+
+
+async def test_same_system_cannot_be_connected_twice(client: httpx.AsyncClient) -> None:
+    async with owner(client, "Takror MChJ") as (c, _):
+        body = {"connector_id": "erp_api", "name": "ERP: Sotuvlar", "entity": "sales.order_line"}
+        assert (await c.post("/api/v1/integrations", headers=csrf(c), json=body)).status_code == 202
+        again = await c.post("/api/v1/integrations", headers=csrf(c), json=body)
+        assert again.status_code == 409 and again.json()["code"] == "ALREADY_CONNECTED"
+        assert "ERP: Sotuvlar" in again.json()["message"]
+        # Boshqa obyekt (qaytarishlar) — ruxsat; ro‘yxatda analitika holati ham bor.
+        other = {**body, "name": "ERP: Qaytarishlar", "entity": "sales.return"}
+        assert (await c.post("/api/v1/integrations", headers=csrf(c), json=other)).status_code == 202
+        listed = (await c.get("/api/v1/integrations")).json()
+        assert {s["name"] for s in listed} == {"ERP: Sotuvlar", "ERP: Qaytarishlar"}
+        assert all(s["usage"] is None for s in listed)  # hali yuklanmagan

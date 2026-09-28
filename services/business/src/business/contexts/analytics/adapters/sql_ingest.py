@@ -19,6 +19,9 @@ def snapshot_from_row(r: Any) -> SnapshotRef:
                        r.quarantined_count)
 
 
+# Yozuvlarining shuncha qismi boshqa faol manbada bo‘lsa — bu o‘sha bazaning takrori.
+DUPLICATE_OVERLAP = 0.5
+
 SNAPSHOT_SELECT = (
     "SELECT s.id, s.dataset_id, d.entity, s.seq, s.as_of, s.row_count, s.quarantined_count"
     " FROM analytics.snapshots s JOIN analytics.datasets d"
@@ -32,12 +35,12 @@ class SqlIngestion:
         self._tenant = tenant_id
 
     async def dataset_for(self, data_source_id: UUID, entity: Entity) -> DatasetRef:
-        """Yo‘q bo‘lsa yaratadi; entity uchun faol dataset yo‘q bo‘lsa — shu faol bo‘ladi."""
+        """Yo‘q bo‘lsa yaratadi (faol: bir obyektning barcha manbalari qo‘shib hisoblanadi;
+        takroriy baza birinchi snapshot’da aniqlanib o‘chiriladi)."""
         now = datetime.now(UTC)
         await self._c.execute(text(
             "INSERT INTO analytics.datasets (tenant_id, id, data_source_id, entity, is_active,"
-            " created_at, updated_at) SELECT :t, :id, :ds, :e, NOT EXISTS (SELECT 1 FROM"
-            " analytics.datasets WHERE entity = :e AND is_active), :now, :now"
+            " created_at, updated_at) VALUES (:t, :id, :ds, :e, true, :now, :now)"
             " ON CONFLICT (tenant_id, data_source_id, entity) DO NOTHING"),
             {"t": self._tenant, "id": uuid4(), "ds": data_source_id, "e": entity.value,
              "now": now})
@@ -109,5 +112,74 @@ class SqlIngestion:
                   "rec": json.dumps({k: v for k, v in q.record.items() if not k.startswith("_")},
                                     default=str, ensure_ascii=False), "now": now}
                  for q in quarantined])
+        await self._guard_duplicate(dataset.id, entity, table, row_count)
         return SnapshotRef(snapshot_id, dataset.id, entity, seq, meta.extracted_at, row_count,
                            len(quarantined))
+
+    async def _shared(self, table: str, dataset_id: UUID, entity: Entity,
+                      *, active_only: bool) -> tuple[UUID | None, int]:
+        """Boshqa (faol) manba bilan eng ko‘p umumiy yozuv (source_id bo‘yicha): (dataset, soni)."""
+        r = (await self._c.execute(text(
+            f"SELECT o.dataset_id, count(*) AS n FROM {table} t JOIN {table} o"
+            " ON o.tenant_id = t.tenant_id AND o.source_id = t.source_id"
+            " AND o.valid_to_seq IS NULL AND o.dataset_id <> t.dataset_id"
+            " JOIN analytics.datasets od ON od.tenant_id = o.tenant_id AND od.id = o.dataset_id"
+            " WHERE t.dataset_id = :ds AND t.valid_to_seq IS NULL AND od.entity = :e"
+            + (" AND od.is_active" if active_only else "") +
+            " GROUP BY 1 ORDER BY 2 DESC LIMIT 1"),
+            {"ds": dataset_id, "e": entity.value})).first()
+        return (r.dataset_id, int(r.n)) if r else (None, 0)
+
+    async def _guard_duplicate(self, dataset_id: UUID, entity: Entity, table: str,
+                               row_count: int) -> None:
+        """Bir baza ikki marta ulansa (boshqa connector yoki fayl orqali ham) ikki marta
+        sanalmasin: yozuvlarining ≥ DUPLICATE_OVERLAP qismi boshqa faol manbada bo‘lsa —
+        bu manba hisobga olinmaydi (foydalanuvchi keyin qaysi birini ishlatishni tanlaydi)."""
+        active: bool = (await self._c.execute(text(
+            "SELECT is_active FROM analytics.datasets WHERE id = :ds"),
+            {"ds": dataset_id})).scalar_one()
+        if not active or row_count == 0:
+            return
+        other, shared = await self._shared(table, dataset_id, entity, active_only=True)
+        overlap = round(shared / row_count, 4)
+        duplicate = other is not None and overlap >= DUPLICATE_OVERLAP
+        await self._c.execute(text(
+            "UPDATE analytics.datasets SET overlap = :o, is_active = :a, duplicate_of = :dup"
+            " WHERE id = :ds"),
+            {"o": overlap, "a": not duplicate, "dup": other if duplicate else None,
+             "ds": dataset_id})
+
+    async def activate_source(self, data_source_id: UUID) -> list[UUID]:
+        """Foydalanuvchi tanlovi: shu manba ishlatiladi; u bilan bir xil bazani beradigan boshqa
+        faol manbalar hisobdan chiqariladi. Qaytaradi: o‘chirilgan dataset’lar."""
+        rows = (await self._c.execute(text(
+            "UPDATE analytics.datasets SET is_active = true, duplicate_of = NULL,"
+            " updated_at = now() WHERE data_source_id = :src RETURNING id, entity"),
+            {"src": data_source_id})).all()
+        deactivated: list[UUID] = []
+        for r in rows:
+            entity = Entity(r.entity)
+            table = TABLES[entity]
+            others = (await self._c.execute(text(
+                "SELECT d.id, (SELECT count(*) FROM " + table + " x WHERE x.dataset_id = d.id"
+                " AND x.valid_to_seq IS NULL) AS n FROM analytics.datasets d"
+                " WHERE d.entity = :e AND d.is_active AND d.id <> :ds"),
+                {"e": entity.value, "ds": r.id})).all()
+            for o in others:
+                top, shared = await self._shared(table, o.id, entity, active_only=True)
+                if top == r.id and o.n and shared / o.n >= DUPLICATE_OVERLAP:
+                    await self._c.execute(text(
+                        "UPDATE analytics.datasets SET is_active = false, duplicate_of = :dup,"
+                        " overlap = :ov, updated_at = now() WHERE id = :id"),
+                        {"dup": r.id, "ov": round(shared / o.n, 4), "id": o.id})
+                    deactivated.append(o.id)
+        return deactivated
+
+    async def source_status(self) -> list[dict[str, Any]]:
+        """Manbalar bo‘yicha: obyekt, hisobga olinadimi, kimning takrori, moslik ulushi."""
+        rows = (await self._c.execute(text(
+            "SELECT d.data_source_id, d.entity, d.is_active, d.overlap,"
+            " dd.data_source_id AS duplicate_of_source FROM analytics.datasets d"
+            " LEFT JOIN analytics.datasets dd ON dd.tenant_id = d.tenant_id"
+            " AND dd.id = d.duplicate_of"))).mappings().all()
+        return [dict(r) for r in rows]

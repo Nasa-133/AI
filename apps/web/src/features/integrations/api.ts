@@ -17,6 +17,9 @@ export type Source = {
   id: string; name: string; connector_id: string; status: string; entity: string | null;
   mapping_version: number | null; error_message: string | null; updated_at: string;
   discovery?: { entities: DiscoveredEntity[] } | null;
+  /** Analitikada hisobga olinadimi; takroriy baza bo‘lsa — qaysi manbaning takrori. */
+  usage?: { counted: boolean; duplicate_of: string | null; duplicate_of_name: string | null;
+            overlap?: number | null } | null;
 };
 
 const BUSY = new Set(["discovering", "configuring", "syncing"]);
@@ -62,12 +65,18 @@ export const ERP_OBJECTS = [
   { entity: "finance.receivable", name: "ERP: Debitorlik" },
 ] as const;
 
-export function useConnectErp() {
+export function useConnectErp(existing: Source[] = []) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => {
+      // Bitta tizimni ikki marta ulash mumkin emas: allaqachon ulangan obyektlar o‘tkazib yuboriladi.
+      const missing = ERP_OBJECTS.filter((o) => !existing.some(
+        (s) => s.connector_id === "erp_api" && s.entity === o.entity));
+      if (!missing.length) {
+        throw new ApiError(409, "ALREADY_CONNECTED", "ERP’ning barcha obyektlari allaqachon ulangan.", false, null);
+      }
       const created: { id: string }[] = [];
-      for (const o of ERP_OBJECTS) {
+      for (const o of missing) {
         created.push(await (unwrap(api.POST("/api/v1/integrations", {
           body: { connector_id: "erp_api", name: o.name, entity: o.entity },
         })) as Promise<{ id: string }>));
@@ -97,6 +106,18 @@ export function useApproveMapping(id: string) {
     mutationFn: (body: { entity: string; mapping: MappingItem[]; status_map: { source_value: string; canonical_value: string }[] }) =>
       unwrap(api.POST("/api/v1/integrations/{source_id}/mapping", { params: { path: { source_id: id } }, body: body as never })),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["source", id] }),
+  });
+}
+
+export function useUseSource(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => unwrap(api.POST("/api/v1/integrations/{source_id}/use", { params: { path: { source_id: id } } })),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["sources"] });
+      void qc.invalidateQueries({ queryKey: ["source"] });
+      void qc.invalidateQueries({ queryKey: ["dashboards"] });
+    },
   });
 }
 

@@ -31,9 +31,15 @@ Qoidalar:
 4. Har sinxron — to‘liq **snapshot**. Yangi snapshot faqat to‘liq va muvaffaqiyatli o‘qilganda
    e’lon qilinadi. Sinxron yarim yo‘lda uzilsa, oxirgi to‘liq snapshot bilan ishlash davom etadi
    (qabul mezoni A05).
-5. Noto‘g‘ri satrlar (sana buzilgan, miqdor ≤ 0, takroriy ID) **karantinga** tushadi. Ular
+5. **Bir nechta manba** (masalan, ikki filialning alohida ERP’lari yoki ERP + CSV) qo‘shib
+   hisoblanadi. **Bitta bazani ikki marta ulash mumkin emas**: bir xil tizim yoki bir xil fayl
+   shu obyekt uchun qayta ulanmaydi (ulashda rad etiladi). Boshqa yo‘l bilan ulansa ham, yangi
+   manbaning yozuvlari yarmidan ko‘pi boshqa faol manbada bo‘lsa, u **“takroriy baza”** deb
+   belgilanadi va hisobga olinmaydi. Qaysi biri ishlatilishini Integratsiyalar sahifasida
+   **“Shu manbani ishlatish”** bilan tanlaysiz (masalan, eski CSV o‘rniga ERP).
+6. Noto‘g‘ri satrlar (sana buzilgan, miqdor ≤ 0, takroriy ID) **karantinga** tushadi. Ular
    yashirilmaydi: sinxron natijasida soni va misollari ko‘rsatiladi.
-6. AI raqamni o‘zi o‘ylab topmaydi. U faqat snapshot ustidagi deterministik so‘rov natijasini
+7. AI raqamni o‘zi o‘ylab topmaydi. U faqat snapshot ustidagi deterministik so‘rov natijasini
    aytadi va manbani (snapshot, query ID) ko‘rsatadi.
 
 ---
@@ -342,6 +348,8 @@ Chuqurroq: `docs/runbooks/incidents.md` (“Integration Runtime ishlamayapti”)
 - Faqat to‘liq sinxron. `updated_since` bilan inkremental sinxron — P1 (API shartnomada bor).
 - Bitta manba — bitta obyekt. ERP 4 ta manba sifatida ulanadi (“ERP ulash” tugmasi hammasini
   yaratadi), har birining mapping’i alohida tasdiqlanadi.
+- Takroriy baza yozuv ID’lari (source_id) bo‘yicha aniqlanadi: ikki tizim bir hujjatga turli ID
+  bersa, takror sezilmaydi — bunday holatda manbalardan birini qo‘lda o‘chirib qo‘ying.
 - Ombor harakatlari yuklanadi, lekin qoldiq/aylanma metrikalari katalogda hali yo‘q — ombor
   qoldig‘i bo‘yicha savollarga hozircha raqamli javob berilmaydi (P1).
 - ERP’ga yozish (hujjat yaratish) — rejada yo‘q (faqat o‘qish).

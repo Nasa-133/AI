@@ -10,7 +10,7 @@ from business.kernel.errors import BusinessError
 from ..domain.ingestion import Entity
 from ..domain.metrics import CATALOG, DIMENSION_NAMES, Dimension, Subject
 from ..domain.query import Filters, Period, QuerySpec
-from ..ports.store import AnalyticsStore, ComponentRow, SnapshotRef, StoredQuery
+from ..ports.store import AnalyticsStore, ComponentRow, Snapshots, StoredQuery, snapshot_list
 from . import results as R
 
 _ENTITY_LABEL = {Entity.SALES_ORDER_LINE: "Savdo", Entity.FINANCE_RECEIVABLE: "Debitorlik"}
@@ -79,9 +79,9 @@ def spec_from_args(a: dict[str, Any]) -> QuerySpec:
     )
 
 
-def source_refs(snapshots: dict[Entity, SnapshotRef], query_id: UUID) -> list[dict[str, Any]]:
+def source_refs(snapshots: Snapshots, query_id: UUID) -> list[dict[str, Any]]:
     refs = [{"kind": "dataset_snapshot", "id": str(s.id), "version_id": None,
-             "locator": e.value} for e, s in snapshots.items()]
+             "locator": e.value} for e, parts in snapshots.items() for s in parts]
     return [*refs, {"kind": "query_result", "id": str(query_id), "version_id": None,
                     "locator": None}]
 
@@ -112,8 +112,8 @@ class QueryService:
         }
 
     async def require_ready(self, spec: QuerySpec,
-                            snapshots: dict[Entity, SnapshotRef] | None = None,
-                            ) -> dict[Entity, SnapshotRef]:
+                            snapshots: Snapshots | None = None,
+                            ) -> Snapshots:
         if await self._s.metric_settings() is None:
             raise SettingsNotApproved(
                 "Hisob qoidalari (QQS, qaytarish, chegirma) hali tasdiqlanmagan, shuning uchun "
@@ -121,7 +121,7 @@ class QueryService:
                 "Hisob qoidalari → “Tasdiqlash”.")
         snaps = snapshots if snapshots is not None else await self._s.active_snapshots()
         needed = (Entity.FINANCE_RECEIVABLE if spec.is_receivable else Entity.SALES_ORDER_LINE)
-        if needed not in snaps:
+        if not snaps.get(needed):
             raise NoData(f"{_ENTITY_LABEL.get(needed, needed.value)} ma’lumoti hali yuklanmagan. "
                          "Integratsiyalar sahifasida ERP’ni ulang yoki CSV fayl yuklang.")
         keep = ({Entity.FINANCE_RECEIVABLE} if spec.is_receivable
@@ -129,7 +129,7 @@ class QueryService:
         return {e: s for e, s in snaps.items() if e in keep}
 
     async def components(self, spec: QuerySpec, period: Period,
-                         snaps: dict[Entity, SnapshotRef],
+                         snaps: Snapshots,
                          dims: tuple[Dimension, ...]) -> list[ComponentRow]:
         if spec.is_receivable:
             return await self._s.receivable_components(
@@ -137,7 +137,7 @@ class QueryService:
         return await self._s.sales_components(spec, period, snaps, dims)
 
     async def names(self, rows: list[ComponentRow], dims: tuple[Dimension, ...],
-                    snaps: dict[Entity, SnapshotRef]) -> dict[Dimension, dict[str, str]]:
+                    snaps: Snapshots) -> dict[Dimension, dict[str, str]]:
         plain = [d for d in dims if d is not Dimension.CURRENCY]
         out: dict[Dimension, dict[str, str]] = {}
         for i, d in enumerate(plain):
@@ -165,14 +165,14 @@ class QueryService:
             notes.append("Bir nechta valyuta: natija valyuta bo‘yicha ajratilgan, qo‘shilmagan.")
         if spec.period.is_incomplete(ctx.today):
             notes.append("Davr hali tugamagan — to‘liq davr bilan izohsiz solishtirmang.")
-        if not spec.is_receivable and Entity.SALES_RETURN not in snaps:
+        if not spec.is_receivable and not snaps.get(Entity.SALES_RETURN):
             notes.append("Qaytarishlar ma’lumoti yuklanmagan — sof savdoga ta’sir qilishi mumkin.")
         if scope_note:
             notes.append(scope_note)
         query_id = uuid4()
         data = {
             "query_spec_id": str(query_id),
-            "dataset_snapshot_ids": [str(s.id) for s in snaps.values()],
+            "dataset_snapshot_ids": [str(s.id) for s in snapshot_list(snaps)],
             "metric_versions": [{"metric_id": d.id, "version": d.version} for d in defs],
             "period": {"from": spec.period.start.isoformat(), "to": spec.period.end.isoformat()},
             "currency": spec.currency or (currencies[0] if len(currencies) == 1 else None),
@@ -180,7 +180,7 @@ class QueryService:
                         *({"name": d.id, "kind": "metric", "metric_id": d.id, "unit": d.unit.value}
                           for d in defs)],
             "rows": out_rows, "row_count": len(out_rows), "truncated": len(rows) > spec.limit,
-            "as_of": max(s.as_of for s in snaps.values()).isoformat(),
+            "as_of": max(s.as_of for s in snapshot_list(snaps)).isoformat(),
             "notes": list(dict.fromkeys(notes)),
         }
         # Saqlangan spec’da amaldagi filial filtri — dashboard/yangilash doirani saqlaydi.
@@ -188,8 +188,8 @@ class QueryService:
                        {**args, "filters": {**(args.get("filters") or {}),
                                             "branch_codes": list(spec.filters.branch_codes or ())}})
         await self._s.save_query(StoredQuery(query_id, "query", stored_args,
-                                             [s.id for s in snaps.values()], data, ctx.user_id,
-                                             ctx.task_id))
+                                             [s.id for s in snapshot_list(snaps)], data,
+                                             ctx.user_id, ctx.task_id))
         return data, source_refs(snaps, query_id)
 
 

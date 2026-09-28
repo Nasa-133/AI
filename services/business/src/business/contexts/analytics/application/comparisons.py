@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 from ..domain.metrics import ADDITIVE_METRICS, CATALOG, Dimension, Unit, compute, contributions
 from ..domain.metrics import growth as growth_of
 from ..domain.query import InvalidQuery, Period, QuerySpec
-from ..ports.store import ComponentRow, StoredQuery
+from ..ports.store import ComponentRow, StoredQuery, snapshot_list
 from . import results as R
 from .queries import (
     QueryContext,
@@ -90,7 +90,7 @@ class ComparisonService:
         data = {"query_spec_id": str(query_id), "base_query_spec_id": str(base.id),
                 "current_period": _pdict(spec.period), "comparison_period": _pdict(comparison),
                 "currency": spec.currency or (currencies[0] if len(currencies) == 1 else None),
-                "dataset_snapshot_ids": [str(s.id) for s in snaps.values()],
+                "dataset_snapshot_ids": [str(s.id) for s in snapshot_list(snaps)],
                 "columns": columns, "rows": rows, "notes": list(dict.fromkeys(notes))}
         await self._q.store.save_query(StoredQuery(
             query_id, "comparison", args, base.snapshot_ids, data, ctx.user_id, ctx.task_id))
@@ -139,7 +139,7 @@ class ComparisonService:
                                "change": R.fmt(i.change, unit),
                                "share_of_change_pct": R.fmt(i.share_of_change_pct, Unit.PERCENT)}
                               for i in items],
-            "dataset_snapshot_ids": [str(s.id) for s in snaps.values()],
+            "dataset_snapshot_ids": [str(s.id) for s in snapshot_list(snaps)],
             "notes": ["Hisobiy hissa: har a’zoning umumiy o‘zgarishdagi ulushi. Bu sababni "
                       "isbotlamaydi (TZ 7.3).", *([scope_note] if scope_note else [])],
         }

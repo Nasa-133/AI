@@ -104,10 +104,14 @@ class ErpData:
         """Tarixdagi tasdiqlangan hujjatlar (qatorlari bilan) — yangi kun uchun namuna."""
         if not hasattr(self, "_invoice_cache"):
             by_no: dict[str, list[Record]] = {}
+            bad: set[str] = set()
             for r in self.history["sales-invoice-lines"]:
                 if r["state"] == "posted" and r["currency"] == "UZS":
                     by_no.setdefault(str(r["invoice_no"]), []).append(r)
-            self._invoice_cache = [lines for _, lines in sorted(by_no.items())]
+                    # Tarixdagi ataylab buzilgan satrlar (karantin sinovi) namuna bo‘lmasin.
+                    if _moment(r["posted_at"]) is None or not _positive(r["qty"]):
+                        bad.add(str(r["invoice_no"]))
+            self._invoice_cache = [lines for no, lines in sorted(by_no.items()) if no not in bad]
         return self._invoice_cache
 
     def plan(self, day: date) -> dict[str, list[Record]]:
@@ -182,6 +186,13 @@ def _moment(value: str | None) -> datetime | None:
         return datetime.fromisoformat(str(value))
     except ValueError:
         return None  # tarixdagi ataylab buzilgan sana (karantin sinovi) — faqat to‘liq sinxronda
+
+
+def _positive(value: str | None) -> bool:
+    try:
+        return Decimal(str(value)) > 0
+    except ArithmeticError:
+        return False
 
 
 def filter_since(rows: list[Record], since: str | None) -> list[Record]:

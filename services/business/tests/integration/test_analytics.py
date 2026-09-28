@@ -257,3 +257,47 @@ async def test_a05_failed_ingestion_keeps_previous_snapshot(
     after, _ = await q.run(ctx(), args(["net_sales"], "2026-01-01", "2026-04-30"))
     assert after["rows"] == before["rows"] == [["1800.00"]]
     assert after["dataset_snapshot_ids"] == before["dataset_snapshot_ids"]
+
+
+async def test_several_sources_are_summed_and_duplicate_base_is_not(
+    tenant_conn: tuple[AsyncConnection, UUID],
+) -> None:
+    """Ikki filialning alohida ERP’lari qo‘shiladi; o‘sha bazani qayta ulash ikki marta sanalmaydi."""
+    conn, tenant = tenant_conn
+    store = SqlAnalyticsStore(conn, tenant)
+    lines = order_lines(GOLDEN / "sotuvlar.csv")
+    tos = [r for r in lines if r["branch_code"] == "TOS"]
+    rest = [r for r in lines if r["branch_code"] != "TOS"]
+    erp_a, erp_b, copy = uuid4(), uuid4(), uuid4()
+    reader = MemoryReader({"a": jsonl(tos), "b": jsonl(rest), "all": jsonl(lines),
+                           "r": jsonl(returns(GOLDEN / "qaytarishlar.csv"))})
+    for key, source in (("a", erp_a), ("b", erp_b)):
+        await ingest_batch(store, reader, Outbox(), batch(Entity.SALES_ORDER_LINE, key, source),
+                           timezone="Asia/Tashkent")
+    await ingest_batch(store, reader, Outbox(), batch(Entity.SALES_RETURN, "r", erp_a),
+                       timezone="Asia/Tashkent")
+    await store.save_metric_settings(MetricSettings(1, {}, uuid4(), datetime.now(UTC)))
+    q = QueryService(store)
+    total = args(["net_sales"], "2026-01-01", "2026-04-30")
+
+    both, _ = await q.run(ctx(), total)
+    assert both["rows"] == [["1800.00"]]  # TOS (A) + boshqa filiallar (B)
+    assert len((await store.active_snapshots())[Entity.SALES_ORDER_LINE]) == 2
+
+    # O‘sha baza boshqa yo‘l bilan (to‘liq eksport) ulandi — takroriy, hisobga olinmaydi.
+    await ingest_batch(store, reader, Outbox(), batch(Entity.SALES_ORDER_LINE, "all", copy),
+                       timezone="Asia/Tashkent")
+    again, _ = await q.run(ctx(), total)
+    assert again["rows"] == [["1800.00"]]
+    status = {r["data_source_id"]: r for r in await store.source_status()
+              if r["entity"] == "sales.order_line"}
+    assert status[copy]["is_active"] is False and status[copy]["duplicate_of_source"] == erp_a
+    assert float(status[copy]["overlap"]) >= 0.5
+
+    # Foydalanuvchi to‘liq eksportni tanladi: A va B undan iborat — ular hisobdan chiqadi.
+    assert len(await store.activate_source(copy)) == 2
+    chosen, _ = await q.run(ctx(), total)
+    assert chosen["rows"] == [["1800.00"]]
+    active = (await store.active_snapshots())[Entity.SALES_ORDER_LINE]
+    chosen_dataset = (await store.dataset_for(copy, Entity.SALES_ORDER_LINE)).id
+    assert [snap.dataset_id for snap in active] == [chosen_dataset]

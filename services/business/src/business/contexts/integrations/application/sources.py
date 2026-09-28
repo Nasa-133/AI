@@ -9,6 +9,7 @@ from business.kernel.errors import BusinessError
 
 from ..domain.sources import (
     AUTO_SYNC_CONNECTORS,
+    AlreadyConnected,
     SourceNotReady,
     SourceStatus,
     check_upload,
@@ -58,6 +59,7 @@ class SourceService:
                                   "connector": connector_id, "upload": upload_id,
                                   "status": SourceStatus.DISCOVERING.value, "by": user_id})
         if entity:
+            await self._ensure_not_connected(None, connector_id, entity, upload_id)
             await self._s.update_source(source_id, entity=entity)
         await self._outbox.publish("DiscoverSchema.v1", {
             "discovery_id": str(uuid4()), "data_source_id": str(source_id),
@@ -71,6 +73,8 @@ class SourceService:
         source = await self._require(source_id)
         if source["status"] in (SourceStatus.DISCOVERING, SourceStatus.SYNCING):
             raise SourceNotReady("Manba hozir band — natijani kuting.")
+        await self._ensure_not_connected(source_id, source["connector_id"], entity,
+                                         source["upload_id"])
         version = await self._s.next_mapping_version(source_id)
         config = {"delimiter": ",", "encoding": "utf-8", "status_map": status_map}
         now = datetime.now(UTC)
@@ -120,6 +124,19 @@ class SourceService:
             await self.sync(row["created_by"], row["id"])
             started += 1
         return started
+
+    async def _ensure_not_connected(self, source_id: UUID | None, connector_id: str,
+                                    entity: str, upload_id: UUID | None) -> None:
+        sha = None
+        if upload_id is not None:
+            upload = await self._s.get_upload(upload_id)
+            sha = upload["sha256"].strip() if upload else None
+        same = await self._s.find_same_source(source_id, connector_id, entity, sha)
+        if same is not None:
+            what = "Bu fayl" if sha else "Bu tizim"
+            raise AlreadyConnected(f"{what} shu ma’lumot turi uchun allaqachon ulangan "
+                                   f"(“{same['name']}”). Bitta bazani ikki marta ulash mumkin "
+                                   "emas — raqamlar ikki marta sanalardi.")
 
     async def detail(self, source_id: UUID) -> dict[str, Any]:
         return await self._require(source_id)

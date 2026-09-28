@@ -1,9 +1,9 @@
 "use client";
 
-import { Database, FileSpreadsheet, RefreshCw, Server, Upload } from "lucide-react";
+import { CheckCheck, Database, FileSpreadsheet, RefreshCw, Server, Upload } from "lucide-react";
 import { useState } from "react";
 
-import { useConnectErp, useCreateSource, useSource, useSources, useSync } from "@/features/integrations/api";
+import { useConnectErp, useCreateSource, useSource, useSources, useSync, useUseSource, type Source } from "@/features/integrations/api";
 import { useFreshness } from "@/features/dashboards/freshness";
 import { MappingEditor } from "@/features/integrations/MappingEditor";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
@@ -31,6 +31,29 @@ function Status({ status, id }: { status: string; id?: string }) {
   return <span className={cls}>{label}</span>;
 }
 
+/** Takroriy baza: shu ma’lumot boshqa manbada ham bor — ikki marta sanalmaydi. */
+function DuplicateNotice({ s }: { s: Source }) {
+  const use = useUseSource(s.id);
+  if (!s.usage || s.usage.counted) return null;
+  const pct = s.usage.overlap != null ? ` (yozuvlarning ${Math.round(s.usage.overlap * 100)}% bir xil)` : "";
+  return (
+    <div className="notice notice-warning" role="status">
+      <strong>Takroriy baza — hisobga olinmaydi</strong>
+      <span>
+        Bu manba {s.usage.duplicate_of_name ? `“${s.usage.duplicate_of_name}”` : "boshqa manba"} bilan bir xil
+        ma’lumotni beradi{pct}. Raqamlar ikki marta sanalmasligi uchun faqat bittasi ishlatiladi.
+      </span>
+      <div className="row" style={{ marginTop: 6 }}>
+        <button className="btn btn-sm" disabled={use.isPending} onClick={() => use.mutate()}>
+          <CheckCheck aria-hidden /> Shu manbani ishlatish
+        </button>
+        <span className="hint">Boshqasi hisobdan chiqadi (o‘chirilmaydi).</span>
+      </div>
+      <ErrorNotice error={use.error} />
+    </div>
+  );
+}
+
 function SourceDetail({ id }: { id: string }) {
   const source = useSource(id);
   const sync = useSync(id);
@@ -52,6 +75,7 @@ function SourceDetail({ id }: { id: string }) {
         {s.connector_id === "erp_api" && <span className="badge" title="Integration Runtime sozlamasidagi ERP API">ERP API</span>}
         <Status status={s.status} id={s.id} />
       </div>
+      <DuplicateNotice s={s} />
       {s.error_message && (
         <div className={s.status === "failed" ? "notice notice-danger" : "notice notice-warning"}>{s.error_message}</div>
       )}
@@ -87,7 +111,7 @@ function SourceDetail({ id }: { id: string }) {
 export default function IntegrationsPage() {
   const sources = useSources();
   const create = useCreateSource();
-  const connectErp = useConnectErp();
+  const connectErp = useConnectErp(sources.data ?? []);
   const [selected, setSelected] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const current = selected ?? sources.data?.[0]?.id ?? null;
@@ -142,7 +166,10 @@ export default function IntegrationsPage() {
             <button key={s.id} className={styles.item} aria-current={s.id === current ? "true" : undefined}
                     onClick={() => setSelected(s.id)}>
               <span className={styles.itemName}>{s.name}</span>
-              <span><Status status={s.status} id={s.id} /></span>
+              <span className="row" style={{ gap: 4 }}>
+                <Status status={s.status} id={s.id} />
+                {s.usage && !s.usage.counted && <span className="badge badge-warning" title="Boshqa manba bilan bir xil ma’lumot">Takroriy</span>}
+              </span>
             </button>
           ))}
         </nav>

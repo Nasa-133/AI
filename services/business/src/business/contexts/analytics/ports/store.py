@@ -28,6 +28,15 @@ class SnapshotRef:
     quarantined_count: int
 
 
+# Bir obyektning faol snapshot’lari — har manba (dataset) uchun bittadan; qo‘shib hisoblanadi.
+SnapshotSet = tuple[SnapshotRef, ...]
+Snapshots = dict[Entity, SnapshotSet]
+
+
+def snapshot_list(snapshots: "Snapshots") -> list[SnapshotRef]:
+    return [s for parts in snapshots.values() for s in parts]
+
+
 @dataclass(frozen=True, slots=True)
 class BatchMeta:
     batch_id: UUID
@@ -87,24 +96,24 @@ class AnalyticsStore(Protocol):
         """Canonical record’lar (kontrakt ko‘rinishida) → versiyali satrlar; sana — tenant TZ’da."""
         ...
 
-    async def active_snapshots(self) -> dict[Entity, SnapshotRef]: ...
-    async def snapshots_by_ids(self, ids: list[UUID]) -> dict[Entity, SnapshotRef]: ...
+    async def active_snapshots(self) -> Snapshots: ...
+    async def snapshots_by_ids(self, ids: list[UUID]) -> Snapshots: ...
 
     async def sales_components(
-        self, spec: QuerySpec, period: Period, snapshots: dict[Entity, SnapshotRef],
+        self, spec: QuerySpec, period: Period, snapshots: Snapshots,
         dimensions: tuple[Dimension, ...],
     ) -> list[ComponentRow]: ...
 
     async def receivable_components(
-        self, spec: QuerySpec, as_of: date, snapshot: SnapshotRef,
+        self, spec: QuerySpec, as_of: date, snapshot: SnapshotSet,
         dimensions: tuple[Dimension, ...],
     ) -> list[ComponentRow]: ...
 
     async def dimension_names(
-        self, dimension: Dimension, codes: list[str], snapshots: dict[Entity, SnapshotRef]
+        self, dimension: Dimension, codes: list[str], snapshots: Snapshots
     ) -> dict[str, str]: ...
 
-    async def coverage(self, snapshots: dict[Entity, SnapshotRef]) -> Coverage: ...
+    async def coverage(self, snapshots: Snapshots) -> Coverage: ...
 
     async def metric_settings(self) -> MetricSettings | None: ...
     async def save_metric_settings(self, settings: MetricSettings) -> None: ...

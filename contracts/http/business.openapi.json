@@ -2905,6 +2905,52 @@
         ]
       }
     },
+    "/api/v1/integrations/{source_id}/use": {
+      "post": {
+        "description": "Takroriy bazalardan qaysi biri hisobga olinishini foydalanuvchi tanlaydi (masalan, eski\nCSV o‘rniga ERP). Tanlangan manba bilan bir xil bo‘lganlar hisobdan chiqadi.",
+        "operationId": "use_source_api_v1_integrations__source_id__use_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Source Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Use Source Api V1 Integrations  Source Id  Use Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Use Source",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/api/v1/invitations": {
       "get": {
         "operationId": "list_invitations_api_v1_invitations_get",

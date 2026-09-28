@@ -86,6 +86,18 @@ class SqlIntegrationsStore:
             " status, requested_by, requested_at) VALUES (:t, :id, :source, :version,"
             " 'requested', :by, now())"), {"t": self._t, **run})
 
+    async def find_same_source(self, source_id: UUID | None, connector_id: str, entity: str,
+                               upload_sha256: str | None) -> dict[str, Any] | None:
+        # Tashqi tizim — bir xil connector (bitta ulanish); fayl — bir xil tarkib (sha256).
+        r = (await self._c.execute(text(
+            "SELECT s.id, s.name FROM integrations.data_sources s"
+            " LEFT JOIN integrations.uploads u ON u.tenant_id = s.tenant_id AND u.id = s.upload_id"
+            " WHERE s.entity = :e AND s.connector_id = :c"
+            " AND (CAST(:sha AS text) IS NULL OR trim(u.sha256) = :sha)"
+            " AND (CAST(:id AS uuid) IS NULL OR s.id <> :id) LIMIT 1"),
+            {"e": entity, "c": connector_id, "sha": upload_sha256, "id": source_id})).first()
+        return None if r is None else {"id": r.id, "name": r.name}
+
     async def due_for_auto_sync(self, connectors: tuple[str, ...],
                                 interval_seconds: int) -> list[dict[str, Any]]:
         rows = (await self._c.execute(text(

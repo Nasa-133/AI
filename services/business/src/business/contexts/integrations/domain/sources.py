@@ -31,6 +31,12 @@ class SourceNotReady(BusinessError):
     code = "SOURCE_NOT_READY"
 
 
+class AlreadyConnected(BusinessError):
+    """Bitta bazani ikki marta ulash mumkin emas — raqamlar ikki marta sanalardi."""
+
+    code = "ALREADY_CONNECTED"
+
+
 class InvalidSource(ValidationFailed):
     pass
 

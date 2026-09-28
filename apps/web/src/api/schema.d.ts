@@ -559,6 +559,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/integrations/{source_id}/use": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Use Source
+         * @description Takroriy bazalardan qaysi biri hisobga olinishini foydalanuvchi tanlaydi (masalan, eski
+         *     CSV o‘rniga ERP). Tanlangan manba bilan bir xil bo‘lganlar hisobdan chiqadi.
+         */
+        post: operations["use_source_api_v1_integrations__source_id__use_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/invitations": {
         parameters: {
             query?: never;
@@ -2576,6 +2597,39 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    use_source_api_v1_integrations__source_id__use_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
