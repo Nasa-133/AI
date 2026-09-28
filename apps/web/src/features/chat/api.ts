@@ -77,7 +77,11 @@ export function useSendMessage() {
         },
         body: { content: input.content, agent: input.agent, document_ids: input.documentIds ?? [] },
       })) as Promise<{ task_id: string; agent_role_key: string; agent_name: string }>,
-    onSuccess: (_d, input) => qc.invalidateQueries({ queryKey: keys.messages(input.conversationId) }),
+    onSuccess: (_d, input) => {
+      void qc.invalidateQueries({ queryKey: keys.messages(input.conversationId) });
+      // Agent darhol o‘z stoliga yo‘l oladi (holat backend’dan: yangi vazifa navbatda).
+      void qc.invalidateQueries({ queryKey: ["office"] });
+    },
   });
 }
 

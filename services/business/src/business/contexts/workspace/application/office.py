@@ -39,6 +39,25 @@ def _positions(rows: list[AgentTaskRow]) -> dict[object, int]:
     return {r.task_id: i for i, r in enumerate(sorted(queued, key=lambda r: r.created_at), 1)}
 
 
+RESULT_CHARS = 1200
+
+
+def _result(row: AgentTaskRow | None, answers: dict[Any, dict[str, Any]],
+            viewer_id: object) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    answer = answers.get(row.task_id) or {}
+    content = str(answer.get("content") or "")
+    structured = answer.get("structured") or {}
+    return {**task_view(row, viewer_id, None),
+            "answer": content if len(content) <= RESULT_CHARS
+            else content[:RESULT_CHARS].rstrip() + "…",
+            "truncated": len(content) > RESULT_CHARS,
+            "dashboard_ids": list(structured.get("dashboard_ids") or []),
+            "document_drafts": list(structured.get("document_drafts") or []),
+            "source_count": len(answer.get("source_refs") or [])}
+
+
 class OfficeView:
     def __init__(self, store: WorkspaceStore, *, limit: int) -> None:
         self._s = store
@@ -49,6 +68,14 @@ class OfficeView:
         by_role: dict[str, list[AgentTaskRow]] = defaultdict(list)
         for r in rows:
             by_role[r.agent_role_key].append(r)
+        # Agent kartasi uchun: joriy foydalanuvchining har agentdagi oxirgi yakunlangan vazifasi.
+        last_mine: dict[str, AgentTaskRow] = {}
+        for r in rows:
+            if r.initiator_id == viewer_id and r.status in TERMINAL_TASK:
+                if r.agent_role_key not in last_mine or r.updated_at > last_mine[
+                        r.agent_role_key].updated_at:
+                    last_mine[r.agent_role_key] = r
+        answers = await self._s.answers([r.task_id for r in last_mine.values()])
         agents = []
         for role, (name, title) in AGENTS.items():
             tasks = by_role.get(role, [])
@@ -66,6 +93,7 @@ class OfficeView:
                     row, viewer_id, positions.get(row.task_id)),
                 "tasks": [task_view(r, viewer_id, positions.get(r.task_id)) for r in tasks
                           if r.status not in TERMINAL_TASK][:10],
+                "last_result": _result(last_mine.get(role), answers, viewer_id),
             })
         return {"agents": agents, "idle_after_seconds": int(IDLE_AFTER.total_seconds()),
                 "generated_at": now.isoformat()}

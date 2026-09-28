@@ -6,9 +6,10 @@ import { useEffect, useRef } from "react";
 import { PHASES } from "@/features/chat/taskStream";
 import { useCancelTask } from "@/features/chat/api";
 import { chatTarget } from "@/features/chat/chatTarget";
+import { Markdown } from "@/shared/markdown/Markdown";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
-import { stateLabel, TASK_STATUS, type OfficeAgent, type OfficeTask } from "./api";
+import { stateLabel, TASK_STATUS, type AgentResult, type OfficeAgent, type OfficeTask } from "./api";
 import styles from "./office.module.css";
 
 function TaskRow({ task }: { task: OfficeTask }) {
@@ -38,6 +39,40 @@ function TaskRow({ task }: { task: OfficeTask }) {
       )}
       <ErrorNotice error={cancel.error} />
     </li>
+  );
+}
+
+function LastResult({ result }: { result: AgentResult }) {
+  const [label, cls] = TASK_STATUS[result.status] ?? [result.status, "badge"];
+  return (
+    <section className={styles.result} aria-label="Oxirgi natija">
+      <div className={styles.taskHead}>
+        <strong>Oxirgi natija</strong>
+        <span className={cls}>{label}</span>
+      </div>
+      <span className="muted">{result.title}</span>
+      {result.answer ? (
+        <div className={styles.answer}><Markdown source={result.answer} /></div>
+      ) : (
+        <span className="muted">Javob matni yo‘q.</span>
+      )}
+      <div className={styles.taskActions}>
+        {result.source_count > 0 && <span className="badge">Manbalar: {result.source_count}</span>}
+        {result.dashboard_ids.map((id) => (
+          <Link key={id} className="btn btn-sm" href={`/?dashboard=${id}`}>Dashboardni ochish</Link>
+        ))}
+        {result.document_drafts.map((d) => (
+          <Link key={d.version_id} className="btn btn-sm" href={`/documents?doc=${d.document_id}&compare=${d.version_id}`}>
+            Draftni ko‘rish
+          </Link>
+        ))}
+        {result.conversation_id && (
+          <button className="btn btn-sm" onClick={() => chatTarget.open({ conversationId: result.conversation_id })}>
+            {result.truncated ? "To‘liq javob chatda" : "Suhbatni ochish"}
+          </button>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -71,6 +106,7 @@ export function AgentPanel({ agent, onClose }: { agent: OfficeAgent; onClose: ()
       ) : (
         <p className="muted">Faol vazifa yo‘q.</p>
       )}
+      {agent.last_result && <LastResult result={agent.last_result} />}
       <div className={styles.taskActions}>
         <button className="btn btn-primary btn-sm" onClick={() => chatTarget.open({ agent: agent.role_key })}>
           Chatga yozish

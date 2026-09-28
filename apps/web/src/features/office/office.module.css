@@ -5,56 +5,11 @@
 .layout { display: flex; gap: 16px; align-items: flex-start; min-width: 0; }
 @media (max-width: 1100px) { .layout { flex-direction: column; align-items: stretch; } }
 
-/* Pol: sokin katak naqsh — o‘qishga xalaqit bermaydi. */
-.floor {
-  flex: 1; min-width: 0; display: grid; gap: 12px; padding: 16px; border-radius: var(--radius-lg);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
-  background:
-    linear-gradient(var(--border) 1px, transparent 1px) 0 0 / 32px 32px,
-    linear-gradient(90deg, var(--border) 1px, transparent 1px) 0 0 / 32px 32px,
-    var(--surface-2);
-  background-blend-mode: normal;
-}
-.deskCard {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  box-shadow: var(--shadow); cursor: pointer; text-align: center; color: var(--text); min-width: 0; font: inherit;
-}
-.deskCard:hover { border-color: var(--accent); }
-.deskCard:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.deskCard[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.load { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.taskLine { font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 .stateTag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-muted); }
 .stateTag[data-state="reading"], .stateTag[data-state="analyzing"], .stateTag[data-state="drafting"] { background: var(--accent-soft); color: var(--accent); }
 .stateTag[data-state="awaiting_input"], .stateTag[data-state="awaiting_approval"], .stateTag[data-state="queued"] { background: var(--warning-soft); color: var(--warning); }
 .stateTag[data-state="completed"] { background: var(--success-soft); color: var(--success); }
 .stateTag[data-state="failed"] { background: var(--danger-soft); color: var(--danger); }
-
-.avatar { width: 100%; max-width: 132px; height: auto; }
-.desk { fill: var(--text-muted); opacity: 0.45; }
-.head { fill: var(--agent); opacity: 0.85; }
-.body { fill: var(--agent); }
-.monitor { fill: var(--surface-2); stroke: var(--text-muted); stroke-width: 1.5; }
-.avatar[data-state="analyzing"] .monitor, .avatar[data-state="drafting"] .monitor, .avatar[data-state="reading"] .monitor { fill: var(--accent-soft); stroke: var(--accent); }
-.paper { fill: var(--surface); stroke: var(--text-muted); }
-.pen { fill: var(--warning); }
-.chart { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.badgeMark circle { fill: var(--surface); stroke: var(--agent); stroke-width: 2; }
-.badgeMark text { font-size: 12px; font-weight: 700; fill: var(--text); }
-.avatar[data-state="failed"] .badgeMark circle { stroke: var(--danger); }
-.avatar[data-state="completed"] .badgeMark circle { stroke: var(--success); }
-
-/* Qisqa, sokin animatsiya faqat faol holatlarda; reduced-motion’da yo‘q (TZ 6, U01). */
-@media (prefers-reduced-motion: no-preference) {
-  .avatar[data-state="analyzing"] .chart, .avatar[data-state="drafting"] .pen, .avatar[data-state="reading"] .paper {
-    animation: work 1.8s ease-in-out infinite;
-  }
-  .avatar[data-state="awaiting_input"] .badgeMark { animation: nudge 2.4s ease-in-out infinite; transform-origin: 60px 10px; }
-}
-@keyframes work { 50% { opacity: 0.45; } }
-@keyframes nudge { 0%, 80%, 100% { transform: scale(1); } 90% { transform: scale(1.15); } }
 
 .listWrap { flex: 1; min-width: 0; overflow-x: auto; }
 .taskCell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -71,3 +26,7 @@
 .taskHead { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 .taskTitle { overflow-wrap: anywhere; }
 .taskActions { display: flex; flex-wrap: wrap; gap: 6px; }
+.result { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.answer { max-height: 260px; overflow-y: auto; background: var(--surface-2); border-radius: var(--radius); padding: 8px; font-size: 13px; overflow-wrap: anywhere; }
+.answer :global(.md) { display: flex; flex-direction: column; gap: 6px; }
+.answer :global(.md p) { margin: 0; }

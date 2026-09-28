@@ -1,0 +1,65 @@
+.wrap { position: relative; min-width: 0; aspect-ratio: 5 / 3; max-height: max(360px, calc(100dvh - 300px)); border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); }
+.map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; }
+.map:active { cursor: grabbing; }
+.map:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+
+.hall { fill: var(--surface-2); }
+.room { fill: var(--surface); }
+.room[data-kind="lounge"] { fill: color-mix(in srgb, var(--success-soft) 60%, var(--surface)); }
+.room[data-kind="meeting"] { fill: color-mix(in srgb, var(--accent-soft) 50%, var(--surface)); }
+.wall { fill: var(--text-muted); opacity: 0.55; }
+
+.furniture rect { fill: color-mix(in srgb, var(--text-muted) 22%, var(--surface)); stroke: color-mix(in srgb, var(--text-muted) 45%, transparent); stroke-width: 1; }
+.furniture[data-kind="plant"] rect { fill: color-mix(in srgb, var(--success) 45%, var(--surface)); stroke: none; }
+.furniture[data-kind="sofa"] rect { fill: color-mix(in srgb, var(--accent) 25%, var(--surface)); }
+.furniture[data-kind="coffee"] rect { fill: color-mix(in srgb, var(--warning) 40%, var(--surface)); }
+.furniture[data-kind="cabinet"] rect { fill: color-mix(in srgb, var(--text-muted) 35%, var(--surface)); }
+.furniture[data-owner] > rect:first-child { stroke: color-mix(in srgb, var(--text) 45%, transparent); stroke-width: 1.5; }
+.furniture .monitor { fill: var(--text); opacity: 0.55; stroke: none; }
+.furniture[data-active="true"] .monitor { fill: var(--accent); opacity: 0.9; }
+
+.roomLabel text { font-size: 10.5px; letter-spacing: 0.02em; text-transform: uppercase; opacity: 0.8; font-weight: 600; fill: var(--text-muted); dominant-baseline: auto; pointer-events: none; }
+
+.agent { cursor: pointer; outline: none; }
+.hit { fill: transparent; }
+.shadow { fill: rgb(0 0 0 / 18%); }
+.body { fill: var(--agent); }
+.head { fill: color-mix(in srgb, var(--agent) 55%, white); stroke: var(--agent); stroke-width: 1; }
+.hand { fill: color-mix(in srgb, var(--agent) 55%, white); opacity: 0; }
+.agent[data-working="true"] .hand { opacity: 1; }
+.agent[data-selected="true"] .hit, .agent:focus-visible .hit { fill: none; stroke: var(--focus); stroke-width: 2; }
+
+.label { pointer-events: auto; }
+.name { font-size: 12px; font-weight: 700; fill: var(--text); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.pill rect { fill: var(--surface); stroke: var(--border); }
+.pill text { font-size: 10.5px; font-weight: 600; fill: var(--text-muted); }
+.pill[data-state="reading"] rect, .pill[data-state="analyzing"] rect, .pill[data-state="drafting"] rect { fill: var(--accent-soft); stroke: var(--accent); }
+.pill[data-state="reading"] text, .pill[data-state="analyzing"] text, .pill[data-state="drafting"] text { fill: var(--accent); }
+.pill[data-state="queued"] rect, .pill[data-state="awaiting_input"] rect, .pill[data-state="awaiting_approval"] rect { fill: var(--warning-soft); stroke: var(--warning); }
+.pill[data-state="queued"] text, .pill[data-state="awaiting_input"] text, .pill[data-state="awaiting_approval"] text { fill: var(--warning); }
+.pill[data-state="completed"] rect { fill: var(--success-soft); stroke: var(--success); }
+.pill[data-state="completed"] text { fill: var(--success); }
+.pill[data-state="failed"] rect { fill: var(--danger-soft); stroke: var(--danger); }
+.pill[data-state="failed"] text { fill: var(--danger); }
+
+/* Ishlash animatsiyasi: klaviaturada yozish (qo‘llar) va monitor. Reduced-motion’da yo‘q. */
+@media (prefers-reduced-motion: no-preference) {
+  .agent[data-working="true"] .hand[data-hand="l"] { animation: type 0.5s ease-in-out infinite; }
+  .agent[data-working="true"] .hand[data-hand="r"] { animation: type 0.5s ease-in-out 0.25s infinite; }
+  .furniture[data-active="true"] .monitor { animation: screen 1.6s ease-in-out infinite; }
+  .agent[data-at="walking"] [data-body] .body { animation: step 0.35s ease-in-out infinite; }
+  .agent[data-state="awaiting_input"] .pill { animation: nudge 2.4s ease-in-out infinite; }
+}
+@keyframes type { 50% { transform: translateY(1.5px); } }
+@keyframes screen { 50% { opacity: 0.6; } }
+@keyframes step { 50% { transform: scaleY(0.9); } }
+@keyframes nudge { 0%, 85%, 100% { opacity: 1; } 92% { opacity: 0.55; } }
+
+.frame { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.controls { display: flex; gap: 4px; align-items: center; justify-content: flex-end; flex-wrap: wrap; }
+.hint { font-size: 12px; color: var(--text-muted); margin-right: auto; }
+.zoom { min-width: 44px; text-align: center; font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* Ixcham (uzoqlashtirilgan) rejim: bo‘sh agent ismi faqat tanlanganda yoki fokusda. */
+.map[data-compact="true"] .agent[data-state="idle"]:not([data-selected="true"]):not(:focus-visible):not(:hover) .label { display: none; }
+.map[data-tiny="true"] .roomLabel { display: none; }

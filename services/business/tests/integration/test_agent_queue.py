@@ -92,6 +92,8 @@ async def test_t01_queue_per_agent_and_office_state(client: httpx.AsyncClient,
             assert (await c.get(f"/api/v1/tasks/{ids[2]}")).json()["queue_position"] == 1
             ali = agents((await c.get("/api/v1/office")).json())["sales_analyst"]
             assert (ali["active_count"], ali["queue_length"]) == (1, 1)
+            # Agent kartasi: oxirgi natija (javob matni bilan).
+            assert ali["last_result"]["id"] == ids[0] and ali["last_result"]["answer"] == "Tayyor"
 
             # T05: navbatdagi vazifa darhol bekor qilinadi, AI’ga hech narsa yuborilmaydi.
             r = await c.post(f"/api/v1/tasks/{ids[2]}/cancel", headers=csrf(c))
@@ -121,6 +123,10 @@ async def test_clarification_shows_awaiting_input_until_answered(
                                  "structured": None},
             "usage": {"input_tokens": 0, "output_tokens": 0, "cost_estimate": "0",
                       "currency": "USD"}})
+        madina = agents((await c.get("/api/v1/office")).json())["finance_analyst"]
+        assert madina["state"] == "awaiting_input"
+        # Boshqa agentga xabar Madinaning savoliga javob emas.
+        await c.post(url, headers=csrf(c), json={"content": "Ali, savdo qancha?"})
         madina = agents((await c.get("/api/v1/office")).json())["finance_analyst"]
         assert madina["state"] == "awaiting_input"
         await c.post(url, headers=csrf(c), json={"content": "Madina, yalpi foyda"})

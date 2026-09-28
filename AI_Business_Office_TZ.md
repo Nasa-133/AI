@@ -115,9 +115,13 @@ Agent — dasturiy ijrochi, jismoniy resurs emas. Har agent uchun parallel ishla
 
 ### Ofis ko‘rinishi
 
-Yengil 2D/isometrik sahna; 5 ta stol, har birida agent personaji. Vizual uslub professional, sokin va o‘qilishi oson. Animatsiyalar qisqa; `prefers-reduced-motion` qo‘llanadi. P0 uchun DOM/SVG yetarli; og‘ir o‘yin dvigateli majburiy emas.
+Tepadan qaraladigan katta, jonli virtual ofis xaritasi: bir nechta xona (bo‘limlar: Koordinator, Savdo, Moliya, Ombor, Hujjatlar; majlis xonasi; dam olish zonasi), koridor, devorlar, eshiklar, ish zonalari va stollar. Har agentning o‘z bo‘limida doimiy ish stoli va dam olish zonasida o‘z joyi bor. Vizual uslub professional, sokin va o‘qilishi oson. P0 uchun DOM/SVG yetarli; og‘ir o‘yin dvigateli majburiy emas.
 
-Agent ustida ism, rol, holat va bitta joriy vazifa ko‘rinadi. Bosilganda yon kartada vazifa bosqichlari, manbalar, natijalar, to‘xtatish va chatga yozish tugmalari chiqadi. Klaviatura bilan ham tanlash mumkin.
+Harakat faqat backenddagi haqiqiy task holatiga bog‘lanadi (tasodifiy dekorativ yurish yo‘q): agentga vazifa kelganda (navbat, o‘qish, tahlil, tayyorlash, javob kutish) personaj turgan joyidan o‘z stoliga yurib boradi va kompyuterda ishlash animatsiyasini boshlaydi; allaqachon stolida bo‘lsa, joyida boshlaydi. Yakuniy holat stolda ko‘rsatiladi, agent `idle`ga qaytgach dam olish zonasidagi joyiga qaytadi. Bir nechta agent bir vaqtda mustaqil harakatlanadi. Yo‘l katak xaritasida topiladi; personajlar devor va mebel ichidan o‘tmaydi. `prefers-reduced-motion`da personaj yurmasdan joyiga o‘tadi va animatsiya o‘chadi.
+
+Xaritani yaqinlashtirish, uzoqlashtirish (g‘ildirak, tugma, klaviatura, pinch) va surish mumkin. Kamera va agentlar joylashuvi sessiyada saqlanadi: dashboard oynasini ochib-yopish yoki boshqa bo‘limga o‘tib qaytish ofis holatini yo‘qotmaydi, agentlar ishi davom etadi. O‘ngdagi chat va tepadagi dashboard doskasi joyida qoladi. Xaritasiz “Ro‘yxat” ko‘rinishi ham mavjud (U01).
+
+Agent ustida ism va haqiqiy vazifa holati (masalan, “O‘qimoqda”, “Tahlil qilmoqda”, “Javobingizni kutmoqda”, “Bajardi”) ko‘rinadi; uzoqlashtirilganda bo‘sh agentlar yorlig‘i yig‘iladi. Bosilganda yon kartada joriy vazifa va bosqichlari, oxirgi natija (javob, manbalar, dashboard/draft havolalari), to‘xtatish va chatga yozish tugmalari chiqadi. Klaviatura bilan ham tanlash mumkin.
 
 ### Holatlar
 

@@ -11,8 +11,10 @@ _ROWS = (
     "SELECT t.id, t.conversation_id, t.initiator_id, t.agent_role_key, t.title, t.status,"
     " t.error_code, t.dispatched_at IS NOT NULL AS dispatched, s.status AS step_status,"
     " s.kind AS step_kind, s.phase AS step_phase, s.wait_reason,"
+    # Aniqlashtirishga javob — shu suhbatda shu agentga keyingi vazifa (boshqa agentga xabar emas).
     " EXISTS (SELECT 1 FROM workspace.tasks n WHERE n.conversation_id = t.conversation_id"
-    "   AND n.created_at > t.created_at) AS answered, t.created_at, t.updated_at"
+    "   AND n.agent_role_key = t.agent_role_key AND n.created_at > t.created_at) AS answered,"
+    " t.created_at, t.updated_at"
     " FROM workspace.tasks t JOIN LATERAL (SELECT * FROM workspace.task_steps x"
     "   WHERE x.task_id = t.id ORDER BY x.created_at DESC LIMIT 1) s ON true"
 )
@@ -205,3 +207,13 @@ class SqlWorkspaceStore:
             "INSERT INTO workspace.idempotency_keys (tenant_id, user_id, key, response, created_at)"
             " VALUES (:t, :u, :k, CAST(:r AS jsonb), now())"),
             {"t": self._t, "u": user_id, "k": key, "r": _j(response)})
+
+    async def answers(self, task_ids: list[UUID]) -> dict[UUID, dict[str, Any]]:
+        if not task_ids:
+            return {}
+        rows = (await self._c.execute(text(
+            "SELECT DISTINCT ON (task_id) task_id, content, structured, source_refs"
+            " FROM workspace.messages WHERE author_kind = 'agent' AND task_id = ANY(:ids)"
+            " ORDER BY task_id, created_at DESC"), {"ids": task_ids})).all()
+        return {r.task_id: {"content": r.content, "structured": r.structured,
+                            "source_refs": r.source_refs} for r in rows}

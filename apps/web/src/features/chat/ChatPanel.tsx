@@ -75,11 +75,20 @@ export function ChatPanel() {
     e?.preventDefault();
     const content = text.trim();
     if (!content || send.isPending) return;
+    // Maydon birinchi await’dan oldin tozalanadi: yuborish (va suhbat yaratish) davomida
+    // yozilgan keyingi xabar o‘chib ketmaydi. Xato bo‘lsa matn va hujjatlar qaytariladi.
+    const documents = attached;
+    setText("");
+    contextDocs.clear();
+    const restore = () => {
+      setText((current) => current || content);
+      documents.forEach((d) => contextDocs.add(d));
+    };
     const id = await ensureConversation().catch(() => null);
-    if (!id) return;
+    if (!id) { restore(); return; }
     await send.mutateAsync({ conversationId: id, content, agent: agent || null,
-                             documentIds: attached.map((d) => d.id) })
-      .then(() => { setText(""); contextDocs.clear(); }).catch(() => {});
+                             documentIds: documents.map((d) => d.id) })
+      .catch(restore);
   }
 
   function onKey(e: KeyboardEvent<HTMLTextAreaElement>) {

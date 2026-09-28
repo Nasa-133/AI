@@ -261,3 +261,29 @@ Ma’lum cheklovlar:
 - `awaiting_approval` holati mapping’da bor, lekin tasdiq talab qiladigan qadam hali yo‘q.
 - Ofis holati 2 s polling bilan yangilanadi (backend holatidan); tenant SSE kanali — P1.
 - Osilib qolgan (15 daqiqadan oshgan) vazifa slotni band qilmaydi; uni avtomatik `failed` qilish — Bosqich 5.
+
+#### Bosqich 4 aniqlashtirish — jonli ofis xaritasi (TZ 6 “Ofis ko‘rinishi” yangilandi): ✅
+
+- Tepadan ko‘rinadigan xarita (SVG, 60×36 katak): 5 bo‘lim, majlis xonasi, dam olish zonasi,
+  koridor, devor va eshiklar, stollar (egasi belgilangan), mebel.
+- Harakat backend holatidan: vazifa → o‘z stoliga yurish (A*, devor/mebeldan o‘tmaydi), stolda
+  ishlash animatsiyasi (qo‘llar, monitor); `idle` → dam olish joyi. Tasodifiy yurish yo‘q.
+  Bir nechta agent mustaqil. Reduced-motion — yurishsiz, animatsiyasiz.
+- Kamera: g‘ildirak, +/−, klaviatura, surish, pinch; kamera va joylashuv sessiyada saqlanadi
+  (dashboard oynasi va sahifa almashishi holatni yo‘qotmaydi).
+- Yorliqlar ekranda o‘qiladigan o‘lchamda; uzoqlashtirilganda bo‘sh agent ismlari yig‘iladi.
+- Agent kartasi: joriy vazifa + oxirgi natija (javob, manbalar soni, dashboard/draft havolalari).
+- Backend: `/office` → `last_result`; aniqlashtirishga javob — faqat shu agentga keyingi vazifa.
+
+Testlar: unit — xarita (barcha joylar ochiq va o‘zaro yetib boriladi, yo‘l hech qachon to‘siqdan
+o‘tmaydi), harakat (holat → joy, yetib borish, stolida bo‘lsa joyida), kamera; brauzer — agent
+stoliga yuradi (“walking” → “desk”, o‘z bo‘limida), boshqalar joyida, karta natija bilan, zoom/surish
+(tugma, g‘ildirak, sichqoncha, klaviatura), dashboard oynasi va sahifa almashganda holat saqlanadi,
+ikki agent parallel, reduced-motion’da “walking” bo‘lmaydi. Brauzer testlari jami 8/8.
+
+Topilib tuzatilgan xatolar: chatda yuborish davomida yozilgan keyingi xabar o‘chib ketishi;
+boshqa agentga yozilgan xabar aniqlashtirishga javob deb hisoblanishi; kichik ekranda yorliqlar
+ustma-ust tushishi.
+
+Cheklov: agentlar bir-biri bilan to‘qnashuvdan qochmaydi (koridorda qisqa ustma-ust o‘tishi mumkin);
+ofis holati 2 s polling bilan (tenant SSE — P1).

@@ -1,15 +1,14 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
-import { AgentAvatar } from "./AgentAvatar";
 import { AgentPanel } from "./AgentPanel";
 import { stateLabel, useOffice, type OfficeAgent } from "./api";
 import styles from "./office.module.css";
+import { OfficeMap } from "./OfficeMap";
 
-const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 const VIEW_KEY = "abo.office.view";
 
 type View = "scene" | "list";
@@ -36,52 +35,34 @@ function taskLine(a: OfficeAgent): string {
   return t.title ?? "";
 }
 
-function load(a: OfficeAgent): string {
-  const parts = [`${a.active_count}/${a.limit}`];
-  if (a.queue_length) parts.push(`+${a.queue_length} navbatda`);
-  return parts.join(" · ");
-}
-
 /**
- * Ofis (TZ 6): 5 ta stol, holat backend’dan. Klaviatura: strelkalar stollar orasida,
- * Enter/Space — kartani ochish. “Ro‘yxat” ko‘rinishi — sahnasiz muqobil yo‘l (U01).
+ * Ofis (TZ 6): tepadan ko‘rinadigan xarita — xonalar, stollar va backend holatiga bog‘langan
+ * agentlar. “Ro‘yxat” — xaritasiz muqobil yo‘l (U01). Tanlangan agent kartasi yonida.
  */
 export function OfficeFloor() {
   const office = useOffice();
   const [selected, setSelected] = useState<string | null>(null);
-  const [focusIndex, setFocusIndex] = useState(0);
   const view = useSyncExternalStore(subscribeView, readView, () => "scene" as View);
-  const desks = useRef<(HTMLButtonElement | null)[]>([]);
   const agents = office.data?.agents ?? [];
   const current = agents.find((a) => a.role_key === selected) ?? null;
 
   const changeView = writeView;
 
   function close() {
-    const index = agents.findIndex((a) => a.role_key === selected);
+    const role = selected;
     setSelected(null);
-    requestAnimationFrame(() => desks.current[index]?.focus());
-  }
-
-  function onKey(e: KeyboardEvent<HTMLDivElement>) {
-    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
-    let next: number | null = null;
-    if (step) next = (focusIndex + step + agents.length) % agents.length;
-    if (e.key === "Home") next = 0;
-    if (e.key === "End") next = agents.length - 1;
-    if (next === null) return;
-    e.preventDefault();
-    setFocusIndex(next);
-    desks.current[next]?.focus();
+    // Fokus kartani ochgan agentga (xaritada yoki ro‘yxatda) qaytadi.
+    requestAnimationFrame(() => document.querySelector<HTMLElement | SVGElement>(
+      `[data-agent="${role}"], [data-agent-row="${role}"]`)?.focus());
   }
 
   return (
     <section aria-label="Ofis" className={styles.office}>
       <div className={styles.head}>
         <h2>Ofis</h2>
-        <span className="muted">Holat vazifa bosqichlaridan olinadi; foiz taxmin qilinmaydi.</span>
+        <span className="muted">Agentlar vazifa kelganda o‘z stoliga borib ishlaydi; holat backend’dagi vazifadan.</span>
         <div className={styles.viewSwitch} role="group" aria-label="Ko‘rinish">
-          <button className="btn btn-sm" aria-pressed={view === "scene"} onClick={() => changeView("scene")}>Sahna</button>
+          <button className="btn btn-sm" aria-pressed={view === "scene"} onClick={() => changeView("scene")}>Xarita</button>
           <button className="btn btn-sm" aria-pressed={view === "list"} onClick={() => changeView("list")}>Ro‘yxat</button>
         </div>
       </div>
@@ -90,23 +71,7 @@ export function OfficeFloor() {
 
       <div className={styles.layout}>
         {view === "scene" ? (
-          <div className={styles.floor} role="group" aria-label="Agentlar stollari" onKeyDown={onKey}>
-            {agents.map((a, i) => (
-              <button key={a.role_key} ref={(el) => { desks.current[i] = el; }}
-                      className={styles.deskCard} data-state={a.state}
-                      tabIndex={i === focusIndex ? 0 : -1} aria-pressed={selected === a.role_key}
-                      aria-label={`${a.name}, ${a.title}: ${stateLabel(a)}. Joriy ishlar ${a.active_count} / ${a.limit}${a.queue_length ? `, navbatda ${a.queue_length}` : ""}. ${taskLine(a)}`}
-                      onFocus={() => setFocusIndex(i)}
-                      onClick={() => setSelected(selected === a.role_key ? null : a.role_key)}>
-                <span className={styles.stateTag} data-state={a.state}>{stateLabel(a)}</span>
-                <AgentAvatar state={a.state} color={COLORS[i % COLORS.length]} />
-                <strong>{a.name}</strong>
-                <span className="muted">{a.title}</span>
-                <span className={styles.load}>{load(a)}</span>
-                <span className={styles.taskLine}>{taskLine(a)}</span>
-              </button>
-            ))}
-          </div>
+          <OfficeMap agents={agents} selected={selected} onSelect={setSelected} />
         ) : (
           <div className={styles.listWrap}>
             <table className="table">
@@ -122,7 +87,7 @@ export function OfficeFloor() {
                     <td>{a.active_count} / {a.limit}</td>
                     <td>{a.queue_length}</td>
                     <td className={styles.taskCell}>{taskLine(a)}</td>
-                    <td><button className="btn btn-sm" onClick={() => setSelected(a.role_key)}>Ochish</button></td>
+                    <td><button className="btn btn-sm" data-agent-row={a.role_key} onClick={() => setSelected(a.role_key)}>Ochish</button></td>
                   </tr>
                 ))}
               </tbody>

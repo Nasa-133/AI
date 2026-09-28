@@ -18,6 +18,11 @@ export type OfficeAgent = {
   role_key: string; name: string; title: string; state: AgentStateKey; partial: boolean;
   active_count: number; limit: number; queue_length: number;
   current_task: OfficeTask | null; tasks: OfficeTask[];
+  last_result: AgentResult | null;
+};
+export type AgentResult = OfficeTask & {
+  answer: string; truncated: boolean; dashboard_ids: string[];
+  document_drafts: { document_id: string; version_id: string }[]; source_count: number;
 };
 export type Office = { agents: OfficeAgent[]; idle_after_seconds: number; generated_at: string };
 
