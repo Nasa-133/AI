@@ -13,9 +13,10 @@ from business.bootstrap.app import create_app
 from business.bootstrap.settings import Settings
 from tests.unit.identity.fakes import RecordingNotifier
 
+# Alohida test bazasi (scripts/test-dbs.sh): ishlayotgan stek bilan to‘qnashmaydi.
 APP_URL = os.environ.get(
-    "BUSINESS_DATABASE_URL",
-    "postgresql+asyncpg://business_app:business_app_dev@localhost:55432/business",
+    "BUSINESS_TEST_DATABASE_URL",
+    "postgresql+asyncpg://business_app:business_app_dev@localhost:55432/business_test",
 )
 
 pytestmark = pytest.mark.integration

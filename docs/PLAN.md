@@ -200,7 +200,7 @@ Keyingi bosqichlarga o‘tgan ishlar:
 - Ofis sahnasi va jonli agent holatlari — Bosqich 4.
 - Email orqali haqiqiy yuborish (hozir `notifier=log` faqat lokal) — provayder tanlovi kerak.
 - Katta eksport uchun fon vazifasi (hozir widget natijasi ≤5000 satr, sinxron).
-- Integratsiya testlari lokal stek bilan bir bazani ishlatadi: stek ishlab tursa AI worker test
+- ✅ (Bosqich 5) Integratsiya testlari endi alohida *_test bazalarida. Eski yozuv: stek ishlab tursa AI worker test
   run’ini olib ketishi mumkin (beqarorlik). Testlar uchun alohida bazalar — Bosqich 5.
 
 ### Bosqich 3 — Hujjatlar: ✅ yakunlandi (FakeProvider bilan; OpenAI tekshiruvi — Bosqich 6)

@@ -10,8 +10,9 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
+# Alohida test bazasi (scripts/test-dbs.sh): stek worker’lari test run’larini olmaydi.
 APP_URL = os.environ.get(
-    "AI_DATABASE_URL", "postgresql+asyncpg://ai_app:ai_app_dev@localhost:55432/ai_runtime")
+    "AI_TEST_DATABASE_URL", "postgresql+asyncpg://ai_app:ai_app_dev@localhost:55432/ai_runtime_test")
 
 
 @pytest.fixture(scope="session")

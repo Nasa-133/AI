@@ -4,7 +4,7 @@ PACKAGES := abo_messaging
 BUSINESS_MIGRATIONS_DATABASE_URL ?= postgresql+asyncpg://business_owner:business_owner_dev@localhost:55432/business
 export BUSINESS_MIGRATIONS_DATABASE_URL
 
-.PHONY: up down reset sync migrate dev worker ai-worker integration-worker check e2e e2e-ui stack web-lint web-test test test-unit test-integration test-repo lint openapi synthetic
+.PHONY: test-db up down reset sync migrate dev worker ai-worker integration-worker check e2e e2e-ui stack web-lint web-test test test-unit test-integration test-repo lint openapi synthetic
 
 up:            ## Platformani ko‘tarish (Postgres, RabbitMQ, Redis, S3 ombori)
 	$(COMPOSE) up -d --wait postgres rabbitmq redis objectstore
@@ -56,10 +56,10 @@ test-unit:
 	@for s in $(SERVICES); do (cd services/$$s && uv run pytest -q -m "not integration") || exit 1; done
 	@for p in $(PACKAGES); do (cd packages/$$p && uv run pytest -q -m "not integration") || exit 1; done
 
-test-integration: ## make up && make migrate kerak (make stack to‘xtatilgan bo‘lsin)
-	@if pgrep -f "bootstrap.worker|business.entrypoints.worker" >/dev/null; then \
-		echo "OGOHLANTIRISH: make stack ishlayapti — uning worker’lari test navbatlaridan ish olib" \
-		     "ketishi mumkin (umumiy lokal baza). Barqaror natija uchun stekni to‘xtating."; fi
+test-db:       ## Integratsiya testlari uchun alohida *_test bazalari (idempotent)
+	./scripts/test-dbs.sh
+
+test-integration: test-db ## make up kerak; stek ishlab tursa ham xavfsiz (alohida test bazalari)
 	cd services/business && uv run pytest -q -m integration
 	cd services/ai_runtime && uv run pytest -q -m integration
 	cd services/integration_runtime && uv run pytest -q -m integration

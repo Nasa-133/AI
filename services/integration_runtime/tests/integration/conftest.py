@@ -7,9 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from integration_runtime.adapters.s3_storage import S3Storage
 
+# Alohida test bazasi (scripts/test-dbs.sh).
 APP_URL = os.environ.get(
-    "INTEGRATION_DATABASE_URL",
-    "postgresql+asyncpg://integration_app:integration_app_dev@localhost:55432/integration_runtime",
+    "INTEGRATION_TEST_DATABASE_URL",
+    "postgresql+asyncpg://integration_app:integration_app_dev@localhost:55432/integration_runtime_test",
 )
 
 
