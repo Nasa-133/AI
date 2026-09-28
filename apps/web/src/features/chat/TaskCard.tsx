@@ -17,6 +17,8 @@ const STATUS: Record<string, [string, string]> = {
   cancelled: ["Bekor qilindi", "badge"],
 };
 
+const AI_SILENT_AFTER = 20; // soniya: vazifa yuborilgan, lekin AI’dan hech qanday holat kelmagan
+
 function useElapsed(since: number, active: boolean): number {
   const [now, setNow] = useState(since);
   useEffect(() => {
@@ -74,6 +76,12 @@ export function TaskCard({ taskId, conversationId, startedAt }: {
                   onClick={() => cancel.mutate(taskId)}>
             To‘xtatish
           </button>
+        </div>
+      )}
+      {live && !stream.phase && !stream.queuePosition && elapsed >= AI_SILENT_AFTER && (
+        // I05: AI xizmati ishlamasa vazifa yo‘qolmaydi — navbatda saqlanadi; soxta javob yo‘q.
+        <div className="notice notice-warning" role="status">
+          AI xizmati hozir javob bermayapti. Vazifa navbatda saqlangan va xizmat tiklanganda bajariladi.
         </div>
       )}
       {stream.limitations.length > 0 && (

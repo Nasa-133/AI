@@ -8,6 +8,7 @@ import { useDashboard, useMetricNames, useRefreshDashboard, useRunQuery } from "
 import { EditPanel, SharePanel, VersionsPanel } from "./DashboardPanels";
 import { DIMENSION_LABEL, drillQuery, loadView, saveView, type DrillStep } from "./drill";
 import styles from "./dashboards.module.css";
+import { useFreshness } from "./freshness";
 import { ResultTable } from "./ResultTable";
 import type { QueryResult, Widget } from "./types";
 import { WidgetView } from "./WidgetView";
@@ -25,6 +26,7 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
   const dashboard = useDashboard(id);
   const metricNames = useMetricNames();
   const run = useRunQuery();
+  const fresh = useFreshness();
   const [steps, setSteps] = useState<DrillStep[]>(() => loadView(id).steps);
   const [results, setResults] = useState<Record<number, QueryResult>>({});
   const heading = useRef<HTMLHeadingElement>(null);
@@ -68,6 +70,9 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
     <div className={styles.overlay} role="region" aria-label="Dashboard oynasi">
       <div className={styles.windowHead}>
         <h2 ref={heading} tabIndex={-1} className={styles.windowTitle}>{d?.title ?? "Dashboard"}</h2>
+        {fresh.data?.state === "stale" && (
+          <span className="badge badge-warning" title={fresh.data.message ?? undefined}>Eskirgan</span>
+        )}
         {steps.length > 0 && (
           <button className="btn btn-sm" onClick={() => { setSteps([]); setResults({}); }}>Filtrlarni tiklash</button>
         )}

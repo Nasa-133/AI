@@ -2047,6 +2047,30 @@
         ]
       }
     },
+    "/api/v1/data-freshness": {
+      "get": {
+        "description": "I03: import/sync kutilayotgani va dashboardlar “eskirgan”ligi (UI belgisi uchun).",
+        "operationId": "data_freshness_api_v1_data_freshness_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Data Freshness Api V1 Data Freshness Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Data Freshness",
+        "tags": [
+          "integrations"
+        ]
+      }
+    },
     "/api/v1/documents": {
       "get": {
         "operationId": "list_documents_api_v1_documents_get",

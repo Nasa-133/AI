@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useCreateSource, useSource, useSources, useSync } from "@/features/integrations/api";
+import { useFreshness } from "@/features/dashboards/freshness";
 import { MappingEditor } from "@/features/integrations/MappingEditor";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
@@ -16,7 +17,12 @@ const STATUS: Record<string, [string, string]> = {
   failed: ["Xato", "badge badge-danger"],
 };
 
-function Status({ status }: { status: string }) {
+function Status({ status, id }: { status: string; id?: string }) {
+  const fresh = useFreshness();
+  // I03: xizmat javob bermasa jarayon “kutilmoqda” deb aniq ko‘rsatiladi (abadiy “o‘qilmoqda” emas).
+  if (id && fresh.data?.waiting.some((w) => w.id === id && w.stale)) {
+    return <span className="badge badge-warning" title="Integratsiya xizmati javob bermayapti">Kutilmoqda</span>;
+  }
   const [label, cls] = STATUS[status] ?? [status, "badge"];
   return <span className={cls}>{label}</span>;
 }
@@ -35,7 +41,7 @@ function SourceDetail({ id }: { id: string }) {
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <h2 style={{ marginRight: "auto" }}>{s.name}</h2>
         {s.connector_id === "demo_erp" && <span className="badge badge-warning">DEMO — haqiqiy ERP emas</span>}
-        <Status status={s.status} />
+        <Status status={s.status} id={s.id} />
       </div>
       {s.error_message && (
         <div className={s.status === "failed" ? "notice notice-danger" : "notice notice-warning"}>{s.error_message}</div>
@@ -106,7 +112,7 @@ export default function IntegrationsPage() {
                     style={{ justifyContent: "space-between", borderColor: s.id === current ? "var(--accent)" : undefined }}
                     onClick={() => setSelected(s.id)}>
               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</span>
-              <Status status={s.status} />
+              <Status status={s.status} id={s.id} />
             </button>
           ))}
         </nav>

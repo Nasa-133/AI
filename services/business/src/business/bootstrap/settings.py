@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     budget_task_reservation: Decimal = Decimal("0.05")
     # Fon ishlari va saqlash muddatlari (TZ 17; mahsulot defaultlari, mijoz talabi bilan o‘zgaradi).
     maintenance_interval_seconds: int = Field(default=60, ge=5)
+    # I03: import/sync shuncha vaqt siljimasa dashboardlar “eskirgan” deb belgilanadi.
+    data_stale_after_seconds: int = Field(default=300, ge=1)
     retention_conversation_days: int = Field(default=90, ge=1)
     retention_draft_days: int = Field(default=90, ge=1)
     retention_audit_days: int = Field(default=365, ge=30)

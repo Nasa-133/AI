@@ -1,5 +1,6 @@
 """Yuklash va data source API (TZ 9.1, 15). Integratsiyani faqat Owner/Admin boshqaradi."""
 
+from datetime import UTC, datetime, timedelta
 from typing import IO, Annotated, Any, Literal
 from uuid import UUID
 
@@ -12,6 +13,7 @@ from business.contexts.identity.domain.errors import Forbidden
 from business.contexts.identity.public import AuthContext, Role
 from business.contexts.integrations.adapters.sql import SqlIntegrationsStore
 from business.contexts.integrations.application.sources import SourceService
+from business.contexts.integrations.domain.freshness import freshness
 from business.platform.db import tenant_transaction
 from business.platform.outbox import BoundOutbox
 
@@ -98,6 +100,16 @@ async def list_sources(ctx: AuthCtx, container: ContainerDep) -> list[dict[str, 
     async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
                                   user_id=ctx.user_id) as conn:
         return [_json(r) for r in await SqlIntegrationsStore(conn, ctx.tenant_id).list_sources()]
+
+
+@router.get("/data-freshness")
+async def data_freshness(ctx: AuthCtx, container: ContainerDep) -> dict[str, Any]:
+    """I03: import/sync kutilayotgani va dashboardlar “eskirgan”ligi (UI belgisi uchun)."""
+    async with tenant_transaction(container.engine, tenant_id=ctx.tenant_id,
+                                  user_id=ctx.user_id) as conn:
+        sources = await SqlIntegrationsStore(conn, ctx.tenant_id).list_sources()
+    stale_after = timedelta(seconds=container.settings.data_stale_after_seconds)
+    return freshness(sources, datetime.now(UTC), stale_after).to_json()
 
 
 @router.get("/integrations/{source_id}")

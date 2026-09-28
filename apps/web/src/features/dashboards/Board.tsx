@@ -6,6 +6,7 @@ import { formatValue } from "@/shared/format/number";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 import { useDashboardCards, useMetricNames } from "./api";
+import { useFreshness } from "./freshness";
 import styles from "./dashboards.module.css";
 import type { DashboardCard } from "./types";
 
@@ -39,6 +40,7 @@ export function Board({ onOpen, onShowAll }: {
   const cards = useDashboardCards(q);
   const metricNames = useMetricNames();
   const count = cards.data?.length ?? 0;
+  const fresh = useFreshness();
 
   return (
     <section className={styles.board} aria-label="Dashboardlar doskasi">
@@ -49,6 +51,11 @@ export function Board({ onOpen, onShowAll }: {
                aria-label="Dashboard qidirish" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       <ErrorNotice error={cards.error} />
+      {fresh.data?.state === "stale" && (
+        <div className="notice notice-warning" role="status">
+          <strong>Eskirgan</strong> {fresh.data.message}
+        </div>
+      )}
       <div className={styles.strip}>
         {cards.isLoading && [1, 2, 3].map((i) => <div key={i} className={`skeleton ${styles.card}`} />)}
         {cards.data?.map((c) => <CardButton key={c.id} card={c} onOpen={onOpen} metricNames={metricNames} />)}
