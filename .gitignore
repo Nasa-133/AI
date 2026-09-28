@@ -15,3 +15,5 @@ build/
 .idea/
 .e2e-logs/
 .dev-logs/
+.eval-logs/
+.degradation-logs/

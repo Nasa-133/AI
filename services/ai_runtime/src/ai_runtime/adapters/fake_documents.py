@@ -62,8 +62,11 @@ def is_document_request(text: str, available: set[str], has_context: bool) -> bo
     return _DOCUMENT_RE.search(_norm(text)) is not None or parse_edit(text) is not None
 
 
+_ADDRESS = re.compile(r"^\s*@?[\w']+\s*,\s*")  # “Dilnoza, …” — murojaat, savol emas
+
+
 def content_terms(question: str) -> list[str]:
-    words = re.findall(r"[\w']+", _norm(question))
+    words = re.findall(r"[\w']+", _norm(_ADDRESS.sub("", question, count=1)))
     return [w for w in words if len(w.strip("'")) > 1 and w not in _STOP_WORDS
             and not w.startswith(_STOP_PREFIXES)]
 

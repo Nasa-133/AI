@@ -161,3 +161,11 @@ async def test_analytics_question_still_goes_to_metrics_for_coordinator() -> Non
         "", [{"type": "message", "role": "user", "content": "Oktabr savdosi qancha?"}],
         [specs[n] for n in allowed_tools("coordinator")]))
     assert response.tool_calls[0].name == "list_available_metrics"
+
+
+def test_addressed_agent_name_is_not_a_search_term() -> None:
+    from ai_runtime.adapters.fake_documents import content_terms, is_relevant
+
+    terms = content_terms("Dilnoza, inventarizatsiya qanchalik tez-tez o‘tkaziladi?")
+    assert "dilnoza" not in terms
+    assert is_relevant("Inventarizatsiya har chorakda bir marta o‘tkaziladi.", terms)
