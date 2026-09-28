@@ -2,6 +2,7 @@
 
 import json
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -28,9 +29,12 @@ def sections_from(parsed: dict[str, Any]) -> list[Section]:
 
 class DocumentIngest:
     def __init__(self, store: DocumentStore, files: FileStore, outbox: Outbox, parser: Parser,
-                 tenant_id: UUID) -> None:
+                 tenant_id: UUID, *, redact: Callable[[str], str] = lambda text: text) -> None:
+        """`redact` — AI’ga (embedding) ketadigan matndan shaxsiy ma’lumotni yashirish (TZ 13.12);
+        qidiruv indeksi (FTS) va bo‘limlar Core’da asl matn bilan qoladi."""
         self._s, self._files, self._outbox, self._parser, self._t = (
             store, files, outbox, parser, tenant_id)
+        self._redact = redact
 
     async def upload(self, user_id: UUID, filename: str, path: Path) -> dict[str, Any]:
         """Fayl diskda (hajm limiti yuklashda tekshirilgan). Parse — worker’da."""
@@ -81,8 +85,9 @@ class DocumentIngest:
             return
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "chunks.jsonl"
-            path.write_text("".join(json.dumps({"chunk_id": str(c), "text": t}, ensure_ascii=False)
-                                    + "\n" for c, t in chunks), encoding="utf-8")
+            path.write_text("".join(json.dumps({"chunk_id": str(c), "text": self._redact(t)},
+                                               ensure_ascii=False) + "\n" for c, t in chunks),
+                            encoding="utf-8")
             ref = await self._files.put_file(f"embeddings-in/{self._t}/{version_id}.jsonl", path,
                                              content_type="application/x-ndjson")
         await self._s.set_embedding_status(version_id, "pending")

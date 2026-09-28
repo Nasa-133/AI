@@ -32,7 +32,7 @@ from business.platform.capability import Capability, InvalidCapability
 from business.platform.db import tenant_transaction
 
 from ..http.deps import ContainerDep
-from ..wiring import document_services
+from ..wiring import document_services, task_privacy
 
 DOCUMENT_TOOLS = frozenset({"search_documents", "read_document_section",
                             "compare_document_versions", "create_document_draft"})
@@ -173,13 +173,17 @@ async def call_tool(name: str, body: ToolRequest, request: Request, container: C
         log = SqlToolCallLog(conn, cap.tenant_id)
         if (cached := await log.get(cap.task_id, body.tool_call_id)) is not None:
             return cached
+        # TZ 13.12: model ko‘rgan tokenlar → asl qiymat (bajarish uchun); natija → tokenlar.
+        privacy = await task_privacy(container, conn, cap.tenant_id, cap.task_id)
+        arguments = await privacy.unmask_data(body.arguments)
         try:
             async with conn.begin_nested():
                 if name in DOCUMENT_TOOLS:
                     data, refs = await _execute_documents(conn, container, cap, role.value, name,
-                                                          body.arguments)
+                                                          arguments)
                 else:
-                    data, refs = await _execute(conn, cap, name, body.arguments, ctx)
+                    data, refs = await _execute(conn, cap, name, arguments, ctx)
+            data = await privacy.mask_data(data)
             warnings = [*data.get("notes", []), *data.get("warnings", [])]
             result = _result(trace_id, data=data, refs=refs, warnings=warnings)
         except BusinessError as exc:

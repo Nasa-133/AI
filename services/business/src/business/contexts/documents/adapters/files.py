@@ -2,6 +2,7 @@
 
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -35,9 +36,11 @@ class S3FileStore:
 class HttpQueryEmbedder:
     """Core → AI yagona sinxron chaqiruv (13.3). Xato — None: qidiruv matnli rejimga tushadi."""
 
-    def __init__(self, base_url: str, token: str) -> None:
+    def __init__(self, base_url: str, token: str, *,
+                 redact: Callable[[str], str] = lambda text: text) -> None:
         self._url = base_url.rstrip("/") + "/internal/v1/embed"
         self._token = token
+        self._redact = redact  # TZ 13.12: so‘rovdagi shaxsiy ma’lumot AI’ga ketmaydi
 
     async def embed(self, text: str) -> list[float] | None:
         if not self._url.startswith("http"):
@@ -45,7 +48,7 @@ class HttpQueryEmbedder:
         try:
             async with httpx.AsyncClient(timeout=EMBED_TIMEOUT_SECONDS) as client:
                 r = await client.post(self._url, headers={"Authorization": f"Bearer {self._token}"},
-                                      json={"texts": [text[:4000]],
+                                      json={"texts": [self._redact(text)[:4000]],
                                             "model_profile": "embedding_default"})
             r.raise_for_status()
             vector: list[float] = r.json()["embeddings"][0]

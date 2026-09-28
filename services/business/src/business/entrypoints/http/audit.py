@@ -31,6 +31,7 @@ AUDITED: dict[tuple[str, str], tuple[str, str | None, str | None]] = {
     ("DELETE", "/api/v1/members/{user_id}"): ("member.removed", "user", "user_id"),
     ("POST", "/api/v1/metric-settings/approve"): ("metrics.settings_approved", None, None),
     ("PUT", "/api/v1/budget"): ("budget.updated", None, None),
+    ("PUT", "/api/v1/privacy"): ("privacy.updated", None, None),
     ("POST", "/api/v1/documents"): ("document.uploaded", None, None),
     ("POST", "/api/v1/documents/{document_id}/drafts"): (
         "document.draft_created", "document", "document_id"),

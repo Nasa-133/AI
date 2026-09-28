@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
 from business.contexts.workspace.application.agent_events import AgentEventHandler
-from business.entrypoints.wiring import BudgetGateAdapter, task_dispatcher
+from business.entrypoints.wiring import BudgetGateAdapter, PrivacyGateAdapter, task_dispatcher
 from business.platform.db import tenant_transaction
 
 from .test_documents import owner
@@ -37,7 +37,8 @@ async def agent_event(client: httpx.AsyncClient, engine: AsyncEngine, tenant: UU
     async with tenant_transaction(engine, tenant_id=tenant, user_id=None) as conn:
         handler = AgentEventHandler(SqlWorkspaceStore(conn, tenant), _AllRefs(),
                                     task_dispatcher(container, conn, tenant),
-                                    BudgetGateAdapter(container, conn, tenant))
+                                    BudgetGateAdapter(container, conn, tenant),
+                                    PrivacyGateAdapter(container, conn, tenant))
         await getattr(handler, kind)(payload)
 
 

@@ -15,7 +15,7 @@ from business.bootstrap.container import Container
 from business.contexts.documents.adapters.files import S3FileStore
 from business.contexts.documents.adapters.sql_store import SqlDocumentStore
 from business.contexts.documents.application.maintenance import DocumentMaintenance
-from business.contexts.governance.public import SqlAuditLog
+from business.contexts.governance.public import SqlAuditLog, SqlPrivacySettings
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
 from business.contexts.workspace.application.maintenance import WorkspaceMaintenance
 from business.platform.db import tenant_transaction
@@ -57,6 +57,8 @@ async def run_for_tenant(container: Container, tenant_id: UUID, stats: Maintenan
         stats.cleanups_retried += await docs.retry_cleanups()
         stats.drafts_purged += await docs.purge_stale_drafts(s.retention_draft_days)
         stats.audit_purged += await SqlAuditLog(conn, tenant_id).purge(s.retention_audit_days)
+        # Psevdonim tokenlari faqat vazifa davomida kerak (javob allaqachon tiklangan).
+        await SqlPrivacySettings(conn, tenant_id).purge_tokens(days=7)
 
 
 async def run_maintenance(container: Container) -> MaintenanceStats:

@@ -20,6 +20,10 @@ from business.contexts.governance.public import (
     BudgetLimits,
     BudgetService,
     SqlBudgetStore,
+    SqlPiiVault,
+    SqlPrivacySettings,
+    TaskPrivacy,
+    redact_text,
 )
 from business.contexts.workspace.adapters.sql import SqlWorkspaceStore
 from business.contexts.workspace.application.dispatch import Dispatcher
@@ -41,9 +45,11 @@ def document_services(container: Container, conn: AsyncConnection,
     store = SqlDocumentStore(conn, tenant_id)
     files = S3FileStore(container.storage, container.settings.uploads_bucket)
     outbox = BoundOutbox(conn, tenant_id)
-    ingest = DocumentIngest(store, files, outbox, IsolatedParser(), tenant_id)
+    # TZ 13.12: AI’ga (embedding) ketadigan matndan shaxsiy ma’lumot yashiriladi.
+    ingest = DocumentIngest(store, files, outbox, IsolatedParser(), tenant_id,
+                            redact=redact_text)
     embedder = HttpQueryEmbedder(container.settings.ai_runtime_url,
-                                 container.settings.tools_service_token)
+                                 container.settings.tools_service_token, redact=redact_text)
     return DocumentServices(DocumentReading(store, embedder), ingest,
                             DocumentEditing(store, files, outbox, FileDraftWriter(), ingest,
                                             tenant_id), store)
@@ -91,9 +97,30 @@ class BudgetGateAdapter:
         await (await self._get()).release(task_id)
 
 
+async def task_privacy(container: Container, conn: AsyncConnection, tenant_id: UUID,
+                       task_id: UUID) -> TaskPrivacy:
+    enabled, people = await SqlPrivacySettings(conn, tenant_id).get()
+    vault = SqlPiiVault(conn, tenant_id, task_id, container.settings.data_encryption_key)
+    return TaskPrivacy(vault, enabled=enabled, mask_people=people)
+
+
+class PrivacyGateAdapter:
+    """Workspace PrivacyGate porti → Governance psevdonimlash (vazifa bo‘yicha token ombori)."""
+
+    def __init__(self, container: Container, conn: AsyncConnection, tenant_id: UUID) -> None:
+        self._args = (container, conn, tenant_id)
+
+    async def mask_instruction(self, task_id: UUID, text: str) -> str:
+        return await (await task_privacy(*self._args, task_id)).mask_text(text)
+
+    async def unmask_answer(self, task_id: UUID, text: str) -> str:
+        return await (await task_privacy(*self._args, task_id)).unmask_text(text)
+
+
 def task_dispatcher(container: Container, conn: AsyncConnection, tenant_id: UUID) -> Dispatcher:
     return Dispatcher(SqlWorkspaceStore(conn, tenant_id), BoundOutbox(conn, tenant_id),
                       CapabilityIssuer(container), tenant_id=tenant_id,
                       limit=container.settings.agent_parallel_limit,
                       policy_version=POLICY_VERSION, clock=lambda: datetime.now(UTC),
-                      budget=BudgetGateAdapter(container, conn, tenant_id))
+                      budget=BudgetGateAdapter(container, conn, tenant_id),
+                      privacy=PrivacyGateAdapter(container, conn, tenant_id))

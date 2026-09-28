@@ -10,7 +10,14 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from ..domain.tasks import TaskStatus
-from ..ports.store import BudgetGate, CapabilityIssuer, Outbox, QueuedTask, WorkspaceStore
+from ..ports.store import (
+    BudgetGate,
+    CapabilityIssuer,
+    Outbox,
+    PrivacyGate,
+    QueuedTask,
+    WorkspaceStore,
+)
 
 TASK_DEADLINE = timedelta(minutes=10)
 
@@ -18,8 +25,10 @@ TASK_DEADLINE = timedelta(minutes=10)
 class Dispatcher:
     def __init__(self, store: WorkspaceStore, outbox: Outbox, capabilities: CapabilityIssuer, *,
                  tenant_id: UUID, limit: int, policy_version: int,
-                 clock: Callable[[], datetime], budget: BudgetGate) -> None:
+                 clock: Callable[[], datetime], budget: BudgetGate,
+                 privacy: PrivacyGate) -> None:
         self._budget = budget
+        self._privacy = privacy
         self._s = store
         self._outbox = outbox
         self._caps = capabilities
@@ -70,7 +79,9 @@ class Dispatcher:
             tools=tuple(d["tools"]), expires_at=deadline)
         await self._outbox.publish("RunAgent.v1", {
             "task_id": str(q.task_id), "task_step_id": str(q.step_id), "agent_role_key": role,
-            "sanitized_instruction": d["instruction"], "context_refs": d["context_refs"],
+            "sanitized_instruction": await self._privacy.mask_instruction(q.task_id,
+                                                                          d["instruction"]),
+            "context_refs": d["context_refs"],
             "deadline": deadline.isoformat(),
             "budget_reservation_id": str(decision.reservation_id or uuid4()),
             "policy_version": self._policy_version,

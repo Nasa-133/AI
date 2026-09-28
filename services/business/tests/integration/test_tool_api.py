@@ -5,8 +5,8 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import httpx
-from sqlalchemy import text
 import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from business.contexts.analytics.adapters.sql_store import SqlAnalyticsStore

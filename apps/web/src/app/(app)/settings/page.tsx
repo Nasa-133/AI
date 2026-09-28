@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, unwrap } from "@/api/client";
 import { AuditSection } from "@/features/audit/AuditSection";
 import { BudgetSection } from "@/features/budget/BudgetSection";
+import { PrivacySection } from "@/features/budget/PrivacySection";
 import { MembersSection } from "@/features/members/MembersSection";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
@@ -45,6 +46,7 @@ export default function SettingsPage() {
         </button>
       </section>
       <BudgetSection />
+      <PrivacySection />
       <MembersSection />
       <AuditSection />
     </div>

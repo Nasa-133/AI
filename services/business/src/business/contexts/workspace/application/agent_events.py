@@ -9,7 +9,7 @@ from uuid import UUID
 
 from ..domain.office import CLARIFICATION, PHASE_KIND
 from ..domain.tasks import TaskStatus
-from ..ports.store import BudgetGate, QueryRefs, WorkspaceStore
+from ..ports.store import BudgetGate, PrivacyGate, QueryRefs, WorkspaceStore
 from .dispatch import Dispatcher
 
 _STATUS = {"succeeded": TaskStatus.SUCCEEDED, "partial": TaskStatus.PARTIAL,
@@ -20,8 +20,9 @@ _STEP_STATUS = {"succeeded": "succeeded", "partial": "succeeded", "failed": "fai
 
 class AgentEventHandler:
     def __init__(self, store: WorkspaceStore, query_refs: QueryRefs,
-                 dispatcher: Dispatcher, budget: BudgetGate) -> None:
+                 dispatcher: Dispatcher, budget: BudgetGate, privacy: PrivacyGate) -> None:
         self._budget = budget
+        self._privacy = privacy
         self._s = store
         self._refs = query_refs
         self._dispatcher = dispatcher
@@ -57,6 +58,9 @@ class AgentEventHandler:
         status = _STATUS[p["status"]]
         candidate = p["result_candidate"]
         answer = (candidate or {}).get("answer_markdown")
+        if answer:
+            answer = await self._privacy.unmask_answer(task_id, answer)
+        limitations = [await self._privacy.unmask_answer(task_id, x) for x in limitations]
         if answer:
             await self._s.add_message({
                 "conversation_id": task.conversation_id, "author_kind": "agent",
