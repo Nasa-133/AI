@@ -15,5 +15,17 @@
   "budget_reservation_id": "00000000-0000-4000-8000-000000000004",
   "policy_version": 1,
   "locale": "uz-Latn",
-  "capability_token": "v1.eyJ0YXNrX2lkIjoiMDAwIn0.c2lnbmF0dXJlLXBsYWNlaG9sZGVy"
+  "capability_token": "v1.eyJ0YXNrX2lkIjoiMDAwIn0.c2lnbmF0dXJlLXBsYWNlaG9sZGVy",
+  "conversation": [
+    {
+      "role": "user",
+      "agent_role_key": null,
+      "text": "Oylik hisobot bo‘yicha dashboard qur"
+    },
+    {
+      "role": "agent",
+      "agent_role_key": "finance_analyst",
+      "text": "Qaysi ko‘rsatkich kerak?"
+    }
+  ]
 }

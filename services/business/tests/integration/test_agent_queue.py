@@ -200,3 +200,39 @@ async def test_t04_same_idempotency_key_creates_one_task(
         other = await c.post(url, headers={**csrf(c), "Idempotency-Key": f"msg-{uuid4()}"},
                              json={"content": "Ali, savdo qancha?"})
         assert other.json()["task_id"] != first.json()["task_id"]
+
+
+async def test_follow_up_carries_masked_conversation(client: httpx.AsyncClient,
+                                                     app_engine: AsyncEngine) -> None:
+    """“Barchasi” kabi davom javobi oldingi savolsiz tushunilmaydi: RunAgent suhbatni olib boradi."""
+    async with owner(client, "Davom MChJ") as (c, tenant):
+        conv = (await c.post("/api/v1/conversations", headers=csrf(c), json={})).json()["id"]
+        url = f"/api/v1/conversations/{conv}/messages"
+        first = (await c.post(url, headers=csrf(c), json={
+            "content": "Madina, oylik hisobot bo‘yicha dashboard qur, tel +998901234567"})).json()
+        step = (await c.get(f"/api/v1/tasks/{first['task_id']}")).json()["steps"][0]["id"]
+        await agent_event(client, app_engine, tenant, "completed", {
+            "task_id": first["task_id"], "task_step_id": step, "agent_run_id": str(uuid4()),
+            "status": "partial", "source_refs": [], "limitations": [],
+            "error_code": "CLARIFICATION_REQUIRED",
+            "result_candidate": {"kind": "answer", "answer_markdown": "Qaysi ko‘rsatkich kerak?",
+                                 "structured": None},
+            "usage": {"input_tokens": 0, "output_tokens": 0, "cost_estimate": "0",
+                      "currency": "USD"}})
+        # Murojaatsiz “barchasi” — aniqlashtirish so‘ragan agentga (Madina) qaytadi.
+        second = (await c.post(url, headers=csrf(c), json={"content": "barchasi"})).json()
+        assert second["agent_role_key"] == "finance_analyst"
+
+        async with tenant_transaction(app_engine, tenant_id=tenant, user_id=None) as conn:
+            payloads = {r[0]: r[1] for r in (await conn.execute(text(
+                "SELECT envelope->'payload'->>'task_id', envelope->'payload'"
+                " FROM messaging.outbox WHERE event_type = 'RunAgent.v1'"
+                " AND envelope->'payload'->>'task_id' = ANY(:ids)"),
+                {"ids": [first["task_id"], second["task_id"]]})).all()}
+        assert payloads[first["task_id"]]["conversation"] == []
+        turns = payloads[second["task_id"]]["conversation"]
+        assert [(t["role"], t["agent_role_key"]) for t in turns] == [
+            ("user", None), ("agent", "finance_analyst")]
+        assert turns[1]["text"] == "Qaysi ko‘rsatkich kerak?"
+        # AI’ga ketadigan tarix ham psevdonimlanadi (TZ 13.12).
+        assert "+998901234567" not in turns[0]["text"] and "[TEL-" in turns[0]["text"]

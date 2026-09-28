@@ -63,3 +63,73 @@ def test_net_profit_is_not_invented() -> None:
 def test_unknown_metric_asks_one_question() -> None:
     plan = build_plan("Xodimlar kayfiyati qanday?", CATALOG)
     assert plan.clarification and plan.clarification.count("?") == 1
+
+
+# --- suhbat davomi va metrika nomlari (foydalanuvchi holati: “dashboard qur” → “barchasi”) ---
+
+from ai_runtime.adapters.fake_documents import is_document_request  # noqa: E402
+from ai_runtime.adapters.fake_provider import conversation_turns, resolve_followup  # noqa: E402
+from ai_runtime.application.commands import RunAgentCommand, initial_items  # noqa: E402
+
+CLARIFY = ("Qaysi ko‘rsatkich kerak? Mavjud metrikalar: Sof savdo tushumi, Chegirmalar, "
+           "Qaytarishlar, Hujjatlar soni, Debitorlik qoldig‘i.")
+ALL_LIST = ("Sof savdo tushumi, Chegirmalar, Qaytarishlar, Sotilgan mahsulot tannarxi, Yalpi "
+            "foyda, Yalpi marja, Hujjatlar soni, Sotilgan miqdor, Debitorlik qoldig‘i, Muddati "
+            "o‘tgan debitorlik.")
+
+
+def turns_of(*pairs: tuple[str, str]) -> list[tuple[str, str]]:
+    return list(pairs)
+
+
+def test_metric_list_answer_is_metrics_not_document_question() -> None:
+    tools = {"search_documents", "list_available_metrics"}
+    assert not is_document_request(ALL_LIST, tools, has_context=False)
+    assert is_document_request("Shartnomada to‘lov muddati necha kun?", tools, has_context=False)
+    catalog = {**CATALOG, "metrics": [*CATALOG["metrics"], *(
+        {"id": i, "name": i, "unit": "money", "subject": "sales", "dimensions": ["month"]}
+        for i in ("order_count", "quantity_sold", "cogs", "gross_margin", "discounts", "returns",
+                  "receivables_open", "receivables_overdue") if i not in
+        {m["id"] for m in CATALOG["metrics"]})]}
+    plan = build_plan(ALL_LIST, catalog)
+    assert plan.clarification is None
+    assert plan.metric_ids == ["net_sales", "discounts", "returns", "cogs", "gross_profit",
+                               "gross_margin"]  # ro‘yxat tartibi, so‘rov chegarasi — 6
+    assert any("order_count" in n and "keyingi so‘rovda" in n for n in plan.notes)
+    assert any("alohida so‘rov" in n for n in plan.notes)  # debitorlik aralashmaydi
+    assert plan.dimensions == []  # “Sotilgan mahsulot tannarxi” — kesim emas
+
+
+def test_followup_joins_the_original_request() -> None:
+    history = turns_of(("user", "menga bir oylik hisobot bo‘yicha dashboard qur"),
+                       ("agent", CLARIFY))
+    joined = resolve_followup("barchasi", history)
+    assert "dashboard" in joined
+    plan = build_plan(joined, CATALOG)
+    assert plan.clarification is None and plan.dashboard
+    assert plan.metric_ids == ["net_sales", "gross_profit"]  # katalogdagi hammasi
+    # Ikki marta aniqlashtirilgan zanjir ham boshlang‘ich so‘rovni saqlaydi.
+    history += [("user", "barchasi"), ("agent", CLARIFY)]
+    joined = resolve_followup("Sof savdo tushumi, Yalpi foyda", history)
+    assert joined.startswith("menga bir oylik") and "barchasi" not in joined
+    assert build_plan(joined, CATALOG).dashboard
+    # Aniqlashtirish bo‘lmagan bo‘lsa, yangi savol o‘zgarmaydi.
+    unrelated = [("user", "salom"), ("agent", "Javob")]
+    assert resolve_followup("iyun savdosi", unrelated) == "iyun savdosi"
+
+
+def test_conversation_reaches_the_model_as_developer_context() -> None:
+    from datetime import UTC, datetime
+    from uuid import uuid4
+
+    cmd = RunAgentCommand(uuid4(), uuid4(), uuid4(), "finance_analyst", "barchasi", "uz-Latn",
+                          datetime.now(UTC), "tok", uuid4(), uuid4(),
+                          conversation=({"role": "user", "agent_role_key": None,
+                                         "text": "dashboard qur"},
+                                        {"role": "agent", "agent_role_key": "finance_analyst",
+                                         "text": "Qaysi ko‘rsatkich kerak?\nMavjud: ..."}))
+    items = initial_items(cmd)
+    assert [i["role"] for i in items] == ["developer", "user"]
+    assert items[-1]["content"] == "barchasi"
+    assert conversation_turns(items) == [("user", "dashboard qur"),
+                                         ("agent", "Qaysi ko‘rsatkich kerak?\nMavjud: ...")]

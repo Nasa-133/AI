@@ -17,6 +17,7 @@ _EDIT_RE = re.compile(
     r"[\"“«](?P<find>[^\"”»]{1,200})[\"”»]\s*-?\s*ni\s+[\"“«](?P<replace>[^\"”»]{0,200})[\"”»]"
     r"\s*-?\s*ga\s+(?:o'zgartir|almashtir|tuzat)", re.IGNORECASE)
 _DOCUMENT_RE = re.compile(r"\b(hujjat|shartnoma|band|nizom|buyruq|reglament|kelishuv)")
+_METRIC_NAMES_RE = re.compile(r"\bhujjat(lar)? soni")
 _STOP_PREFIXES = ("hujjat", "shartnom", "qancha", "necha", "qanday", "qaysi", "qachon", "qayer",
                   "bo'yicha", "haqida", "yozilgan", "deyilgan", "ko'rsat", "aytib", "menga")
 _STOP_WORDS = {"nima", "kim", "bormi", "bor", "yo'q", "uchun", "va", "yoki", "bu", "shu", "u",
@@ -59,7 +60,9 @@ def is_document_request(text: str, available: set[str], has_context: bool) -> bo
         return False
     if has_context or "list_available_metrics" not in available:
         return True
-    return _DOCUMENT_RE.search(_norm(text)) is not None or parse_edit(text) is not None
+    # “Hujjatlar soni” — metrika nomi, hujjat (fayl) haqidagi savol emas.
+    plain = _METRIC_NAMES_RE.sub(" ", _norm(text))
+    return _DOCUMENT_RE.search(plain) is not None or parse_edit(text) is not None
 
 
 _ADDRESS = re.compile(r"^\s*@?[\w']+\s*,\s*")  # “Dilnoza, …” — murojaat, savol emas

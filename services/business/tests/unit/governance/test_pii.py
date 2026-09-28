@@ -38,6 +38,8 @@ def test_detects_personal_data(pii: str) -> None:
     "Sof savdo 1 250 000,00 so‘m", "2026-01-31", "To‘lov 30 kun ichida", "TOS filiali",
     "Summa 1250000.00", "Buyurtma 12345", "900000000.00", "Summa 912345678.50 so‘m",
     "Tushum: 912345678,50", "12",
+    # UUID ichidagi raqamli bo‘laklar karta/telefon deb o‘qilmaydi (versiya ID’si buzilardi).
+    "97a2470a-4412-8889-1234-5678addc153c", "Versiya 12345678-9012-3456-7890-123456789012 tayyor",
 ])
 def test_business_numbers_are_not_masked(safe: str) -> None:
     assert mask_text(safe, Vault().token_for) == safe
@@ -71,3 +73,11 @@ def test_bare_identifiers_in_cells_are_masked() -> None:
     v = Vault()
     for cell in ("32010785430027", "901234567", "8600123456789012"):
         assert mask_text(cell, v.token_for) != cell
+
+
+def test_card_next_to_uuid_is_still_masked() -> None:
+    v = Vault()
+    text = "Hujjat 97a2470a-4412-8889-1234-5678addc153c, karta 8600 1234 5678 9012"
+    masked = mask_text(text, v.token_for)
+    assert "97a2470a-4412-8889-1234-5678addc153c" in masked and "8600 1234" not in masked
+    assert unmask_text(masked, v.lookup) == text

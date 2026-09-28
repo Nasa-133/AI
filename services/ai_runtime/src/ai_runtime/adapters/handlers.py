@@ -36,6 +36,9 @@ def make_handlers(*, max_tool_calls: int) -> dict[str, Handler]:
                 correlation_id=envelope.correlation_id,
                 causation_id=envelope.event_id,
                 context_refs=tuple(dict(r) for r in p.get("context_refs") or ()),
+                conversation=tuple(
+                    {"role": str(t["role"]), "agent_role_key": t.get("agent_role_key"),
+                     "text": str(t["text"])} for t in p.get("conversation") or ()),
             )
         except (KeyError, ValueError, TypeError) as exc:
             raise PermanentError(f"RunAgent payload noto‘g‘ri: {exc}") from exc

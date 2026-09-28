@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from ..application.commands import CONVERSATION_PREFIX, USER_LABEL
 from ..ports.model import ModelRequest, ModelResponse, ToolCall
 from . import fake_documents as docs
 
@@ -24,6 +25,10 @@ MONTHS = {
 }
 # (kalit so‘z, metrika id). Tartib muhim: aniqroq ibora oldin.
 METRIC_KEYWORDS: list[tuple[str, str]] = [
+    ("hujjatlar soni", "order_count"),
+    ("hujjat soni", "order_count"),
+    ("sotilgan miqdor", "quantity_sold"),
+    ("tannarx", "cogs"),
     ("sof foyda", "net_profit"),
     ("marja", "gross_margin"),
     ("yalpi foyda", "gross_profit"),
@@ -50,6 +55,41 @@ DIMENSION_KEYWORDS: list[tuple[str, str]] = [
 _COMPARE_WORDS = ("solishtir", "taqqosla", "nega", "kamay", "oshdi", "o'sdi", "o'zgar")
 _EXPLAIN_WORDS = ("nega", "sabab", "nima uchun")
 _DASHBOARD_RE = re.compile(r"(dashboard|dashbord|doska)")
+MAX_QUERY_METRICS = 6  # run_metric_query chegarasi
+_CLARIFICATION_RE = re.compile(r"qaysi (ko'rsatkich|biri) kerak")
+_ALL_RE = re.compile(r"^(barchasi|hammasi|hamma|barcha|hammasini|barchasini)\W*$")
+# “Barchasi” — katalogdagi savdo ko‘rsatkichlari (build_plan katalog bo‘yicha ochadi).
+_ALL_MARKER = "barcha ko'rsatkichlar"
+
+
+def conversation_turns(items: list[dict[str, Any]]) -> list[tuple[str, str]]:
+    """Developer “Oldingi suhbat” xabaridan (rol, matn) juftlari; ko‘p qatorli matn birlashadi."""
+    content = next((str(i["content"]) for i in items
+                    if i.get("role") == "developer"
+                    and str(i.get("content", "")).startswith(CONVERSATION_PREFIX)), "")
+    turns: list[tuple[str, str]] = []
+    for line in content.splitlines()[1:]:
+        m = re.match(r"^\[(.+?)\]: ?(.*)$", line)
+        if m:
+            turns.append(("user" if m.group(1) == USER_LABEL else "agent", m.group(2)))
+        elif turns:
+            turns[-1] = (turns[-1][0], f"{turns[-1][1]}\n{line}")
+    return turns
+
+
+def resolve_followup(text: str, turns: list[tuple[str, str]]) -> str:
+    """Aniqlashtiruvchi savolga javob (“barchasi”, metrikalar ro‘yxati) boshlang‘ich so‘rovga
+    qo‘shiladi: davr, kesim va dashboard talabi o‘sha so‘rovdan olinadi."""
+    chain: list[str] = []
+    i = len(turns) - 1
+    while i >= 1 and turns[i][0] == "agent" and _CLARIFICATION_RE.search(normalize(turns[i][1])) \
+            and turns[i - 1][0] == "user":
+        chain.insert(0, turns[i - 1][1])
+        i -= 2
+    if not chain:
+        return text
+    answer = _ALL_MARKER if _ALL_RE.match(normalize(text)) else text
+    return " ".join([*(c for c in chain if not _ALL_RE.match(normalize(c))), answer])
 
 
 def normalize(text: str) -> str:
@@ -159,6 +199,9 @@ def build_plan(text: str, catalog: dict[str, Any]) -> Plan:
             found.append((pos, metric_id))
             consumed = consumed.replace(keyword, " " * len(keyword))
     requested = list(dict.fromkeys(mid for _, mid in sorted(found)))
+    if _ALL_MARKER in t:  # “barchasi”: katalogdagi savdo ko‘rsatkichlari (debitorliksiz)
+        requested = list(dict.fromkeys(
+            [*requested, *(m for m in metrics if not m.startswith("receivables_"))]))
     if not requested:
         names = ", ".join(m["name"] for m in metrics.values()) or "—"
         plan.clarification = f"Qaysi ko‘rsatkich kerak? Mavjud metrikalar: {names}."
@@ -173,13 +216,28 @@ def build_plan(text: str, catalog: dict[str, Any]) -> Plan:
         plan.clarification = (f"So‘ralgan ko‘rsatkich hozir mavjud emas. Mavjud metrikalar: "
                               f"{names}. Qaysi biri kerak?")
         return plan
-    plan.metric_ids = requested[:3]
+    # Savdo va debitorlik metrikalari bitta so‘rovda aralashtirilmaydi (Core qoidasi).
+    receivable = requested[0].startswith("receivables_")
+    same = [m for m in requested if m.startswith("receivables_") == receivable]
+    other = [metrics[m]["name"] for m in requested if m not in same]
+    if other:
+        plan.notes.append("Boshqa manbadagi ko‘rsatkichlar alohida so‘rov bilan: "
+                          + ", ".join(other) + ".")
+    if len(same) > MAX_QUERY_METRICS:
+        plan.notes.append(f"Bir so‘rovda ko‘pi bilan {MAX_QUERY_METRICS} ta ko‘rsatkich: "
+                          + ", ".join(metrics[m]["name"] for m in same[MAX_QUERY_METRICS:])
+                          + " keyingi so‘rovda.")
+    plan.metric_ids = same[:MAX_QUERY_METRICS]
     if "gross_profit" in plan.metric_ids and "yalpi" not in t:
         plan.notes.append("“Foyda” deganda yalpi foyda olindi (sof foyda hisoblanmaydi).")
 
     allowed_dims = {d for m in plan.metric_ids for d in metrics[m].get("dimensions", [])}
+    # Metrika nomlari (“Sotilgan mahsulot tannarxi”) kesim so‘zi deb o‘qilmasin.
+    t_dims = t
+    for m in metrics.values():
+        t_dims = t_dims.replace(normalize(str(m.get("name", ""))), " ")
     for keyword, dim in DIMENSION_KEYWORDS:
-        if keyword in t and dim not in plan.dimensions:
+        if keyword in t_dims and dim not in plan.dimensions:
             if dim in allowed_dims:
                 plan.dimensions.append(dim)
             else:
@@ -247,6 +305,8 @@ def dashboard_title(plan: Plan, catalog: dict[str, Any], query: dict[str, Any]) 
     """Masalan: “Sof savdo tushumi — oylar kesimida, 2026-01-01 — 2026-04-30”."""
     names = {m["id"]: m["name"] for m in catalog.get("metrics", [])}
     metric = names.get(plan.metric_ids[0], plan.metric_ids[0])
+    if len(plan.metric_ids) > 1:
+        metric += f" va yana {len(plan.metric_ids) - 1} ko‘rsatkich"
     dims = [DIMENSION_NAMES.get(d, d).lower() for d in plan.dimensions]
     period = query["period"]
     by = f" — {', '.join(dims)} kesimida" if dims else ""
@@ -347,6 +407,7 @@ class FakeProvider:
     async def respond(self, request: ModelRequest) -> ModelResponse:
         text = next((str(i["content"]) for i in request.items
                      if i.get("type") == "message" and i.get("role") == "user"), "")
+        text = resolve_followup(text, conversation_turns(request.items))
         calls = {i["call_id"]: i for i in request.items if i.get("type") == "function_call"}
         outputs: dict[str, dict[str, Any]] = {}
         for item in request.items:
@@ -391,8 +452,10 @@ class FakeProvider:
                 "query_spec_id": spec_id, "comparison_range": comparison,
                 "dimension": dimension, "metric_id": plan.metric_ids[0]}, available)
         if plan.dashboard and "create_dashboard" not in outputs:
+            # KPI — faqat bitta ko‘rsatkich va bitta qator (bir valyuta); aks holda jadval.
+            single = len(plan.metric_ids) == 1 and len(query["data"]["rows"]) == 1
             chart = ("line" if plan.dimensions and plan.dimensions[0] in ("month", "day")
-                     else "bar" if plan.dimensions else "kpi")
+                     else "bar" if plan.dimensions else "kpi" if single else "table")
             widgets = [{"title": "Asosiy ko‘rsatkich", "type": chart,
                         "query_spec_id": spec_id, "text": None}]
             if "compare_periods" in outputs and outputs["compare_periods"]["status"] == "ok":
@@ -407,6 +470,11 @@ class FakeProvider:
         limitations = [f"{name}: {r.get('error_message') or r.get('error_code')}"
                        for name, r in outputs.items() if r["status"] != "ok"]
         answer = compose_answer(plan, catalog, results)
+        failed = outputs.get("create_dashboard")
+        if plan.dashboard and failed is not None and failed["status"] != "ok":
+            # So‘ralgan dashboard chiqmagan bo‘lsa, javob buni ochiq aytadi (jim o‘tib ketmaydi).
+            answer += ("\n- Dashboard yaratilmadi: "
+                       f"{failed.get('error_message') or failed.get('error_code')}.")
         return self._final(request, answer, partial=bool(limitations), limitations=limitations)
 
     # --- javob elementlari -------------------------------------------------------------

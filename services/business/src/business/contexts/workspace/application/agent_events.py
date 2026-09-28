@@ -4,6 +4,7 @@ Modelning “tayyor” degan matni muvaffaqiyat mezoni emas: manba havolalari Bu
 tekshiriladi, tasdiqlanmagani olib tashlanadi va cheklov sifatida ko‘rsatiladi.
 """
 
+import json
 from typing import Any
 from uuid import UUID
 
@@ -61,11 +62,16 @@ class AgentEventHandler:
         if answer:
             answer = await self._privacy.unmask_answer(task_id, answer)
         limitations = [await self._privacy.unmask_answer(task_id, x) for x in limitations]
+        # Tuzilgan natija (draft/dashboard ID’lari va h.k.) ham token bilan kelishi mumkin.
+        structured = (candidate or {}).get("structured")
+        if structured is not None:
+            structured = json.loads(await self._privacy.unmask_answer(
+                task_id, json.dumps(structured, ensure_ascii=False)))
         if answer:
             await self._s.add_message({
                 "conversation_id": task.conversation_id, "author_kind": "agent",
                 "agent_role_key": task.agent_role_key, "content": answer, "task_id": task_id,
-                "structured": (candidate or {}).get("structured"), "source_refs": refs})
+                "structured": structured, "source_refs": refs})
         elif status is TaskStatus.SUCCEEDED:
             # Javobsiz “muvaffaqiyat” qabul qilinmaydi.
             status = TaskStatus.FAILED
@@ -77,7 +83,7 @@ class AgentEventHandler:
         await self._budget.settle(task_id, p["usage"])
         await self._s.add_event(task_id, "task.completed", {
             "status": status.value, "error_code": p["error_code"], "limitations": limitations,
-            "has_answer": bool(answer), "structured": (candidate or {}).get("structured"),
+            "has_answer": bool(answer), "structured": structured,
             "needs_input": p["error_code"] == CLARIFICATION})
         # Slot bo‘shadi — shu agent navbatidagi keyingi vazifa yuboriladi (TZ 4).
         await self._dispatcher.pump(task.agent_role_key)

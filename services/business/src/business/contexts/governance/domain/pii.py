@@ -33,12 +33,19 @@ PERSON_COLUMNS = frozenset({"customer", "customer_name", "full_name", "fio", "co
 _DECIMAL = re.compile(r"^-?(?:\d+\.\d+|\d{1,8})$")
 
 
+# UUID (snapshot, versiya, query ID’lari) shaxsiy ma’lumot emas; uning faqat raqamli qismlari
+# karta/telefon naqshiga tushib qolmasligi uchun UUID’lar psevdonimlashdan butunlay chetda.
+_UUID = re.compile(r"([0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12})")
+
+
 def mask_text(text: str, token_for: TokenFor) -> str:
     if _DECIMAL.match(text):
         return text
-    for kind, pattern in PATTERNS:
-        text = pattern.sub(_replacer(kind, token_for), text)
-    return text
+    parts = _UUID.split(text)  # toq indekslar — UUID’lar
+    for i in range(0, len(parts), 2):
+        for kind, pattern in PATTERNS:
+            parts[i] = pattern.sub(_replacer(kind, token_for), parts[i])
+    return "".join(parts)
 
 
 def _replacer(kind: str, token_for: TokenFor) -> Callable[[re.Match[str]], str]:

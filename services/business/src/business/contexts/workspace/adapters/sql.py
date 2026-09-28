@@ -48,6 +48,25 @@ class SqlWorkspaceStore:
             {"u": user_id, "n": limit})).mappings().all()
         return [dict(r) for r in rows]
 
+    async def awaiting_answer_role(self, conversation_id: UUID) -> str | None:
+        row = (await self._c.execute(text(
+            "SELECT agent_role_key, status, error_code FROM workspace.tasks"
+            " WHERE conversation_id = :c ORDER BY created_at DESC, id DESC LIMIT 1"),
+            {"c": conversation_id})).first()
+        if row is None or row.status != "partial" or row.error_code != "CLARIFICATION_REQUIRED":
+            return None
+        return str(row.agent_role_key)
+
+    async def conversation_before(self, task_id: UUID, limit: int) -> list[dict[str, Any]]:
+        rows = (await self._c.execute(text(
+            "SELECT m.author_kind, m.agent_role_key, m.content FROM workspace.messages m"
+            " JOIN workspace.tasks t ON t.id = :task AND t.conversation_id = m.conversation_id"
+            " WHERE m.author_kind IN ('user', 'agent') AND m.created_at < ("
+            "   SELECT coalesce(min(created_at), 'infinity') FROM workspace.messages"
+            "   WHERE task_id = :task AND author_kind = 'user')"
+            " ORDER BY m.created_at DESC, m.id DESC LIMIT :n"), {"task": task_id, "n": limit}))
+        return [dict(r) for r in reversed(rows.mappings().all())]
+
     async def list_messages(self, conversation_id: UUID, limit: int) -> list[dict[str, Any]]:
         rows = (await self._c.execute(text(
             "SELECT id, author_kind, author_id, agent_role_key, content, task_id, structured,"

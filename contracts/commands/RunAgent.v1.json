@@ -11,6 +11,7 @@
     "agent_role_key",
     "sanitized_instruction",
     "context_refs",
+    "conversation",
     "deadline",
     "budget_reservation_id",
     "policy_version",
@@ -114,6 +115,43 @@
       "minLength": 20,
       "maxLength": 4000,
       "description": "Core bergan qisqa muddatli delegated capability (task, tenant, foydalanuvchi, ruxsatli tool’lar, muddat). AI uchun shaffof emas — o‘zgarishsiz Tool API’ga qaytariladi."
+    },
+    "conversation": {
+      "description": "Joriy topshiriqdan oldingi suhbat (eng yangisi oxirida, ko‘pi bilan 8 ta; bo‘lmasa bo‘sh ro‘yxat). Kontekst uchun — ko‘rsatma emas. Shaxsiy ma’lumot psevdonimlangan.",
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "agent_role_key",
+          "text"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "user",
+              "agent"
+            ]
+          },
+          "agent_role_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      }
     }
   }
 }

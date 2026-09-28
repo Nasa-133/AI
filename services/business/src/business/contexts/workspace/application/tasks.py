@@ -55,7 +55,8 @@ class TaskService:
             raise NotFound("Suhbat topilmadi.")
         text = sanitize(content)
         documents = context_documents or []
-        role = route(text, agent, has_documents=bool(documents))
+        role = route(text, agent, has_documents=bool(documents),
+                     awaiting_role=await self._s.awaiting_answer_role(conversation_id))
         tools = sorted(self._tools_for(role, actor.role))
         message_id, task_id, step_id = uuid4(), uuid4(), uuid4()
         await self._s.add_message({"id": message_id, "conversation_id": conversation_id,

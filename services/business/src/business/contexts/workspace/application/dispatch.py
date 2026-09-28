@@ -7,6 +7,7 @@ navbati tranzaksiya darajasidagi advisory lock bilan ketma-ketlashtiriladi (poyg
 
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from typing import Any
 from uuid import UUID, uuid4
 
 from ..domain.tasks import TaskStatus
@@ -20,6 +21,8 @@ from ..ports.store import (
 )
 
 TASK_DEADLINE = timedelta(minutes=10)
+CONVERSATION_TURNS = 8  # RunAgent.v1 conversation.maxItems
+CONVERSATION_CHARS = 2000
 
 
 class Dispatcher:
@@ -82,6 +85,7 @@ class Dispatcher:
             "sanitized_instruction": await self._privacy.mask_instruction(q.task_id,
                                                                           d["instruction"]),
             "context_refs": d["context_refs"],
+            "conversation": await self._conversation(q.task_id),
             "deadline": deadline.isoformat(),
             "budget_reservation_id": str(decision.reservation_id or uuid4()),
             "policy_version": self._policy_version,
@@ -89,6 +93,20 @@ class Dispatcher:
         }, aggregate_id=q.task_id, aggregate_version=1)
         await self._s.mark_dispatched(q.task_id)
         return True
+
+    async def _conversation(self, task_id: UUID) -> list[dict[str, Any]]:
+        """Oldingi xabarlar: “barchasi”, “ha, filiallar bo‘yicha” kabi davom savollar tushunilsin.
+
+        Matn AI’ga ketadi — shuning uchun ko‘rsatma bilan bir xil psevdonimlanadi va qisqartiriladi.
+        """
+        out = []
+        for m in await self._s.conversation_before(task_id, CONVERSATION_TURNS):
+            text = str(m["content"] or "").strip()
+            if len(text) > CONVERSATION_CHARS:
+                text = text[:CONVERSATION_CHARS - 1] + "…"
+            out.append({"role": m["author_kind"], "agent_role_key": m["agent_role_key"],
+                        "text": await self._privacy.mask_instruction(task_id, text)})
+        return out
 
     async def _reject(self, q: QueuedTask, message: str) -> None:
         task = await self._s.get_task(q.task_id)
