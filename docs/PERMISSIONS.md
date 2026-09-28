@@ -23,9 +23,17 @@ vakolat manbai emas. Kod: `contexts/governance/domain/tool_policy.py`, `domain/a
 | AI budjeti limitini o‘zgartirish | ✅ | ✗ (ko‘radi) | ✗ (ko‘radi) | ✗ (ko‘radi) |
 | Maxfiylik (psevdonimlash) sozlamasi | ✅ | ✗ (ko‘radi) | ✗ (ko‘radi) | ✗ (ko‘radi) |
 | Audit jurnalini ko‘rish | ✅ | ✅ | ✗ | ✗ |
+| Filial doirasini berish (S02) | ✅ | ✅ (Analyst/Viewer) | ✗ | ✗ |
+| Analitika / dashboard ma’lumoti | barcha filiallar | barcha filiallar | doira bo‘yicha | doira bo‘yicha |
 
 Hujjat ACL: egasi har doim; `tenant` ko‘rinishida barcha a’zolar; `private` — egasi va
 ulashilgan a’zolar; Owner/Admin hammasini ko‘radi. Qidiruv ACL’ni **qidiruvdan oldin** qo‘llaydi.
+
+**Filial doirasi (S02)**: Analyst/Viewer uchun `PUT /members/{id}/branches` (bo‘sh — barcha filiallar).
+Doira Core’da har yo‘lda qo‘llanadi: erkin query va AI Tool API (umumiy so‘rov doiraga qisqaradi,
+“Faqat ruxsat etilgan filiallar: …” izohi; ruxsatsiz filial — `BRANCH_FORBIDDEN`), taqqoslash/hissa
+(boshqa foydalanuvchining so‘rovi asosida ham), dashboard widget/eksport/yangilash (doiradan tashqari
+widget “Filialga ruxsat yo‘q”). Owner/Admin’ga doira berilmaydi; rol ko‘tarilsa doira olib tashlanadi.
 
 ## Agent vositalari (agent roli ∩ foydalanuvchi roli)
 

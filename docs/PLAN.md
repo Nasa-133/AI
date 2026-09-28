@@ -303,8 +303,9 @@ SSE orqali; mobil/to‘liq ekran xarita.
 | 5.8 Degradatsiya | ✅ | `make degradation`: I05, I03, broker restart (gate 5/7) haqiqiy jarayonlar bilan; UI: “eskirgan” belgisi, “AI javob bermayapti — navbatda” izohi |
 | Ofis qoldiqlari | ✅ | Tenant SSE, to‘qnashuvdan qochish (+ tiqilishsiz joylashuv invarianti), to‘liq ekran, “Xaritada ko‘rsatish”, mobil kadr |
 
-Qabul: T03 (unit), T05 (integratsiya), I03, I05 (degradatsiya skripti), I06 (integratsiya), S02 — Bosqich 1
-dagi filial doirasi testlari; gate 5 (outbox/inbox/lease + broker restart), 6, 7, 8.
+Qabul: T03 (unit), T05 (integratsiya), I03, I05 (degradatsiya skripti), I06 (integratsiya);
+gate 5 (outbox/inbox/lease + broker restart), 6, 7, 8. (S02 bu yerda yopilgan deb yozilgan edi —
+Bosqich 6 tekshiruvida filial doirasi umuman yo‘qligi aniqlandi va Bosqich 6 da qo‘shildi.)
 
 Tekshiruvlar: `make check` (Business 168, AI 73, Integration 14, messaging 17, repo 236, web 34),
 `make e2e` 3/3, `make degradation` 5/5 bosqich, Playwright 11/11, `make migration-check`.
@@ -321,3 +322,29 @@ Ma’lum cheklovlar:
   pilotdan oldin yurist xulosasi bilan kengaytiriladi (TZ 18).
 - AI bucket’idagi vaqtinchalik vektor fayllari o‘chirilmaydi (lifecycle qoidasi — infra).
 - NetworkPolicy namunaviy; FQDN egress allowlist klaster egress gateway’ida sozlanadi.
+
+
+### Bosqich 6 — P0 qabul: 🟡 yakunlandi, real OpenAI tekshiruvi kutilmoqda
+
+Qabul matritsasi: [ACCEPTANCE.md](ACCEPTANCE.md) — TZ 20 dagi har ID va 13.15 gate’lari uchun test/skript.
+
+| Ish paketi | Holat | Izoh |
+|---|---|---|
+| 6.1 Eval (TZ 20) | ✅ fake / ⏳ OpenAI | `make eval`: 42 raqamli (golden + Tool API), 10 agent raqami, 15+5 hujjat Q&A, 11 tahrir, 10 adversarial — 100%. `make eval-openai` kalit bilan |
+| 6.2 Yuklama (TZ 19) | ✅ | `make load`: 1 mln satr 62 s da so‘rovga tayyor; KPI P95 1.97 s; vazifa qabul P95 0.20 s; SSE P95 0.52 s; 10 MB DOCX 22 s; 0 xato (`docs/reports/load-*.md`) |
+| 6.3 Tiklash | ✅ | `scripts/restore-drill.sh`: RTO 57 s, 44 jadval / 3.3 mln satr va 733 S3 obyekt mos |
+| 6.4 Replay | ✅ | `tools/ops/replay.py` (outbox oynasi, DLQ qaytarish), testlar; runbook |
+| 6.5 S02 filial doirasi | ✅ | `memberships.branch_scope`; HTTP, Tool API, taqqoslash/hissa, dashboard/eksport/yangilash; UI “Filiallar” va “Filialga ruxsat yo‘q” |
+| 6.6 Yetishmagan qabul testlari | ✅ | A03, A05 (Integration + Core), T02, T04, U04 (backend + Picker) |
+| 6.7 Hujjatlar | ✅ | ADR 001–012, runbook’lar (deploy, backup-restore, replay, incidents), PERMISSIONS, LOCAL_SETUP, KNOWN_LIMITATIONS, ACCEPTANCE |
+| 6.8 CI | ✅ | pip-audit va npm audit (gate 10), migration-check, secret scan |
+
+Tekshiruvlar: `make check` (Business 179, AI 74, Integration 28, messaging 18, repo 236, web 37),
+`make e2e` 3/3, `make degradation` 5/5, Playwright 11/11, eval (fake) 100%.
+
+Topilib tuzatilgan xatolar: eval’da Tool API chaqiruvlari sessiya cookie’si sabab CSRF’ga urilib,
+ruxsat ssenariylari “soxta o‘tishi”; KPI so‘rovi har safar 1 mln satrni skanerlashi (snapshot keshi —
+P95 5.5 s → 2.0 s); pg_restore xatolari yashirin qolishi; S02 umuman amalga oshirilmagani.
+
+Qolgan: real OpenAI bilan `make eval-openai` (kalit kerak); yuridik xulosa (TZ 18) va email
+kanali — [KNOWN_LIMITATIONS.md](KNOWN_LIMITATIONS.md).
