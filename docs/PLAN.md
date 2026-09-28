@@ -285,5 +285,39 @@ Topilib tuzatilgan xatolar: chatda yuborish davomida yozilgan keyingi xabar o‘
 boshqa agentga yozilgan xabar aniqlashtirishga javob deb hisoblanishi; kichik ekranda yorliqlar
 ustma-ust tushishi.
 
-Cheklov: agentlar bir-biri bilan to‘qnashuvdan qochmaydi (koridorda qisqa ustma-ust o‘tishi mumkin);
-ofis holati 2 s polling bilan (tenant SSE — P1).
+Keyin (Bosqich 5 bilan) yopilgan cheklovlar: agentlar to‘qnashuvdan qochadi; ofis holati tenant
+SSE orqali; mobil/to‘liq ekran xarita.
+
+
+### Bosqich 5 — Ishonchlilik va boshqaruv: ✅ yakunlandi
+
+| Ish paketi | Holat | Izoh |
+|---|---|---|
+| 5.1 Test bazalari | ✅ | `*_test` bazalari (`make test-db`); stek ishlab tursa ham integratsiya testlari barqaror |
+| 5.2 Budjet (TZ 19) | ✅ | Narx konfiguratsiyadan (AI `AI_PRICE_*`), vazifa rezervi (standart 0.05 USD) yuborishdan oldin, yakunda haqiqiy sarf; kunlik/oylik limit, 80% ogohlantirish, 100% da yangi pulli ish to‘xtaydi (sabab chatda); Sozlamalar va sarlavhada holat |
+| 5.3 Fon ishlari | ✅ | Osilgan vazifa → `TASK_TIMEOUT` (rezerv bo‘shatiladi, navbat siljiydi); suhbat 90 kun, draft 90 kun, audit 365 kun; tozalash job’i eksponensial qayta urinish; tenant ro‘yxati (faqat ID, RLS saqlanadi) |
+| 5.4 T03 | ✅ | Model 429/timeout/5xx — 3 urinish, Retry-After, holat chatda; tugasa `PROVIDER_UNAVAILABLE`, soxta javob yo‘q; SDK yashirin retry o‘chiq |
+| 5.5 Audit | ✅ | Middleware: muhim amallar (faqat ID’lar, IP); agent artifactlari; faqat qo‘shiladi (UPDATE/DELETE taqiq), 365 kun; egasi/admin uchun Sozlamalarda |
+| 5.6 Psevdonimlash (13.12) | ✅ | Ko‘rsatma, tool natijasi, embedding matnida telefon/email/PINFL/pasport/karta va mijoz nomlari tokenlanadi; javob va tool argumentlari Core’da tiklanadi; shifrlangan vault (7 kun); tenant sozlamasi, audit |
+| 5.7 Chegara va migratsiya | ✅ | I06: credential faqat o‘z bazasiga, app roli imtiyozsiz, FORCE RLS (2 ta asosli istisno); compose tarmoq segmentatsiyasi, NetworkPolicy namunasi; gate 8: `make migration-check` (CI’da) |
+| 5.8 Degradatsiya | ✅ | `make degradation`: I05, I03, broker restart (gate 5/7) haqiqiy jarayonlar bilan; UI: “eskirgan” belgisi, “AI javob bermayapti — navbatda” izohi |
+| Ofis qoldiqlari | ✅ | Tenant SSE, to‘qnashuvdan qochish (+ tiqilishsiz joylashuv invarianti), to‘liq ekran, “Xaritada ko‘rsatish”, mobil kadr |
+
+Qabul: T03 (unit), T05 (integratsiya), I03, I05 (degradatsiya skripti), I06 (integratsiya), S02 — Bosqich 1
+dagi filial doirasi testlari; gate 5 (outbox/inbox/lease + broker restart), 6, 7, 8.
+
+Tekshiruvlar: `make check` (Business 168, AI 73, Integration 14, messaging 17, repo 236, web 34),
+`make e2e` 3/3, `make degradation` 5/5 bosqich, Playwright 11/11, `make migration-check`.
+
+Topilib tuzatilgan xatolar: provayder xatosida run cheksiz qayta olinishi (sarf); dam olish zonasida
+agentlar tiqilib qolishi; maxfiylik belgisi keshi asinxron bo‘lgani uchun “sakrashi”; mobil aniqlash
+element o‘lchamidan (barqaror emas) — ekran kengligiga o‘tkazildi; xaritada ko‘rsatish hodisasi
+xarita chizilmasdan yo‘qolishi.
+
+Ma’lum cheklovlar:
+- Budjet embedding sarfini hisobga olmaydi (faqat agent run tokenlari); narx bitta model uchun.
+- Audit yozuvi amaldan keyin alohida tranzaksiyada (crash oynasida yo‘qolishi mumkin; amal esa saqlanadi).
+- Psevdonimlash regex va ustun nomlariga asoslangan (erkin matndagi F.I.Sh. aniqlanmaydi) —
+  pilotdan oldin yurist xulosasi bilan kengaytiriladi (TZ 18).
+- AI bucket’idagi vaqtinchalik vektor fayllari o‘chirilmaydi (lifecycle qoidasi — infra).
+- NetworkPolicy namunaviy; FQDN egress allowlist klaster egress gateway’ida sozlanadi.
