@@ -117,6 +117,14 @@ async def test_a02_a07_growth_rules(tenant_conn: tuple[AsyncConnection, UUID]) -
                                                                  "to": "2026-03-31"}})
     assert compared["rows"] == [["-50.00", "-100.00", "50.00", None]]  # A07
 
+    # Joriy davrda umuman yozuv yo‘q — nol emas, bo‘sh qiymat va ochiq izoh.
+    base, _ = await q.run(ctx(), args(["net_sales"], "2026-07-01", "2026-07-31", ["branch"]))
+    compared, _ = await cmp.compare(ctx(), {"query_spec_id": base["query_spec_id"],
+                                            "comparison_range": {"from": "2026-04-01",
+                                                                 "to": "2026-04-30"}})
+    assert compared["rows"] and all(r[-4] is None and r[-2] is None for r in compared["rows"])
+    assert any("Joriy davr" in n and "ma’lumot yo‘q" in n for n in compared["notes"])
+
 
 async def test_a06_contributions(tenant_conn: tuple[AsyncConnection, UUID]) -> None:
     conn, tenant = tenant_conn

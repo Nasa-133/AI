@@ -27,3 +27,11 @@ export function formatValue(value: string | null | undefined, unit: string | nul
     default: return value;
   }
 }
+
+/** Matndagi xom o‘nli sonlar (`1936621058.00`) → o‘qiladigan (`1 936 621 058,00`). Sana, versiya
+ * va butun sonlarga (yil) tegmaydi — faqat nuqtali o‘nli qismi borlar. */
+export function formatNumbersInText(text: string): string {
+  return text.replace(/(^|[^\d.,\w-])(-?)(\d+)\.(\d{1,2})(?![\d.])/g,
+    (_, pre: string, sign: string, int: string, frac: string) =>
+      `${pre}${sign ? "−" : ""}${group(int)},${frac.padEnd(2, "0")}`);
+}

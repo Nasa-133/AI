@@ -45,3 +45,23 @@ def test_charts_accept_matching_shapes() -> None:
 def test_charts_reject_wrong_shapes(kind: WidgetType, data: dict[str, Any], message: str) -> None:
     with pytest.raises(InvalidDashboard, match=message):
         check(kind, data)
+
+
+def test_card_spark_only_from_clean_time_series() -> None:
+    from business.contexts.dashboards.application.service import _spark
+
+    def col(name: str, kind: str = "dimension") -> dict[str, object]:
+        return {"name": name, "kind": kind, "metric_id": name if kind == "metric" else None,
+                "unit": "money" if kind == "metric" else None}
+
+    series = {"columns": [col("month"), col("net_sales", "metric")],
+              "rows": [["2026-01", "1.00"], ["2026-02", "2.00"], ["2026-03", "3.00"]]}
+    assert _spark(series, 1) == {"metric_id": "net_sales", "unit": "money",
+                                 "points": ["1.00", "2.00", "3.00"]}
+    mixed = {"columns": [col("month"), col("currency"), col("net_sales", "metric")],
+             "rows": [["2026-01", "UZS", "1"], ["2026-01", "USD", "1"], ["2026-02", "UZS", "2"]]}
+    assert _spark(mixed, 2) is None  # valyutalar aralash — chizilmaydi
+    branches = {"columns": [col("branch"), col("net_sales", "metric")], "rows": [["A", "1"]] * 3}
+    assert _spark(branches, 1) is None  # vaqt qatori emas
+    short = {"columns": series["columns"], "rows": series["rows"][:2]}
+    assert _spark(short, 1) is None

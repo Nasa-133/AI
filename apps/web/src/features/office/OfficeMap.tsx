@@ -2,13 +2,17 @@
 
 import { Maximize2, Minimize2, Scan, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent, type PointerEvent } from "react";
+import { createPortal } from "react-dom";
+
+import { HelpTip } from "@/shared/ui/HelpTip";
 
 import { stateLabel, type OfficeAgent } from "./api";
 import styles from "./officeMap.module.css";
 import { centerOn, fit, initialFor, pan, zoomAt, zoomLevel, type Camera } from "./world/camera";
 import { accentOf, AgentLabel, AgentSprite, OfficeStatic } from "./OfficeArt";
 import { PIXEL, SPRITE_H } from "./world/sprites";
-import { ROOMS, seatOf, TILE, type Point } from "./world/map";
+import { ROOMS, TILE, type Point } from "./world/map";
+import { placeLabels, type LabelBox } from "./world/labels";
 import { officeSim, WORKING } from "./world/sim";
 
 // Kamera sessiya davomida saqlanadi: dashboard oynasi yoki boshqa sahifadan qaytganda joyida.
@@ -45,8 +49,10 @@ function RoomLabels() {
  * kadrlar requestAnimationFrame’da DOM transform bilan yangilanadi (React qayta chizmaydi).
  * Yorliqlar ekranda doimiy o‘lchamda (kamera masshtabiga teskari).
  */
-export function OfficeMap({ agents, selected, onSelect }: {
+export function OfficeMap({ agents, selected, onSelect, toolbar }: {
   agents: OfficeAgent[]; selected: string | null; onSelect: (role: string | null) => void;
+  /** Kamera boshqaruvi shu joyga (ofis sarlavhasi qatori) chiziladi; to‘liq ekranda — xarita ustida. */
+  toolbar?: HTMLElement | null;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const agentRefs = useRef(new Map<string, SVGGElement>());
@@ -55,6 +61,8 @@ export function OfficeMap({ agents, selected, onSelect }: {
   const drag = useRef<{ pointers: Map<number, Point>; moved: boolean; last: Point | null; dist: number | null }>(
     { pointers: new Map(), moved: false, last: null, dist: null });
   const agentsRef = useRef(agents);
+  const selectedRef = useRef(selected);
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
 
   const [full, setFull] = useState(false);
   const setCamera = (update: (c: Camera) => Camera) => {
@@ -106,6 +114,7 @@ export function OfficeMap({ agents, selected, onSelect }: {
         svg.dataset.compact = String(scale < 0.72);
         svg.dataset.tiny = String(scale < 0.42);
       }
+      const boxes: LabelBox[] = [];
       for (const a of agentsRef.current) {
         const el = agentRefs.current.get(a.role_key);
         const w = officeSim.walkers.get(a.role_key);
@@ -115,11 +124,17 @@ export function OfficeMap({ agents, selected, onSelect }: {
         el.dataset.at = at;
         el.dataset.working = String(at === "desk" && WORKING.has(a.state));
         el.querySelector<SVGGElement>("[data-label]")?.setAttribute("transform", `scale(${labelScale})`);
-        // Dam olish joyida qo‘shni yorliqlar ustma-ust tushmasligi uchun ba’zilari pastda.
-        el.dataset.labelBelow = String(at === "rest" && Boolean(seatOf(a.role_key).restLabelBelow));
         el.querySelector<SVGGElement>("[data-body]")?.setAttribute("transform", `scale(${w.facing},1)`);
         svg?.querySelector(`[data-owner="${a.role_key}"]`)?.setAttribute(
           "data-active", String(at === "desk" && WORKING.has(a.state)));
+        const size = labelSize(a);
+        boxes.push({ role: a.role_key, x: w.pos.x, y: w.pos.y + LABEL_ANCHOR, w: size.w * +labelScale,
+                     h: size.h * +labelScale, rank: rankOf(a, selectedRef.current) });
+      }
+      // Yorliqlar ustma-ust tushmasin: muhimrog‘i (tanlangan, ishlayotgan) joyida, qolganlari yuqoriga.
+      for (const [role, dy] of placeLabels(boxes)) {
+        agentRefs.current.get(role)?.querySelector("[data-label-offset]")
+          ?.setAttribute("transform", `translate(0,${(LABEL_ANCHOR + dy).toFixed(1)})`);
       }
       svg?.querySelectorAll<SVGGElement>("[data-room-labels] [data-label]").forEach((g) => {
         const base = g.getAttribute("transform")?.replace(/ scale\(.*\)$/, "") ?? "";
@@ -204,21 +219,30 @@ export function OfficeMap({ agents, selected, onSelect }: {
     onSelect(selected === role ? null : role);
   };
 
-  return (
-    <div className={styles.frame} data-full={full}
-         onKeyDown={(e) => { if (full && e.key === "Escape") { e.stopPropagation(); setFull(false); } }}>
+  const controls = (
       <div className={styles.controls} role="group" aria-label="Xarita boshqaruvi">
-        <span className={styles.hint}>G‘ildirak yoki +/− — masshtab, sichqoncha bilan torting — surish.</span>
         <div className="btn-group">
           <button className="btn btn-sm btn-icon" aria-label="Uzoqlashtirish" title="Uzoqlashtirish" onClick={() => setCamera((c) => zoomAt(c, 1.25))}><ZoomOut aria-hidden /></button>
           <span className={`btn btn-sm ${styles.zoom}`} aria-live="polite">{zoomLevel(camera)}%</span>
           <button className="btn btn-sm btn-icon" aria-label="Yaqinlashtirish" title="Yaqinlashtirish" onClick={() => setCamera((c) => zoomAt(c, 0.8))}><ZoomIn aria-hidden /></button>
         </div>
-        <button className="btn btn-sm" onClick={() => setCamera(() => fit())}><Scan aria-hidden /> Butun ofis</button>
-        <button className="btn btn-sm" aria-pressed={full} onClick={() => setFull(!full)}>
-          {full ? <Minimize2 aria-hidden /> : <Maximize2 aria-hidden />} {full ? "Kichraytirish" : "To‘liq ekran"}
+        <button className="btn btn-sm btn-icon" onClick={() => setCamera(() => fit())}
+                aria-label="Butun ofis" title="Butun ofis (0)"><Scan aria-hidden /></button>
+        <button className="btn btn-sm btn-icon" aria-pressed={full} onClick={() => setFull(!full)}
+                aria-label={full ? "Kichraytirish" : "To‘liq ekran"} title={full ? "Kichraytirish (Esc)" : "To‘liq ekran"}>
+          {full ? <Minimize2 aria-hidden /> : <Maximize2 aria-hidden />}
         </button>
+        <HelpTip label="Xaritadan foydalanish">
+          G‘ildirak yoki +/− — masshtab. Sichqoncha bilan torting — surish. Strelkalar — surish, 0 — butun ofis.
+          Agentni bosing — uning kartasi ochiladi.
+        </HelpTip>
       </div>
+  );
+
+  return (
+    <div className={styles.frame} data-full={full}
+         onKeyDown={(e) => { if (full && e.key === "Escape") { e.stopPropagation(); setFull(false); } }}>
+      {toolbar && !full ? createPortal(controls, toolbar) : controls}
       <div className={styles.wrap} ref={measure}>
       <svg ref={svgRef} className={styles.map} viewBox={`${camera.x} ${camera.y} ${camera.w} ${camera.h}`}
            preserveAspectRatio="xMidYMid meet" tabIndex={0} role="application" data-reduced-motion={reduce}
@@ -263,6 +287,22 @@ export function OfficeMap({ agents, selected, onSelect }: {
 }
 
 const LABEL_ANCHOR = 8 - SPRITE_H * PIXEL - 3;  // sprite boshi ustida
+
+/** Yorliq o‘lchami (masshtabsiz): nom nishoni va (band agentda) nutq pufakchasi. */
+function labelSize(a: OfficeAgent): { w: number; h: number } {
+  const nameW = a.name.length * 7.2 + 16;
+  if (a.state === "idle") return { w: nameW, h: 20 };
+  const task = a.current_task?.mine ? a.current_task.title ?? "" : "";
+  const bubbleW = Math.max(stateLabel(a).length * 6.4, Math.min(task.length, 30) * 5.6) + 20;
+  return { w: Math.max(nameW, bubbleW), h: 26 + (task ? 30 : 18) };
+}
+
+function rankOf(a: OfficeAgent, selected: string | null): number {
+  if (a.role_key === selected) return 0;
+  return WORKING.has(a.state) || a.state !== "idle" ? 1 : 2;
+}
+
+
 
 /** Faol agentlar (bo‘lmasa hammasi) markazi — kamerani shu yerga qaratish uchun. */
 function agentsFocus(agents: OfficeAgent[]): Point | null {

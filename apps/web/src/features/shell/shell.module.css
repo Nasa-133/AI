@@ -1,7 +1,7 @@
 .shell {
   display: grid; height: 100vh;
   grid-template-columns: var(--nav-width) minmax(0, 1fr) var(--chat-width);
-  grid-template-rows: 56px minmax(0, 1fr);
+  grid-template-rows: var(--topbar-height) minmax(0, 1fr);
   grid-template-areas: "nav top chat" "nav main chat";
 }
 .shell[data-nav="collapsed"] { grid-template-columns: 68px minmax(0, 1fr) var(--chat-width); }
@@ -14,12 +14,12 @@
   overflow: hidden;
 }
 .brand {
-  display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 6px; margin-bottom: var(--space-2);
+  display: flex; align-items: center; gap: 10px; height: var(--topbar-height); padding: 0 6px; margin-bottom: var(--space-2);
   white-space: nowrap; overflow: hidden; flex: none;
 }
 .logo {
   display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: 8px;
-  background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff;
+  background: var(--accent); color: var(--accent-contrast);
   font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
 }
 .brandText { font-size: var(--text-md); font-weight: 650; letter-spacing: -0.01em; }
@@ -44,17 +44,27 @@
 }
 .tenant { font-size: var(--text-md); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 0 auto; max-width: 260px; }
 .topSpacer { flex: 1; }
-.email { flex: 0 1 auto; min-width: 0; color: var(--text-muted); font-size: var(--text-sm); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 var(--space-2); }
+/* Account menyusi: profil, email, mavzu, chiqish. */
+.account { position: relative; }
+.accountButton { gap: 4px; padding: 0 6px 0 4px; }
+.avatar { display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 70; width: 280px; display: flex; flex-direction: column; gap: 2px; padding: var(--space-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); }
+.menuHead { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border-bottom: 1px solid var(--border); margin-bottom: var(--space-1); }
+.menuWho { display: flex; flex-direction: column; min-width: 0; font-size: var(--text-sm); }
+.menuWho strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menuRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding: 4px var(--space-2); font-size: var(--text-sm); }
+.menuItem { display: flex; align-items: center; gap: var(--space-2); height: 34px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; font-size: var(--text-sm); text-decoration: none; cursor: pointer; text-align: left; }
+.menuItem:hover { background: var(--surface-2); text-decoration: none; }
+.menuItem svg { width: 16px; height: 16px; color: var(--text-muted); }
 .main { grid-area: main; overflow: auto; position: relative; }
 .chat { grid-area: chat; border-left: 1px solid var(--border); background: var(--surface); min-width: 0; overflow: hidden; }
 .mobileNav { display: none; }
 
-@media (max-width: 1200px) { .email { display: none; } }
 
 @media (max-width: 900px) {
   .shell, .shell[data-nav="collapsed"], .shell[data-chat="collapsed"] {
     /* minmax(0, …) — uzun matn yoki jadval sahifani ekrandan kengaytirmasin. */
-    grid-template-columns: minmax(0, 1fr); grid-template-rows: 52px minmax(0, 1fr) 60px;
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: var(--topbar-height) minmax(0, 1fr) 60px;
     grid-template-areas: "top" "main" "mobile";
   }
   .nav { display: none; }

@@ -23,6 +23,15 @@ export function allowedTypes(widget: Widget): Widget["type"][] {
   return types;
 }
 
+/** Saqlangan tur natija shakliga mos kelmasa (masalan, eski dashboard: bitta qiymat uchun ustunli
+ * grafik) — bo‘sh grafik o‘rniga KPI yoki jadval. Bo‘sh natija alohida holat (turi o‘zgarmaydi). */
+export function effectiveType(widget: Widget, data: Widget["data"]): Widget["type"] {
+  if (widget.type === "text" || !data || !data.rows.length) return widget.type;
+  const allowed = allowedTypes({ ...widget, data });
+  if (allowed.includes(widget.type)) return widget.type;
+  return allowed.includes("kpi") ? "kpi" : "table";
+}
+
 export const TYPE_LABEL: Record<Widget["type"], string> = {
   kpi: "KPI karta", line: "Chiziqli grafik", area: "Maydonli grafik", bar: "Ustunli grafik",
   stacked_bar: "Ustma-ust ustunlar", pie: "Doiraviy (ulush)", funnel: "Voronka",

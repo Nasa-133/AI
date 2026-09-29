@@ -21,10 +21,14 @@ export function valueColumns(result: QueryResult): number[] {
     .filter(({ c }) => c.kind === "metric" || c.kind === "current").map(({ i }) => i);
 }
 
-/** A’zo yorlig‘i: nom ustuni bo‘lsa — nomi (masalan, “Toshkent”), aks holda kodi. */
+/** A’zo yorlig‘i: nom ustuni bo‘lsa — nomi (masalan, “Toshkent”), aks holda kodi. Natijada bir
+ * nechta valyuta bo‘lsa valyuta ham qo‘shiladi (“Toshkent · USD”) — bir xil nomli ikki ustun chiqmasin. */
 export function memberLabel(result: QueryResult, row: (string | null)[], dimIndex: number): string {
   const name = result.columns.findIndex((c) => c.name === `${result.columns[dimIndex].name}_name`);
-  return String((name >= 0 && row[name]) || row[dimIndex] || "—");
+  const base = String((name >= 0 && row[name]) || row[dimIndex] || "—");
+  const cur = result.columns.findIndex((c) => c.name === "currency");
+  if (cur < 0 || cur === dimIndex || new Set(result.rows.map((r) => r[cur])).size < 2) return base;
+  return `${base} · ${row[cur] ?? "—"}`;
 }
 
 const num = (v: string | null | undefined) => (v === null || v === undefined ? null : Number(v));

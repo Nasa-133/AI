@@ -216,7 +216,7 @@ def resolve_period(text: str, today: date) -> tuple[Period, list[str]]:
     if "o'tgan oy" in t:
         start = _add_months(this_month, -1)
         return Period(start, _month_end(start)), []
-    if "bu oy" in t or "joriy oy" in t:
+    if "bu oy" in t or "joriy oy" in t or "shu oy" in t:
         return Period(this_month, today), ["Joriy oy to‘liq emas (oy boshidan bugungacha)."]
     if m := re.search(r"oxirgi (\d{1,2}) oy", t):
         n = max(1, min(int(m.group(1)), 24))
@@ -544,7 +544,9 @@ class FakeProvider:
             return self._call(request, "explain_contributions", {
                 "query_spec_id": spec_id, "comparison_range": comparison,
                 "dimension": dimension, "metric_id": plan.metric_ids[0]}, available)
-        if plan.dashboard and "create_dashboard" not in outputs:
+        # Bo‘sh natijadan dashboard yasalmaydi: bo‘sh grafik foydalanuvchini chalg‘itadi.
+        empty = not query["data"]["rows"]
+        if plan.dashboard and not empty and "create_dashboard" not in outputs:
             chart = choose_chart(plan.dimensions, plan.metric_ids, query["data"], text)
             widgets = [{"title": "Asosiy ko‘rsatkich", "type": chart,
                         "query_spec_id": spec_id, "text": None}]
@@ -561,6 +563,9 @@ class FakeProvider:
         limitations = [f"{name}: {r.get('error_message') or r.get('error_code')}"
                        for name, r in outputs.items() if r["status"] != "ok"]
         answer = compose_answer(plan, catalog, results)
+        if plan.dashboard and empty:
+            answer += ("\n- Dashboard yaratilmadi: tanlangan davrda ma’lumot yo‘q. Boshqa davrni "
+                       "ko‘rsating yoki ma’lumot manbasi yangilanganini tekshiring.")
         failed = outputs.get("create_dashboard")
         if plan.dashboard and failed is not None and failed["status"] != "ok":
             # So‘ralgan dashboard chiqmagan bo‘lsa, javob buni ochiq aytadi (jim o‘tib ketmaydi).

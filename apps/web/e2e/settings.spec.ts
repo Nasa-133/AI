@@ -18,6 +18,7 @@ async function linkFromLog(email: string, route: "invite" | "reset-password"): P
 }
 
 async function logout(page: Page) {
+  await page.getByRole("button", { name: "Akkaunt menyusi" }).click();
   await page.getByRole("button", { name: "Chiqish" }).click();
   await expect(page).toHaveURL(/\/login/);
 }
@@ -98,6 +99,7 @@ test("dashboard: tahrir, versiya, ulashish, yangilash, CSV, mavzu", async ({ pag
   expect(csv.split(/\r?\n/)[0]).toBe("month,net_sales");
 
   await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Akkaunt menyusi" }).click();
   await page.getByLabel("Mavzu").selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.reload();

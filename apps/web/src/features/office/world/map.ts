@@ -24,8 +24,7 @@ export type FurnitureKind = "desk" | "table" | "sofa" | "plant" | "cabinet" | "c
 export type Furniture = Rect & { kind: FurnitureKind; owner?: string };
 
 /** Agentning ish joyi (stol oldidagi stul) va bo‘sh vaqtdagi joyi (dam olish zonasi). */
-/** `restLabelBelow` — dam olish joyida yorliq agent ostida (qo‘shnilar bilan ustma-ust tushmasin). */
-export type Seat = { role: string; room: string; work: Point; rest: Point; restLabelBelow?: boolean };
+export type Seat = { role: string; room: string; work: Point; rest: Point };
 
 const doorRow = (x: number, y: number, n = 3): Point[] =>
   Array.from({ length: n }, (_, i) => ({ x: x + i, y }));
@@ -106,11 +105,9 @@ export const DECOR: Decor[] = [
 export const SEATS: Seat[] = [
   // Dam olish joylari bir-biridan 4 katak uzoqda — ism yorliqlari ustma-ust tushmaydi.
   { role: "coordinator", room: "coordinator", work: { x: 8, y: 6 }, rest: { x: 43, y: 28 } },
-  { role: "sales_analyst", room: "sales", work: { x: 20, y: 6 }, rest: { x: 48, y: 28 },
-    restLabelBelow: true },
+  { role: "sales_analyst", room: "sales", work: { x: 20, y: 6 }, rest: { x: 48, y: 28 } },
   { role: "finance_analyst", room: "finance", work: { x: 38, y: 6 }, rest: { x: 53, y: 28 } },
-  { role: "inventory_analyst", room: "inventory", work: { x: 6, y: 27 }, rest: { x: 45, y: 33 },
-    restLabelBelow: true },
+  { role: "inventory_analyst", room: "inventory", work: { x: 6, y: 27 }, rest: { x: 45, y: 33 } },
   { role: "document_assistant", room: "documents", work: { x: 26, y: 27 }, rest: { x: 51, y: 33 } },
 ];
 

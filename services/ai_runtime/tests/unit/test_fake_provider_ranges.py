@@ -49,3 +49,9 @@ def test_dashboard_title_and_headers_use_names() -> None:
 
 def test_debt_maps_to_existing_core_metric() -> None:
     assert build_plan("mijozlar qarzi qancha", CATALOG).metric_ids == ["receivables_open"]
+
+
+def test_this_month_synonyms() -> None:
+    for text in ("bu oy savdo", "shu oy savdosi", "joriy oy savdo"):
+        period, notes = resolve_period(text, TODAY)
+        assert period == Period(date(2026, 9, 1), TODAY) and notes

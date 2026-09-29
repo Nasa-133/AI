@@ -64,12 +64,20 @@ class ComparisonService:
                 columns.append({"name": f"{d.id}__{kind}", "kind": kind, "metric_id": d.id,
                                 "unit": unit})
         rows, notes = [], []
+        # Butun davrda birorta yozuv bo‘lmasa — bu “nol” emas, ma’lumot yo‘q: qiymat bo‘sh qoladi.
+        # (Ma’lumot bor davrda a’zoning yozuvi bo‘lmasa — haqiqiy nol.)
+        if not current:
+            notes.append(f"Joriy davr ({spec.period.start} — {spec.period.end}) uchun ma’lumot "
+                         "yo‘q — nol deb hisoblanmadi.")
+        if not previous:
+            notes.append(f"Oldingi davr ({comparison.start} — {comparison.end}) uchun ma’lumot "
+                         "yo‘q — nol deb hisoblanmadi.")
         for k in keys:
             cells = R.dimension_cells(k, spec.dimensions, with_currency, names)
             label = " / ".join(x for x in k if x)
             for d in spec.definitions:
-                cur = compute(d.id, current.get(k, {})).value
-                prev = compute(d.id, previous.get(k, {})).value
+                cur = compute(d.id, current.get(k, {})).value if current else None
+                prev = compute(d.id, previous.get(k, {})).value if previous else None
                 if cur is None or prev is None:
                     cells += [R.fmt(cur, d.unit), R.fmt(prev, d.unit), None, None]
                     continue

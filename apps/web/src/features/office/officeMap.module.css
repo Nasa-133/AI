@@ -1,4 +1,5 @@
-.wrap { position: relative; min-width: 0; aspect-ratio: 5 / 3; max-height: max(360px, calc(100dvh - 300px)); border-radius: var(--radius-lg); overflow: hidden; border: 3px solid #3f3127; background: #2f261f; }
+/* Sahna mavjud joyni to‘ldiradi; kamera “butun ofis” holatida unga sig‘adi (preserveAspectRatio). */
+.wrap { position: relative; flex: 1; min-height: 240px; min-width: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--office-bg); }
 .map { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; image-rendering: pixelated; }
 .map:active { cursor: grabbing; }
 .map:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
@@ -6,11 +7,11 @@
 /* Stol monitori: agent ishlayotganda ekran yonadi. */
 .desk[data-active="true"] .screen { fill: #5fb3ff; }
 
-.roomLabel text { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; fill: #6b5b4a; opacity: 0.75; dominant-baseline: auto; pointer-events: none; font-family: var(--font-mono); }
+.roomLabel text { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; fill: #6f7a88; opacity: 0.8; dominant-baseline: auto; pointer-events: none; font-family: var(--font-mono); }
 
 .agent { cursor: pointer; outline: none; }
 .hit { fill: transparent; }
-.shadow { fill: rgb(0 0 0 / 22%); }
+.shadow { fill: rgb(30 40 55 / 16%); }
 .agent[data-selected="true"] .hit, .agent:focus-visible .hit { fill: none; stroke: #fff; stroke-width: 2; stroke-dasharray: 4 3; }
 
 /* Yurish: ikki kadrli oyoq almashishi; turganda — oddiy oyoqlar. */
@@ -25,10 +26,10 @@
 .name { font-size: 12px; font-weight: 800; fill: #fff; letter-spacing: 0.02em; font-family: var(--font-mono); }
 
 /* Nutq pufakchasi: backend’dagi haqiqiy holat (va o‘z vazifangiz nomi). */
-.bubble rect, .bubble path { fill: #fff; stroke: #d7d0c6; stroke-width: 1.2; }
+.bubble rect, .bubble path { fill: #fff; stroke: #cfd5dd; stroke-width: 1.2; }
 .bubble path { stroke-linejoin: round; }
-.bubbleStatus { font-size: 11px; font-weight: 700; fill: #2b2230; }
-.bubbleTask { font-size: 9.5px; fill: #6b6270; }
+.bubbleStatus { font-size: 11px; font-weight: 700; fill: #1f2937; }
+.bubbleTask { font-size: 9.5px; fill: #5f6b7a; }
 .bubble[data-state="awaiting_input"] rect, .bubble[data-state="awaiting_input"] path,
 .bubble[data-state="awaiting_approval"] rect, .bubble[data-state="awaiting_approval"] path { fill: #fff4d8; stroke: #e0a33a; }
 .bubble[data-state="failed"] rect, .bubble[data-state="failed"] path { fill: #fde8e6; stroke: #d24b4b; }
@@ -54,21 +55,21 @@
 @keyframes nudge { 0%, 85%, 100% { opacity: 1; } 92% { opacity: 0.6; } }
 @keyframes poke { 40% { transform: translateY(-4px); } }
 
-.frame { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.frame { display: flex; flex-direction: column; gap: var(--space-2); flex: 1; min-width: 0; min-height: 0; }
 /* To‘liq ekran: xarita butun oynani egallaydi (Escape yoki “Kichraytirish” — qaytish). */
 .frame[data-full="true"] { position: fixed; inset: 0; z-index: 60; background: var(--bg); padding: 12px; }
 .frame[data-full="true"] .wrap { flex: 1; aspect-ratio: auto; max-height: none; }
-@media (max-width: 600px) {
-  .wrap { aspect-ratio: 4 / 5; }
-  .hint { display: none; }
-}
+/* Mobil’da sahifa o‘zi suriladi — sahna o‘z nisbatida. */
+@media (max-width: 900px) { .wrap { flex: none; aspect-ratio: 5 / 3; } }
+@media (max-width: 600px) { .wrap { aspect-ratio: 4 / 5; } }
 .controls { display: flex; gap: var(--space-2); align-items: center; justify-content: flex-end; flex-wrap: wrap; }
-.hint { font-size: 12px; color: var(--text-muted); margin-right: auto; }
+.frame[data-full="true"] .controls { flex: none; }
 .zoom { min-width: 60px; cursor: default; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .zoom:hover { background: var(--surface) !important; }
 
 /* Pastki holat satri: har agent — rang, ism, haqiqiy holat (bosilsa karta va kamera). */
-.statusBar { list-style: none; margin: 0; padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 4px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.statusBar { list-style: none; margin: 0; padding: 4px 6px; display: flex; flex: none; gap: 4px 12px; overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.statusBar li { flex: none; }
 .statusBar button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 2px 4px; border-radius: 6px; cursor: pointer; font: inherit; font-size: 13px; color: var(--text); }
 .statusBar button:hover, .statusBar button[aria-pressed="true"] { background: var(--surface-2); }
 .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
@@ -78,8 +79,21 @@
 .statusBar button[data-state="awaiting_input"] .statusText, .statusBar button[data-state="queued"] .statusText { color: var(--warning); font-weight: 600; }
 .statusBar button[data-state="failed"] .statusText { color: var(--danger); font-weight: 600; }
 
-/* Ixcham (uzoqlashtirilgan) rejim: bo‘sh agent ismi faqat tanlanganda yoki fokusda. */
-.map[data-compact="true"] .agent[data-state="idle"]:not([data-selected="true"]):not(:focus-visible):not(:hover) .label { display: none; }
+/* Juda uzoqlashtirilganda bo‘sh agent ismi faqat tanlanganda/fokusda; boshqa masshtablarda
+   yorliqlar to‘qnashuvsiz joylanadi (OfficeMap: placeLabels). */
+.map[data-tiny="true"] .agent[data-state="idle"]:not([data-selected="true"]):not(:focus-visible):not(:hover) .label { display: none; }
 .map[data-tiny="true"] .roomLabel { display: none; }
-/* Yorliq agent ostida (dam olish joyi). */
-.agent[data-label-below="true"] [data-label-offset] { transform: translate(0px, 32px); }
+/* Tanlangan agent: oq hoshiyali nishon va oyoq ostida rangli halqa. */
+.agent[data-selected="true"] .nameTag rect { stroke: #fff; stroke-width: 2.5; }
+.agent[data-selected="true"] .shadow { fill: color-mix(in srgb, var(--agent) 30%, transparent); stroke: var(--agent); stroke-width: 2; }
+/* Ishlayotgan agent: nishonda yonib turuvchi nuqta. */
+.workDot { display: none; fill: #5ee08f; stroke: #fff; stroke-width: 1.5; }
+.agent[data-working="true"] .workDot { display: inline; }
+
+/* Qorong‘i mavzu: sahna (pol, devor, mebel) xiralashadi — agentlar va yorliqlar yorqin qoladi. */
+:global(:root[data-theme="dark"]) .static { filter: brightness(0.58) saturate(0.85); }
+:global(:root[data-theme="dark"]) .roomLabel text { fill: #b3bdc9; }
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .static { filter: brightness(0.58) saturate(0.85); }
+  :global(:root:not([data-theme="light"])) .roomLabel text { fill: #b3bdc9; }
+}

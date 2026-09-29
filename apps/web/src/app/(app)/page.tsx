@@ -10,6 +10,8 @@ import { Picker } from "@/features/dashboards/Picker";
 import { OfficeFloor } from "@/features/office/OfficeFloor";
 import { SetupChecklist } from "@/features/onboarding/SetupChecklist";
 
+import styles from "./page.module.css";
+
 function Workspace() {
   const router = useRouter();
   const pathname = usePathname();
@@ -34,7 +36,7 @@ function Workspace() {
   }, [router, pathname]);
 
   return (
-    <>
+    <div className={styles.workspace}>
       <SetupChecklist />
       <Board onOpen={(id) => open(id)} onShowAll={() => router.push(`${pathname}?dashboards=all`, { scroll: false })} />
       <OfficeFloor />
@@ -44,7 +46,7 @@ function Workspace() {
                          onClose={close} />
       )}
       {showAll && !dashboardId && <Picker onOpen={open} onClose={close} />}
-    </>
+    </div>
   );
 }
 

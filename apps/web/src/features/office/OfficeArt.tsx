@@ -1,7 +1,7 @@
 /**
  * Ofisning piksel-art ko‘rinishi (tepadan): pol, devor, derazalar, mebel va personajlar.
- * Faqat chizish — holat va harakat OfficeMap/officeSim’da. Ranglar o‘z palitrasi (o‘yin sahnasi
- * kabi), UI mavzusidan mustaqil; matnlar esa UI tokenlari bilan o‘qiladigan qoladi.
+ * Faqat chizish — holat va harakat OfficeMap/officeSim’da. Sahna palitrasi UI’ga uyg‘un: neytral,
+ * past kontrastli pol va devorlar (xonalar yengil ohang bilan farqlanadi) — e’tibor agentlarda.
  *
  * Vizual uslub KbWen/agent-virtual-office (MIT) ilhomida; kod va sprite’lar mustaqil yozilgan.
  */
@@ -30,13 +30,13 @@ function Patterns() {
   );
   return (
     <defs>
-      {tile("floor-wood", "#d6b58a", "#c9a676")}
-      {tile("floor-wood2", "#d9bb90", "#caa97c")}
-      {tile("floor-lavender", "#a9a7cf", "#9c9ac4")}
-      {tile("floor-library", "#b7b5d6", "#aaa8cc")}
-      {tile("floor-concrete", "#c9c3b8", "#bbb4a8")}
-      {tile("floor-green", "#b3c7a2", "#a6bb95")}
-      {tile("floor-hall", "#c4a47c", "#b8966d")}
+      {tile("floor-wood", "#efe7da", "#e8dfd0")}
+      {tile("floor-wood2", "#ece5d9", "#e4dccd")}
+      {tile("floor-lavender", "#e6e5f1", "#dedcec")}
+      {tile("floor-library", "#e3e9f1", "#dae2ec")}
+      {tile("floor-concrete", "#e8e9eb", "#e0e2e5")}
+      {tile("floor-green", "#e3eee1", "#dae7d7")}
+      {tile("floor-hall", "#f5f6f8", "#eff1f4")}
     </defs>
   );
 }
@@ -46,9 +46,9 @@ function Desk({ f }: { f: Furniture }) {
   const cx = x + w / 2;
   return (
     <g data-owner={f.owner} className={styles.desk}>
-      <rect x={x + 1} y={y + 2} width={w - 2} height={h - 3} fill="#9b6a42" />
-      <rect x={x + 1} y={y + 2} width={w - 2} height={3} fill="#b07c50" />
-      <rect x={x + 1} y={y + h - 3} width={w - 2} height={2} fill="#7d5333" />
+      <rect x={x + 1} y={y + 2} width={w - 2} height={h - 3} fill="#c2a383" />
+      <rect x={x + 1} y={y + 2} width={w - 2} height={3} fill="#d2b797" />
+      <rect x={x + 1} y={y + h - 3} width={w - 2} height={2} fill="#a88a6c" />
       {/* monitor, klaviatura, krujka */}
       <rect className={styles.screen} x={cx - 9} y={y + 3} width={18} height={11} fill="#2b2d3a" />
       <rect x={cx - 2} y={y + 14} width={4} height={2} fill="#2b2d3a" />
@@ -72,7 +72,7 @@ function Plant({ f }: { f: Furniture }) {
   );
 }
 
-const BOOKS = ["#d24b4b", "#3d6fd6", "#e0a33a", "#2e9c6a", "#8a5cd6", "#d9578f"];
+const BOOKS = ["#d98c8c", "#8fa9dd", "#e2bf7f", "#86bea0", "#b09ad9", "#dc9ab8"];
 
 function Shelf({ f, books }: { f: Furniture; books: boolean }) {
   const x = f.x * T, y = f.y * T, w = f.w * T, h = f.h * T;
@@ -80,9 +80,9 @@ function Shelf({ f, books }: { f: Furniture; books: boolean }) {
   const slots = Math.floor((vertical ? h : w) / 4);
   return (
     <g>
-      <rect x={x + 1} y={y + 1} width={w - 2} height={h - 2} fill="#7b5230" />
+      <rect x={x + 1} y={y + 1} width={w - 2} height={h - 2} fill="#a9927a" />
       {Array.from({ length: slots }, (_, i) => {
-        const color = books ? BOOKS[(i * 7 + f.x) % BOOKS.length] : ["#c79a62", "#b58a55", "#d8ad73"][i % 3];
+        const color = books ? BOOKS[(i * 7 + f.x) % BOOKS.length] : ["#d3bb9c", "#c7ae8e", "#dcc6a9"][i % 3];
         return vertical
           ? <rect key={i} x={x + 3} y={y + 2 + i * 4} width={w - 6} height={3} fill={color} />
           : <rect key={i} x={x + 2 + i * 4} y={y + 3} width={3} height={h - 6} fill={color} />;
@@ -95,9 +95,9 @@ function Sofa({ f }: { f: Furniture }) {
   const x = f.x * T, y = f.y * T, w = f.w * T;
   return (
     <g>
-      <rect x={x} y={y - 2} width={w} height={T + 4} rx={3} fill="#8e5a3a" />
+      <rect x={x} y={y - 2} width={w} height={T + 4} rx={3} fill="#a3968a" />
       {Array.from({ length: Math.floor(f.w / 2) }, (_, i) => (
-        <rect key={i} x={x + 3 + i * 2 * T} y={y + 2} width={2 * T - 6} height={T - 5} rx={2} fill="#c9875a" />
+        <rect key={i} x={x + 3 + i * 2 * T} y={y + 2} width={2 * T - 6} height={T - 5} rx={2} fill="#c4b8ab" />
       ))}
     </g>
   );
@@ -107,8 +107,8 @@ function Table({ f }: { f: Furniture }) {
   const x = f.x * T, y = f.y * T, w = f.w * T, h = f.h * T;
   return (
     <g>
-      <rect x={x + 1} y={y + 1} width={w - 2} height={h - 2} rx={3} fill="#c58a4e" />
-      <rect x={x + 4} y={y + 4} width={w - 8} height={h - 8} rx={2} fill="#d49a5c" />
+      <rect x={x + 1} y={y + 1} width={w - 2} height={h - 2} rx={3} fill="#cdb393" />
+      <rect x={x + 4} y={y + 4} width={w - 8} height={h - 8} rx={2} fill="#dac4a8" />
     </g>
   );
 }
@@ -145,11 +145,11 @@ function DecorPiece({ d }: { d: (typeof DECOR)[number] }) {
         </g>
       );
     case "rug":
-      return <rect x={x} y={y} width={w} height={h} rx={4} fill="#7f9a6d" opacity={0.55} />;
+      return <rect x={x} y={y} width={w} height={h} rx={4} fill="#9db493" opacity={0.28} />;
     case "kanban":
       return (
         <g>
-          <rect x={x} y={y} width={w} height={h} fill="#8c6b4c" />
+          <rect x={x} y={y} width={w} height={h} fill="#b3a28f" />
           {[["#f2cf5b", 0, 0], ["#f09a9a", 1, 0], ["#9fd8b8", 0, 1], ["#9cc8f0", 1, 1], ["#f2cf5b", 2, 1]]
             .map(([c, i, j], k) => (
               <rect key={k} x={x + 4 + Number(i) * 18} y={y + 4 + Number(j) * 13} width={14} height={9} fill={String(c)} />
@@ -172,7 +172,7 @@ function DecorPiece({ d }: { d: (typeof DECOR)[number] }) {
         </g>
       );
     case "clock":
-      return <circle cx={x + 8} cy={y + 8} r={5} fill="#f4f1ea" stroke="#5a4636" strokeWidth={1.5} />;
+      return <circle cx={x + 8} cy={y + 8} r={5} fill="#f4f1ea" stroke="#8a929e" strokeWidth={1.5} />;
   }
 }
 
@@ -180,7 +180,7 @@ function DecorPiece({ d }: { d: (typeof DECOR)[number] }) {
 export const OfficeStatic = memo(function OfficeStatic() {
   const walls = wallRuns(officeSim.grid);
   return (
-    <g shapeRendering="crispEdges">
+    <g shapeRendering="crispEdges" className={styles.static}>
       <Patterns />
       <rect x={0} y={0} width={WORLD_W} height={WORLD_H} fill="url(#floor-hall)" />
       {ROOMS.map((r) => (
@@ -190,8 +190,8 @@ export const OfficeStatic = memo(function OfficeStatic() {
       {DECOR.filter((d) => d.kind === "rug").map((d, i) => <DecorPiece key={`r${i}`} d={d} />)}
       {walls.map((w, i) => (
         <g key={i}>
-          <rect x={w.x * T} y={w.y * T} width={w.w * T} height={w.h * T} fill="#5a4636" />
-          <rect x={w.x * T} y={w.y * T} width={w.w * T} height={3} fill="#6d5745" />
+          <rect x={w.x * T} y={w.y * T} width={w.w * T} height={w.h * T} fill="#aab2bd" />
+          <rect x={w.x * T} y={w.y * T} width={w.w * T} height={3} fill="#c0c7d0" />
         </g>
       ))}
       {DECOR.filter((d) => d.kind !== "rug").map((d, i) => <DecorPiece key={`d${i}`} d={d} />)}
@@ -249,6 +249,7 @@ export function AgentLabel({ agent }: { agent: OfficeAgent }) {
       <g className={styles.nameTag}>
         <rect x={-nameW / 2} y={-19} width={nameW} height={18} rx={9} fill={look.accent} />
         <text className={styles.name} textAnchor="middle" y={-6}>{agent.name}</text>
+        <circle className={styles.workDot} cx={nameW / 2 - 2} cy={-17} r={4} />
       </g>
     </g>
   );

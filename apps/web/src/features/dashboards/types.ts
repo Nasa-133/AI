@@ -5,6 +5,7 @@ export type QueryResult = {
   dataset_snapshot_ids: string[];
   period?: { from: string; to: string };
   current_period?: { from: string; to: string };
+  comparison_period?: { from: string; to: string };
   currency: string | null;
   columns: Column[];
   rows: (string | null)[][];
@@ -44,5 +45,7 @@ export type DashboardCard = {
   id: string; title: string; version: number; updated_at: string;
   period: { from: string; to: string } | null;
   kpi: { metric_id: string; value: string | null; unit: Unit; currency: string | null } | null;
-  status: "ready" | "missing" | "restricted";
+  /** Mini grafik: faqat toza vaqt qatoridan (bo‘lmasa null — bezak chizilmaydi). */
+  spark?: { metric_id: string; unit: Unit; points: string[] } | null;
+  status: "ready" | "missing" | "restricted" | "empty";
 };

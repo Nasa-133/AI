@@ -184,23 +184,49 @@ class DashboardService:
 
     async def _preview(self, d: DashboardRecord,
                        scope: tuple[str, ...] | None = None) -> dict[str, Any]:
+        """Kartochka: davr, KPI (bitta qatorli natijadan) va mini grafik (vaqt qatoridan).
+        Hammasi saqlangan natijadan — sun’iy son yoki bezak grafik qo‘yilmaydi (TZ 6)."""
+        first_period, kpi, spark, has_rows, has_query = None, None, None, False, False
         for w in d.spec["widgets"]:
             if not w["query_spec_id"]:
                 continue
             if not await self._allowed(scope, UUID(w["query_spec_id"])):
-                return {"period": None, "kpi": None, "status": "restricted"}
+                return {"period": None, "kpi": None, "spark": None, "status": "restricted"}
             data = await self._results.result(UUID(w["query_spec_id"]))
             if not data:
-                return {"period": None, "kpi": None, "status": "missing"}
-            period = data.get("period") or data.get("current_period")
+                return {"period": None, "kpi": None, "spark": None, "status": "missing"}
+            has_query = True
+            first_period = first_period or data.get("period") or data.get("current_period")
             metric_cols = [i for i, c in enumerate(data["columns"])
                            if c["kind"] in ("metric", "current")]
-            kpi = None
-            # KPI faqat bitta qatorli natijada; aks holda majburan son qo‘yilmaydi (TZ 6).
-            if len(data["rows"]) == 1 and metric_cols:
-                i = metric_cols[0]
+            if not data["rows"] or not metric_cols:
+                continue
+            has_rows = True
+            i = metric_cols[0]
+            if kpi is None and len(data["rows"]) == 1 and data["rows"][0][i] is not None:
                 kpi = {"metric_id": data["columns"][i]["metric_id"],
                        "value": data["rows"][0][i], "unit": data["columns"][i]["unit"],
                        "currency": data.get("currency")}
-            return {"period": period, "kpi": kpi, "status": "ready"}
-        return {"period": None, "kpi": None, "status": "ready"}
+            if spark is None:
+                spark = _spark(data, i)
+            if kpi and spark:
+                break
+        status = "empty" if has_query and not has_rows else "ready"
+        return {"period": first_period, "kpi": kpi, "spark": spark, "status": status}
+
+
+TIME_DIMENSIONS = {"day", "week", "month", "quarter", "year"}
+
+
+def _spark(data: dict[str, Any], metric_col: int) -> dict[str, Any] | None:
+    """Mini grafik faqat toza vaqt qatoridan: birinchi kesim vaqt, boshqa kesim va valyuta
+    aralashmasi yo‘q, kamida 3 nuqta. Aks holda — yo‘q (majburan chizilmaydi)."""
+    cols = data["columns"]
+    dims = [c for c in cols if c["kind"] == "dimension" and not c["name"].endswith("_name")]
+    if not dims or dims[0]["name"] not in TIME_DIMENSIONS or len(dims) > 1:
+        return None
+    points = [r[metric_col] for r in data["rows"] if r[metric_col] is not None]
+    if len(points) < 3:
+        return None
+    return {"metric_id": cols[metric_col]["metric_id"], "unit": cols[metric_col]["unit"],
+            "points": points[-24:]}

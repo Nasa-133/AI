@@ -26,7 +26,7 @@ test("ro‘yxatdan o‘tish → CSV → chat javobi → dashboard oynasi", async
   // Chat sahifa almashganda ham saqlanadi (o‘ng panel doimiy).
   await page.getByRole("link", { name: "Ofis" }).click();
   await ask(page, "Ali, 2026 yanvar oyidagi savdoni ko‘rsat");
-  await expect(page.getByText(/Sof savdo tushumi — 850\.00/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/Sof savdo tushumi — 850,00/)).toBeVisible({ timeout: 30_000 });
 
   await ask(page, "Ali, 2026 yanvar savdosini dashboard qil");
   const openLink = page.getByRole("link", { name: "Dashboardni ochish" });

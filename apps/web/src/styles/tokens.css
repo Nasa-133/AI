@@ -46,13 +46,16 @@
 
   --nav-width: 232px;
   --chat-width: 400px;
-  --board-height: 172px;
+  --topbar-height: 48px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+
+  /* Ofis sahnasi: UI palitrasiga uyg‘un, yumshoq neytral fon. */
+  --office-bg: #e9ecf0;
 
   --chart-1: #1f6feb;
   --chart-2: #12a37f;
@@ -84,6 +87,7 @@
     --danger: #ff7b72;
     --danger-soft: #3a1a18;
     --focus: #5b9dff;
+    --office-bg: #1a2029;
     --shadow: 0 1px 2px rgb(0 0 0 / 40%);
     --shadow-lg: 0 12px 32px rgb(0 0 0 / 50%);
     color-scheme: dark;
@@ -111,6 +115,7 @@
   --danger: #ff7b72;
   --danger-soft: #3a1a18;
   --focus: #5b9dff;
+  --office-bg: #1a2029;
   --shadow: 0 1px 2px rgb(0 0 0 / 40%);
   --shadow-lg: 0 12px 32px rgb(0 0 0 / 50%);
   color-scheme: dark;

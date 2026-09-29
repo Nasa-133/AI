@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { Widget } from "./types";
-import { allowedTypes } from "./widgetTypes";
+import { spanFor } from "./filters";
+import { allowedTypes, effectiveType } from "./widgetTypes";
 
 const widget = (dims: string[], rows: number): Widget => ({
   id: "w1", title: "t", type: "table", query_spec_id: "q", text: null, query: null, status: "ready",
@@ -27,5 +28,31 @@ describe("allowedTypes", () => {
     expect(allowedTypes(widget(["month", "branch"], 20))).toEqual(
       ["line", "area", "bar", "stacked_bar", "heatmap", "table"]);
     expect(allowedTypes(widget(["product"], 40))).toEqual(["bar", "funnel", "table"]);
+  });
+});
+
+describe("effectiveType", () => {
+  it("eski “ustunli” widget bitta qiymat bilan — KPI (bo‘sh grafik paneli emas)", () => {
+    const w = { ...widget([], 1), type: "bar" as const };
+    expect(effectiveType(w, w.data)).toBe("kpi");
+    expect(spanFor(w)).toBe(3);
+  });
+  it("mos tur o‘zgarmaydi; bo‘sh natija turini saqlaydi va ixcham joy oladi", () => {
+    const w = { ...widget(["branch"], 3), type: "pie" as const };
+    expect(effectiveType(w, w.data)).toBe("pie");
+    const empty = { ...widget(["customer"], 0), type: "bar" as const };
+    expect(effectiveType(empty, empty.data)).toBe("bar");
+    expect(spanFor(empty)).toBe(6);
+  });
+});
+
+describe("memberLabel", () => {
+  it("bir nechta valyutada yorliqqa valyuta qo‘shiladi (ikki “TOS” chiqmaydi)", async () => {
+    const { memberLabel } = await import("./charts");
+    const result = {
+      ...widget(["branch", "currency"], 0).data!,
+      rows: [["TOS", "UZS", "1"], ["TOS", "USD", "2"]],
+    };
+    expect(result.rows.map((r) => memberLabel(result, r, 0))).toEqual(["TOS · UZS", "TOS · USD"]);
   });
 });

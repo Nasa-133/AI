@@ -6,3 +6,21 @@
 .filePicker:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .fileInput { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .fileName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: var(--text-sm); }
+
+.help { position: relative; display: inline-flex; }
+.helpPop {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 70; width: 260px;
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--text);
+  color: var(--surface); font-size: var(--text-xs); line-height: 1.5; box-shadow: var(--shadow-lg);
+}
+
+.dialog {
+  width: min(1100px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); padding: 0; display: flex;
+  flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--text); box-shadow: var(--shadow-lg);
+}
+.dialog:not([open]) { display: none; }
+.dialog::backdrop { background: rgb(15 20 26 / 45%); }
+.dialogHead { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); }
+.dialogHead h2 { margin: 0 auto 0 0; font-size: var(--text-lg); }
+.dialogBody { overflow: auto; padding: var(--space-4); }

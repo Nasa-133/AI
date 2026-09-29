@@ -8,8 +8,8 @@ export const MAX_W = WORLD_W * 1.2; // eng uzoq (butun ofis + chet)
 
 export function fit(): Camera {
   // Yuqorida qo‘shimcha joy: yuqori xonalardagi agentlarning nutq pufakchasi kesilmasin.
-  const pad = 16;
-  const top = 110;
+  const pad = 12;
+  const top = 44;
   return { x: -pad, y: -top, w: WORLD_W + pad * 2, h: WORLD_H + pad + top };
 }
 

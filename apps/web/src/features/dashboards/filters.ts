@@ -3,6 +3,7 @@
  * Saqlangan so‘rov spec’i o‘zgartirilib Core’da qayta hisoblanadi — raqamlar yana semantik qatlamdan.
  */
 import type { QuerySpec, Widget } from "./types";
+import { effectiveType } from "./widgetTypes";
 
 export type PeriodPreset = "saved" | "mtd" | "last_month" | "last_3" | "last_12" | "ytd";
 export type DashboardFilter = { period: PeriodPreset; branches: string[] };
@@ -64,7 +65,8 @@ export function higherIsBetter(metricId: string | null | undefined): boolean {
 
 /** 12 ustunli to‘rda kenglik: KPI kichik, grafiklar yarim, keng jadval/matn — to‘liq. */
 export function spanFor(widget: Widget): number {
-  switch (widget.type) {
+  if (widget.data && !widget.data.rows.length) return widget.type === "kpi" ? 3 : 6;  // bo‘sh — ixcham
+  switch (effectiveType(widget, widget.data)) {
     case "kpi": return 3;
     case "pie": case "funnel": return 6;
     case "text": return 12;

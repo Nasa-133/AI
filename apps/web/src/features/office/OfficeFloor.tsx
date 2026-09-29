@@ -43,6 +43,7 @@ function taskLine(a: OfficeAgent): string {
 export function OfficeFloor() {
   const office = useOffice();
   const [selected, setSelected] = useState<string | null>(null);
+  const [toolSlot, setToolSlot] = useState<HTMLDivElement | null>(null);
   const view = useSyncExternalStore(subscribeView, readView, () => "scene" as View);
   const agents = office.data?.agents ?? [];
   const current = agents.find((a) => a.role_key === selected) ?? null;
@@ -59,19 +60,20 @@ export function OfficeFloor() {
 
   return (
     <section aria-label="Ofis" className={styles.office}>
+      {/* Bitta ixcham qator: sarlavha, ko‘rinish va (xaritada) kamera boshqaruvi — slot’ga portal. */}
       <div className={styles.head}>
-        <h2>Ofis</h2>
-        <span className="muted">Agentlar vazifa kelganda o‘z stoliga borib ishlaydi; holat backend’dagi vazifadan.</span>
-        <div className={`btn-group ${styles.viewSwitch}`} role="group" aria-label="Ko‘rinish">
+        <h2 className={styles.title}>Ofis</h2>
+        <div className="btn-group" role="group" aria-label="Ko‘rinish">
           <button className="btn btn-sm" aria-pressed={view === "scene"} onClick={() => changeView("scene")}><MapIcon aria-hidden /> Xarita</button>
           <button className="btn btn-sm" aria-pressed={view === "list"} onClick={() => changeView("list")}><List aria-hidden /> Ro‘yxat</button>
         </div>
+        <div className={styles.toolSlot} ref={setToolSlot} />
       </div>
       <ErrorNotice error={office.error} />
 
       <div className={styles.layout}>
         {view === "scene" ? (
-          <OfficeMap agents={agents} selected={selected} onSelect={setSelected} />
+          <OfficeMap agents={agents} selected={selected} onSelect={setSelected} toolbar={toolSlot} />
         ) : (
           <div className={styles.listWrap}>
             <table className="table">

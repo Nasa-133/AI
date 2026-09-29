@@ -43,27 +43,25 @@ export function SetupChecklist() {
       action: null,
     },
   ];
+  // Ixcham: bitta qator qadamlar (tavsif — sichqoncha ostida); ofis ekrandan surilib ketmaydi.
+  const next = steps.findIndex((st) => !st.done);
   return (
-    <section className={`panel ${styles.card}`} aria-label="Ishni boshlash">
-      <div className={styles.head}>
-        <h2>Ishni boshlash</h2>
-        <span className="muted">Agentlar faqat tasdiqlangan qoidalar va yuklangan ma’lumotdan hisoblaydi — raqam taxmin qilinmaydi.</span>
-      </div>
-      {!manager && (
-        <div className="notice notice-warning">Bu qadamlarni korxona egasi yoki administrator bajaradi.</div>
-      )}
+    <section className={styles.card} aria-label="Ishni boshlash">
+      <h2 className={styles.title} title="Agentlar faqat tasdiqlangan qoidalar va yuklangan ma’lumotdan hisoblaydi — raqam taxmin qilinmaydi.">
+        Ishni boshlash
+      </h2>
       <ol className={styles.steps}>
         {steps.map((s, i) => (
-          <li key={s.title} className={styles.step} data-done={s.done}>
+          <li key={s.title} className={styles.step} data-done={s.done} data-next={i === next} title={s.text}>
             <span className={styles.mark} aria-hidden>{s.done ? <Check /> : <s.icon />}</span>
-            <div className={styles.body}>
-              <strong>{i + 1}. {s.title}{s.done && <span className="badge badge-success" style={{ marginLeft: 8 }}>Bajarildi</span>}</strong>
-              <span className="muted">{s.text}</span>
-            </div>
+            <span className={styles.body}>
+              {i + 1}. {s.title}{s.done && <span className="sr-only"> — bajarildi</span>}
+            </span>
             {!s.done && s.action}
           </li>
         ))}
       </ol>
+      {!manager && <span className={styles.note}>Bu qadamlarni korxona egasi yoki administrator bajaradi.</span>}
     </section>
   );
 }

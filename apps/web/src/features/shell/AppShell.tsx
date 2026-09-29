@@ -1,19 +1,19 @@
 "use client";
 
 import {
-  Building2, FileText, LayoutDashboard, ListChecks, LogOut, MessageSquare, PanelLeftClose,
+  Building2, FileText, LayoutDashboard, ListChecks, MessageSquare, PanelLeftClose,
   PanelLeftOpen, PanelRightClose, PanelRightOpen, Plug, Settings, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { useLogout, useSwitchTenant, type Me } from "@/features/auth/api";
+import { useSwitchTenant, type Me } from "@/features/auth/api";
 import { useBudget } from "@/features/budget/api";
 import { chatTarget } from "@/features/chat/chatTarget";
 import { ChatPanel } from "@/features/chat/ChatPanel";
-import { ThemeSelect } from "@/shared/theme/ThemeSelect";
 
+import { AccountMenu } from "./AccountMenu";
 import styles from "./shell.module.css";
 
 const NAV: { href: string; label: string; short: string; icon: LucideIcon }[] = [
@@ -28,8 +28,6 @@ const NAV: { href: string; label: string; short: string; icon: LucideIcon }[] = 
 
 export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const logout = useLogout();
   const switchTenant = useSwitchTenant();
   const [navCollapsed, setNavCollapsed] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
@@ -79,7 +77,6 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
         ) : (
           <strong className={styles.tenant}>{current?.tenant_name}</strong>
         )}
-        <span className="badge badge-outline">{me.role}</span>
         {budget.data && budget.data.state !== "ok" && (
           <Link href="/settings" className={budget.data.state === "exceeded" ? "badge badge-danger" : "badge badge-warning"}
                 title="AI budjeti — Sozlamalar">
@@ -87,17 +84,13 @@ export function AppShell({ me, children }: { me: Me; children: ReactNode }) {
           </Link>
         )}
         <div className={styles.topSpacer} />
-        <span className={styles.desktopOnly}><ThemeSelect /></span>
-        <span className={`${styles.email} ${styles.desktopOnly}`} title={me.email}>{me.email}</span>
-        <button className={`btn btn-sm ${styles.desktopOnly}`} onClick={() => setChatCollapsed(!chatCollapsed)}
-                aria-pressed={!chatCollapsed} title={chatCollapsed ? "Chatni ochish" : "Chatni yig‘ish"}>
+        <button className={`btn btn-sm btn-ghost btn-icon ${styles.desktopOnly}`}
+                onClick={() => setChatCollapsed(!chatCollapsed)} aria-pressed={!chatCollapsed}
+                aria-label={chatCollapsed ? "Chatni ochish" : "Chatni yig‘ish"}
+                title={chatCollapsed ? "Chatni ochish" : "Chatni yig‘ish"}>
           {chatCollapsed ? <PanelRightOpen aria-hidden /> : <PanelRightClose aria-hidden />}
-          {chatCollapsed ? "Chatni ochish" : "Chatni yig‘ish"}
         </button>
-        <button className="btn btn-sm" title="Tizimdan chiqish"
-                onClick={() => logout.mutate(undefined, { onSettled: () => router.replace("/login") })}>
-          <LogOut aria-hidden /> Chiqish
-        </button>
+        <AccountMenu me={me} />
       </header>
 
       <main className={styles.main}>{children}</main>

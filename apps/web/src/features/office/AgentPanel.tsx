@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import { PHASES } from "@/features/chat/taskStream";
 import { useCancelTask } from "@/features/chat/api";
 import { chatTarget } from "@/features/chat/chatTarget";
-import { Markdown } from "@/shared/markdown/Markdown";
+import { AgentAnswer } from "@/features/chat/AgentAnswer";
 import { ErrorNotice } from "@/shared/ui/ErrorNotice";
 
 import { stateLabel, TASK_STATUS, type AgentResult, type OfficeAgent, type OfficeTask } from "./api";
@@ -53,7 +53,7 @@ function LastResult({ result }: { result: AgentResult }) {
       </div>
       <span className="muted">{result.title}</span>
       {result.answer ? (
-        <div className={styles.answer}><Markdown source={result.answer} /></div>
+        <div className={styles.answer}><AgentAnswer content={result.answer} refs={[]} /></div>
       ) : (
         <span className="muted">Javob matni yo‘q.</span>
       )}

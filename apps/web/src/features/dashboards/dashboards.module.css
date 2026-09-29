@@ -1,17 +1,25 @@
-.board { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border); background: var(--surface); }
+/* Ixcham doska: sarlavha qatori + bitta qator kartochkalar (ofisga joy qoldiradi). */
+.board { flex: none; display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-2) var(--space-4) var(--space-3); border-bottom: 1px solid var(--border); background: var(--surface); }
 .boardHead { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-.boardTitle { background: none; border: 0; padding: 0; font-size: var(--text-md); font-weight: 600; cursor: pointer; color: var(--text); }
-.boardSearch { max-width: 240px; margin-left: auto; }
+.boardTitle { margin: 0; font-size: var(--text-md); font-weight: 600; color: var(--text); }
+.boardSearch { max-width: 220px; margin-left: auto; }
 @media (max-width: 900px) { .boardSearch { max-width: none; margin-left: 0; flex: 1 1 100%; } }
 .strip { display: flex; gap: var(--space-3); overflow-x: auto; padding-bottom: var(--space-1); scroll-snap-type: x proximity; }
 .card {
-  flex: none; width: 220px; min-height: 96px; text-align: left; cursor: pointer; scroll-snap-align: start;
-  display: flex; flex-direction: column; gap: 4px; padding: var(--space-3);
-  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+  flex: none; width: 236px; min-height: 88px; text-align: left; cursor: pointer; scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 2px; padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit;
 }
 .card:hover { border-color: var(--accent); }
-.cardTitle { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.kpi { font-size: 18px; font-weight: 600; }
+.cardTitle { font-size: var(--text-sm); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cardBody { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-2); min-height: 36px; }
+.cardKpi { display: flex; flex-direction: column; min-width: 0; }
+.cardMetric { font-size: var(--text-xs); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cardEmpty { font-size: var(--text-xs); color: var(--text-muted); }
+.cardPeriod { font-size: 11px; color: var(--text-subtle); font-variant-numeric: tabular-nums; }
+.spark { width: 88px; height: 28px; flex: none; color: var(--accent); }
+.stripEmpty { margin: 0; padding: var(--space-2) 0; font-size: var(--text-sm); }
+.kpi { font-size: var(--text-lg); font-weight: 650; line-height: 1.2; white-space: nowrap; }
 .overlay { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; z-index: 5; }
 .windowHead { container-type: inline-size; display: flex; align-items: center; gap: var(--space-2); min-height: 56px; padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
 .windowTitle { font-size: var(--text-lg); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -42,6 +50,12 @@
 .delta svg { width: 16px; height: 16px; }
 .delta[data-good="true"] { color: var(--success); }
 .delta[data-good="false"] { color: var(--danger); }
+.compare { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: var(--text-xs); color: var(--text-muted); }
+.compare b { color: var(--text); font-weight: 600; }
+/* Bo‘sh natija va yuklanish — grafik o‘rnida ixcham holat (ulkan bo‘sh panel emas). */
+.empty { padding: var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); font-size: var(--text-sm); color: var(--text); background: var(--surface-2); }
+.loading { height: 240px; border-radius: var(--radius-sm); }
+.loading[data-kind="kpi"] { height: 64px; }
 .widgetFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--text-subtle); margin-top: auto; }
 .notes { margin: 0; padding-left: 18px; font-size: var(--text-xs); color: var(--text-muted); display: flex; flex-direction: column; gap: 2px; }
 .textBody { font-size: var(--text-sm); line-height: 1.6; }

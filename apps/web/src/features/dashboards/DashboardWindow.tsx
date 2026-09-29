@@ -17,6 +17,7 @@ import { useFreshness } from "./freshness";
 import { ResultTable } from "./ResultTable";
 import type { QueryResult, Widget } from "./types";
 import { WidgetView } from "./WidgetView";
+import { effectiveType } from "./widgetTypes";
 
 /**
  * Dashboard tafsiloti — ilova ichidagi oyna (TZ 6): markaziy hudud ustida, chat faol qoladi.
@@ -81,6 +82,7 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
   }, [filterKey, filter]);
   const [results2, setResults2] = useState<Record<string, QueryResult>>({});
   const [fetchedBranches, setFetchedBranches] = useState<Record<string, string>>({});
+  const [failedKeys, setFailedKeys] = useState<Set<string>>(new Set());
   const today = useMemo(() => new Date(), []);
   const active = allowDrill && isActive(filter);
   const sig = `${d?.version ?? 0}|${JSON.stringify(filter)}`;
@@ -115,8 +117,13 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
     }
     for (const w of queried) {
       const spec = applyFilter(w.query!, filter, today);
-      if (spec) void mutateAsync(spec).then(keep(`${sig}|cur|${w.id}`)).catch(() => undefined);
-      if (w.type === "kpi") {
+      if (spec) {
+        const key = `${sig}|cur|${w.id}`;
+        void mutateAsync(spec).then(keep(key)).catch(() => {
+          if (!cancelled) setFailedKeys((prev) => new Set(prev).add(key));
+        });
+      }
+      if (effectiveType(w, w.data) === "kpi") {
         const base = spec ?? w.query!;
         void mutateAsync({ ...base, date_range: previousRange(base.date_range) })
           .then(keep(`${sig}|prev|${w.id}`)).catch(() => undefined);
@@ -125,6 +132,10 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
     return () => { cancelled = true; };
   }, [d, allowDrill, filter, today, mutateAsync, sig, dataBranches]);
   const overrideOf = (wid: string) => (active ? results2[`${sig}|cur|${wid}`] ?? null : null);
+  // Filtr qo‘llangan, lekin natija hali kelmagan (yoki xato) — eski raqam “yangi”dek ko‘rsatilmaydi.
+  const loadingOf = (w: Widget) => active && Boolean(w.query) && w.status === "ready"
+    && !(`${sig}|cur|${w.id}` in results2) && !failedKeys.has(`${sig}|cur|${w.id}`);
+  const failedOf = (w: Widget) => active && failedKeys.has(`${sig}|cur|${w.id}`);
   const previousOf = (wid: string) => results2[`${sig}|prev|${wid}`] ?? null;
 
   const toggleBranch = (code: string) => setFilter((f) => ({
@@ -225,6 +236,7 @@ export function DashboardWindow({ id, allowDrill, onShowAll, onClose }: {
                 <div key={w.id} className={styles.cell} style={{ "--span": spanFor(w) } as CSSProperties}>
                   <WidgetView widget={w} dashboardId={id} metricNames={metricNames} allowDrill={allowDrill}
                               override={overrideOf(w.id)} previous={previousOf(w.id)}
+                              loading={loadingOf(w)} failed={failedOf(w)}
                               filterNote={active && !w.query && w.type !== "text" ? "Filtr qo‘llanmaydi" : null}
                               onDrill={(widget, member) => drill(widget.query, member, 0)} />
                 </div>
