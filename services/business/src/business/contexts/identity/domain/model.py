@@ -120,6 +120,12 @@ class User:
             raise MfaNotEnrolled("Avval MFA’ni ro‘yxatdan o‘tkazing.")
         self.mfa_enabled = True
 
+    def reset_mfa(self) -> None:
+        """Administrator tiklashi: foydalanuvchi keyingi kirishda 2FA’ni qaytadan sozlaydi."""
+        self.mfa_secret_encrypted = None
+        self.mfa_enabled = False
+        self.mfa_last_used_step = None
+
     def use_totp_step(self, step: int) -> None:
         """Bir TOTP kodi (vaqt qadami) ikki marta qabul qilinmaydi."""
         if self.mfa_last_used_step is not None and step <= self.mfa_last_used_step:

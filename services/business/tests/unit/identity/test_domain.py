@@ -84,6 +84,29 @@ def test_mfa_enrollment_flow() -> None:
         user.start_mfa_enrollment("enc2")
 
 
+def test_mfa_reset_allows_new_enrollment() -> None:
+    user = make_user()
+    user.start_mfa_enrollment("enc")
+    user.confirm_mfa()
+    user.use_totp_step(10)
+    user.reset_mfa()
+    assert not user.mfa_enabled and user.mfa_secret_encrypted is None
+    user.start_mfa_enrollment("enc2")
+    user.confirm_mfa()
+    user.use_totp_step(1)  # eski qadam hisobga olinmaydi
+
+
+def test_secret_from_another_key_is_readable_error() -> None:
+    from cryptography.fernet import Fernet
+
+    from business.contexts.identity.adapters.security import FernetSecretBox
+    from business.contexts.identity.domain.errors import MfaSecretUnreadable
+
+    old = FernetSecretBox(Fernet.generate_key().decode()).encrypt("SECRET")
+    with pytest.raises(MfaSecretUnreadable):
+        FernetSecretBox(Fernet.generate_key().decode()).decrypt(old)
+
+
 @pytest.mark.parametrize(
     ("role", "user_mfa", "verified", "expected"),
     [

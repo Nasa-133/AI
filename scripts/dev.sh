@@ -6,13 +6,26 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 LOGS="$ROOT/.dev-logs"; mkdir -p "$LOGS"
 PORT="${E2E_PORT:-8010}"
 WEB_PORT="${WEB_PORT:-3010}"
-TOKEN="e2e-tools-token-$(python3 -c 'import secrets;print(secrets.token_hex(16))')"
+# Kalitlar bir marta yaratilib .dev-secrets’da saqlanadi: qayta ishga tushganda shifrlangan
+# ma’lumot (2FA siri, PII tokenlari) o‘qiladigan bo‘lib qoladi. Fayl git’ga kirmaydi.
+SECRETS="$ROOT/.dev-secrets"
+if [ ! -f "$SECRETS" ]; then
+  umask 077
+  {
+    echo "DEV_TOOLS_TOKEN=e2e-tools-token-$(python3 -c 'import secrets;print(secrets.token_hex(16))')"
+    echo "DEV_ENCRYPTION_KEY=$(cd "$ROOT/services/business" && uv run python -c 'from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())')"
+    echo "DEV_SIGNING_KEY=e2e-signing-key-$(python3 -c 'import secrets;print(secrets.token_hex(16))')"
+  } > "$SECRETS"
+fi
+# shellcheck disable=SC1090
+source "$SECRETS"
+TOKEN="$DEV_TOOLS_TOKEN"
 export BUSINESS_DATABASE_URL=postgresql+asyncpg://business_app:business_app_dev@localhost:55432/business
-export BUSINESS_DATA_ENCRYPTION_KEY="$(cd "$ROOT/services/business" && uv run python -c 'from cryptography.fernet import Fernet;print(Fernet.generate_key().decode())')"
+export BUSINESS_DATA_ENCRYPTION_KEY="$DEV_ENCRYPTION_KEY"
 export BUSINESS_COOKIE_SECURE=false BUSINESS_TOOLS_SERVICE_TOKEN="$TOKEN"
 # Lokal: taklif/parol havolalari API logiga yoziladi (email kanali hali yo‘q).
 export BUSINESS_NOTIFIER=log BUSINESS_WEB_BASE_URL="http://localhost:$WEB_PORT"
-export BUSINESS_CAPABILITY_SIGNING_KEY="e2e-signing-key-$(python3 -c 'import secrets;print(secrets.token_hex(16))')"
+export BUSINESS_CAPABILITY_SIGNING_KEY="$DEV_SIGNING_KEY"
 export BUSINESS_AMQP_URL=amqp://abo:abo_dev@localhost:5672/ BUSINESS_S3_ACCESS_KEY=abo BUSINESS_S3_SECRET_KEY=abo_dev_password
 export AI_BUSINESS_TOOLS_URL="http://localhost:$PORT" AI_BUSINESS_TOOLS_TOKEN="$TOKEN" AI_MODEL_PROVIDER=fake
 # AI Runtime ichki HTTP (embed): Core qidiruv so‘rovini vektorlashtiradi (TZ 13.3).

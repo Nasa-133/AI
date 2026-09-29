@@ -347,6 +347,7 @@ foyda, CRM voronkasi, Debitorlik) — qayta ishga tushirilsa yangi versiya yarat
 | Manba uzoq “o‘qilmoqda” / “Kutilmoqda” | Integration worker ishlamayapti | Worker logi (`.dev-logs/integration-worker.log`) |
 | “N ta satr o‘qilmadi” | Karantin: sana, miqdor, takroriy ID, xaritada yo‘q holat | Misollarni ERP egasiga berish; holat xaritasini to‘ldirish (yangi mapping versiyasi) |
 | Raqam ERP hisobotidan farq qiladi | QQS/chegirma sozlamasi, holat xaritasi | Hisob qoidalari va mapping’dagi `discount_already_deducted`, `amount_includes_vat` |
+| Kirishda “Ichki xato” / “2FA sozlamasini o‘qib bo‘lmadi” | Server shifrlash kaliti (`BUSINESS_DATA_ENCRYPTION_KEY`) almashgan | Kalitni doimiy saqlang (lokal: `.dev-secrets`); foydalanuvchi uchun `tools/admin/reset_mfa.py --email …`, keyin QR qayta skanerlanadi |
 | Dashboard’da “Eskirgan” | Sinxron uzoq vaqt yakunlanmadi | Integratsiyalar sahifasidagi manba holati |
 | “Filialga ruxsat yo‘q” | Foydalanuvchiga filial doirasi berilgan (S02) | Sozlamalar → A’zolar |
 

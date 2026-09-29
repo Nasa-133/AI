@@ -25,6 +25,12 @@ class MfaNotEnrolled(BusinessError):
     code = "MFA_NOT_ENROLLED"
 
 
+class MfaSecretUnreadable(BusinessError):
+    """Saqlangan 2FA siri joriy shifrlash kaliti bilan ochilmaydi (kalit almashgan)."""
+
+    code = "MFA_RESET_REQUIRED"
+
+
 class MfaCodeReused(BusinessError):
     code = "INVALID_MFA_CODE"
 

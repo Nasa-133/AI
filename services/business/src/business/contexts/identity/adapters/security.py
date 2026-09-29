@@ -7,7 +7,9 @@ from datetime import datetime
 import pyotp
 from argon2 import PasswordHasher as _Argon2
 from argon2.exceptions import InvalidHashError, VerificationError
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
+
+from ..domain.errors import MfaSecretUnreadable
 
 TOTP_ISSUER = "AI Business Office"
 
@@ -52,7 +54,12 @@ class FernetSecretBox:
         return self._fernet.encrypt(plaintext.encode()).decode()
 
     def decrypt(self, ciphertext: str) -> str:
-        return self._fernet.decrypt(ciphertext.encode()).decode()
+        try:
+            return self._fernet.decrypt(ciphertext.encode()).decode()
+        except InvalidToken as exc:
+            raise MfaSecretUnreadable(
+                "2FA sozlamasini o‘qib bo‘lmadi (server shifrlash kaliti almashgan). "
+                "Administrator 2FA’ni qayta sozlashi kerak: tools/admin/reset_mfa.py.") from exc
 
 
 class OpaqueSessionTokens:

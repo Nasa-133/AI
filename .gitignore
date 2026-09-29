@@ -20,3 +20,4 @@ build/
 .load-logs/
 .load-data/
 .backups/
+.dev-secrets
